@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>ثبت‌نام مغازه‌دار</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="form-card">
+        <h2>📋 ثبت‌نام مغازه‌دار</h2>
+        <form id="auth-form">
+            <label for="store-type">نوع فروشگاه:</label>
+            <input type="text" id="store-type" name="store-type" list="store-type-list" required>
+            <datalist id="store-type-list"></datalist>
+            <div id="other-store-fields" style="display: none;">
+                <label for="other-store-name">نام کسب و کار:</label>
+                <input type="text" id="other-store-name" name="other-store-name">
+                <label for="other-store-description">توضیحات:</label>
+                <textarea id="other-store-description" name="other-store-description"></textarea>
+            </div>
+
+            <label for="activity-type">نوع فعالیت:</label>
+            <input type="text" id="activity-type" name="activity-type" list="activity-list" required>
+            <datalist id="activity-list"></datalist>
+
+            <label for="shop-name">نام فروشگاه:</label>
+            <input type="text" id="shop-name" name="shop-name">
+
+            <label for="business-type">کسب و کار:</label>
+            <select id="business-type" name="business-type">
+                <option value="">انتخاب کنید</option>
+            </select>
+
+            <div id="health-license-field" style="display: none;">
+                <label for="health-license">عکس وزارت بهداشت (اختیاری):</label>
+                <div class="file-input-options">
+                    <select id="health-license-source" name="health-license-source">
+                        <option value="gallery">انتخاب از گالری</option>
+                        <option value="camera">گرفتن عکس با دوربین</option>
+                    </select>
+                    <input type="file" id="health-license" name="health-license" accept="image/*">
+                </div>
+            </div>
+
+            <label for="province">استان:</label>
+            <input type="text" id="province" name="province" list="province-list" placeholder="مثل تهران" required>
+            <datalist id="province-list"></datalist>
+
+            <label for="city">شهر:</label>
+            <input type="text" id="city" name="city" list="city-list" placeholder="مثل تهران" required>
+            <datalist id="city-list"></datalist>
+
+            <div id="region-fields" style="display: none;">
+                <label for="region">منطقه تهران (اجباری برای تهران):</label>
+                <input type="text" id="region" name="region" list="region-list" placeholder="مثل منطقه ۱" required>
+                <datalist id="region-list"></datalist>
+            </div>
+
+            <label for="referral-code">کد معرف مغازه‌دار (اختیاری):</label>
+            <input type="text" id="referral-code" name="referral-code" placeholder="شناسه مغازه معرف (اختیاری)">
+
+            <label for="full-name">نام کامل:</label>
+            <input type="text" id="full-name" name="full-name" required>
+
+            <label for="national-id">کد ملی:</label>
+            <input type="text" id="national-id" name="national-id" placeholder="کد ملی ۱۰ رقمی" required pattern="\d{10}">
+
+            <label for="email">ایمیل:</label>
+            <input type="email" id="email" name="email" required>
+
+            <label for="mobile">موبایل:</label>
+            <input type="tel" id="mobile" name="mobile" placeholder="۰۹۱۲XXXXXXX" required pattern="09\d{9}">
+
+            <label for="password">رمز عبور:</label>
+            <div class="password-container">
+                <input type="password" id="password" name="password" required>
+                <span onclick="togglePassword('password')">👁️</span>
+            </div>
+
+            <label for="confirm-password">تأیید رمز عبور:</label>
+            <div class="password-container">
+                <input type="password" id="confirm-password" name="confirm-password" required>
+                <span onclick="togglePassword('confirm-password')">👁️</span>
+            </div>
+
+            <label for="national-card">آپلود تصویر کارت ملی:</label>
+            <div class="file-input-options">
+                <select id="national-card-source" name="national-card-source">
+                    <option value="gallery">انتخاب از گالری</option>
+                    <option value="camera">گرفتن عکس با دوربین</option>
+                </select>
+                <input type="file" id="national-card" name="national-card" accept="image/*" required>
+            </div>
+
+            <label for="selfie">آپلود تصویر سلفی:</label>
+            <div class="file-input-options">
+                <select id="selfie-source" name="selfie-source">
+                    <option value="gallery">انتخاب از گالری</option>
+                    <option value="camera">گرفتن عکس با دوربین (سلفی)</option>
+                </select>
+                <input type="file" id="selfie" name="selfie" accept="image/*" required>
+            </div>
+
+            <label for="business-license">آپلود جواز کسب:</label>
+            <div class="file-input-options">
+                <select id="business-license-source" name="business-license-source">
+                    <option value="gallery">انتخاب از گالری</option>
+                    <option value="camera">گرفتن عکس با دوربین</option>
+                </select>
+                <input type="file" id="business-license" name="business-license" accept="image/*" required>
+            </div>
+
+            <button type="submit">ثبت‌نام</button>
+        </form>
+
+        <p>🔒 اطلاعات شما فقط برای احراز استفاده شده و محفوظ خواهد بود.</p>
+    </div>
+
+    <div id="verify-code" style="display: none;">
+        <h2>تأیید کد</h2>
+        <form id="verify-code-form">
+            <label for="verify-email">ایمیل:</label>
+            <input type="email" id="verify-email" name="email" required>
+
+            <label for="code">کد تأیید:</label>
+            <input type="text" id="code" name="code" required>
+
+            <button type="button" id="get-code">دریافت کد</button>
+            <button type="submit">تأیید</button>
+        </form>
+    </div>
+
+    <div id="loading-panel" style="display: none;">
+        <div>
+            <div class="spinner"></div>
+            در حال پردازش...
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/compressorjs@1.2.1/dist/compressor.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

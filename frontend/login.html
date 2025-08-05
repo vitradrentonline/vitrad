@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>ورود</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <a href="index.html">بازگشت به صفحه اصلی</a>
+
+    <div class="form-card" id="login-form-container">
+        <h2>ورود</h2>
+        <form id="login-form-content">
+            <label for="userId">شناسه (کد ملی برای مغازه‌دار، موبایل برای مشتری/ادمین):</label>
+            <input type="text" id="userId" name="userId" required><br><br>
+
+            <label for="password">رمز عبور:</label>
+            <div class="password-container">
+                <input type="password" id="password" name="password" required>
+                <span onclick="togglePassword('password')">👁️</span>
+            </div><br><br>
+
+            <label>نقش:</label>
+            <select id="role" name="role" required>
+                <option value="">انتخاب کنید</option>
+                <option value="customer">مشتری</option>
+                <option value="shop_owner">مغازه‌دار</option>
+                <option value="admin">ادمین</option>
+            </select><br><br>
+
+            <button type="submit">ورود</button>
+            <a href="#" id="forgot-password-link">فراموشی رمز عبور</a>
+        </form>
+    </div>
+
+    <div class="form-card" id="verify-code" style="display: none;">
+        <h2>تأیید کد</h2>
+        <form id="verify-code-form">
+            <label for="verify-email">ایمیل:</label>
+            <input type="email" id="verify-email" name="email" required><br><br>
+
+            <label for="code">کد تأیید:</label>
+            <input type="text" id="code" name="code" required><br><br>
+
+            <button type="button" id="get-code">دریافت کد</button>
+            <button type="submit">تأیید</button>
+        </form>
+    </div>
+
+    <div class="form-card" id="reset-password" style="display: none;">
+        <h2>بازیابی رمز عبور</h2>
+        <form id="reset-password-form">
+            <label for="reset-userId">شناسه (کد ملی برای مغازه‌دار، موبایل برای مشتری/ادمین):</label>
+            <input type="text" id="reset-userId" name="userId" required><br><br>
+
+            <label for="reset-email">ایمیل:</label>
+            <input type="email" id="reset-email" name="email" required><br><br>
+
+            <label>نقش:</label>
+            <select id="reset-role" name="role" required>
+                <option value="">انتخاب کنید</option>
+                <option value="customer">مشتری</option>
+                <option value="shop_owner">مغازه‌دار</option>
+                <option value="admin">ادمین</option>
+            </select><br><br>
+
+            <label for="reset-code">کد تأیید:</label>
+            <input type="text" id="reset-code" name="code" required><br><br>
+
+            <label for="new-password">رمز عبور جدید:</label>
+            <div class="password-container">
+                <input type="password" id="new-password" name="new-password" required>
+                <span onclick="togglePassword('new-password')">👁️</span>
+            </div><br><br>
+
+            <label for="confirm-new-password">تأیید رمز عبور جدید:</label>
+            <div class="password-container">
+                <input type="password" id="confirm-new-password" name="confirm-new-password" required>
+                <span onclick="togglePassword('confirm-new-password')">👁️</span>
+            </div><br><br>
+
+            <button type="button" id="get-reset-code">دریافت کد</button>
+            <button type="submit">بازیابی رمز</button>
+        </form>
+    </div>
+
+    <div id="loading-panel">
+        <div>
+            <div class="spinner"></div>
+            در حال پردازش...
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>ثبت‌نام مشتری</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="customer-form-card">
+        <h2>📋 ثبت‌نام مشتری</h2>
+        <form id="customer-register-form">
+            <label for="fullName">نام کامل:</label>
+            <input type="text" id="fullName" name="fullName" required>
+            
+            <label for="email">ایمیل:</label>
+            <input type="email" id="email" name="email" required>
+            
+            <label for="mobile">شماره موبایل:</label>
+            <input type="tel" id="mobile" name="mobile" required pattern="09\d{9}">
+            
+            <label for="province">استان:</label>
+            <input type="text" id="province" name="province" list="province-list" placeholder="مثل تهران" required>
+            <datalist id="province-list"></datalist>
+
+            <label for="city">شهر:</label>
+            <input type="text" id="city" name="city" list="city-list" placeholder="مثل تهران" required>
+            <datalist id="city-list"></datalist>
+
+            <!-- فیلد جدید منطقه (پنهان تا تهران/تهران انتخاب بشه) -->
+            <div id="region-fields" style="display: none;">
+                <label for="region">منطقه تهران (اجباری برای تهران):</label>
+                <input type="text" id="region" name="region" list="region-list" placeholder="مثل منطقه ۱" required>
+                <datalist id="region-list"></datalist>
+            </div>
+
+            <!-- فیلد جدید کد معرف (اختیاری) -->
+            <label for="referral-code">کد معرف مغازه‌دار (اختیاری):</label>
+            <input type="text" id="referral-code" name="referral-code" placeholder="شناسه مغازه معرف (اختیاری)">
+            
+            <label for="password">رمز عبور:</label>
+            <div class="password-container">
+                <input type="password" id="password" name="password" required>
+                <span onclick="togglePassword('password')">👁️</span>
+            </div>
+            
+            <label for="confirm-password">تأیید رمز عبور:</label>
+            <div class="password-container">
+                <input type="password" id="confirm-password" name="confirm-password" required>
+                <span onclick="togglePassword('confirm-password')">👁️</span>
+            </div>
+            
+            <button type="submit">ارسال فرم</button>
+        </form>
+
+        <div id="verify-code" style="display: none;">
+            <h2>تأیید کد</h2>
+            <form id="verify-code-form">
+                <label for="verify-email">ایمیل:</label>
+                <input type="email" id="verify-email" name="email" required>
+                
+                <label for="code">کد تأیید:</label>
+                <input type="text" id="code" name="code" required>
+                
+                <button type="button" id="get-code">دریافت کد</button>
+                <button type="submit">تأیید</button>
+            </form>
+        </div>
+        
+        <p>🔒 اطلاعات شما فقط برای احراز استفاده شده و محفوظ خواهد بود.</p>
+    </div>
+
+    <div id="loading-panel" style="display: none;">
+        <div>
+            <div class="spinner"></div>
+            در حال پردازش...
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/compressorjs@1.2.1/dist/compressor.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

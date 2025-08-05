@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>جزئیات مغازه</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />  <!-- لینک Leaflet CSS -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>  <!-- لینک Leaflet JS -->
+</head>
+<body>
+    <div id="user-panel" style="display: none;">
+        <button id="logout-btn">خروج</button>
+    </div>
+
+    <div id="shop-details">
+        <h2 id="shop-name"></h2>
+        <p>صاحب: <span id="shop-owner"></span></p>
+        <p>تلفن: <span id="shop-phone"></span></p>
+        <p id="whatsapp-link" style="display: none;">واتس‌اپ: <a id="shop-whatsapp" href="#" target="_blank"></a></p>
+        <p id="telegram-link" style="display: none;">تلگرام: <a id="shop-telegram" href="#" target="_blank"></a></p>
+        <p id="instagram-link" style="display: none;">اینستاگرام: <a id="shop-instagram" href="#" target="_blank"></a></p>
+        <p id="eitaa-link" style="display: none;">ایتا: <a id="shop-eitaa" href="#" target="_blank"></a></p>
+        <p id="rubika-link" style="display: none;">روبیکا: <a id="shop-rubika" href="#" target="_blank"></a></p>
+        <p id="bale-link" style="display: none;">بله: <a id="shop-bale" href="#" target="_blank"></a></p>
+        <p>وبسایت: <a id="shop-website" href="#"></a></p>
+
+        <div id="shop-map" style="height: 300px;"></div>  <!-- نقشه لوکیشن اینجا -->
+        <p id="map-error" style="display: none;">خطا در بارگذاری نقشه</p>
+    </div>
+
+    <div class="panel-section">
+        <h2>محصولات</h2>
+        <input type="text" id="product-search-input" placeholder="جستجوی محصول...">
+        <ul id="shop-product-list"></ul>
+    </div>
+
+    <div id="image-modal" class="modal" style="display: none;">
+        <span class="modal-close">&times;</span>
+        <img class="modal-content" id="modal-image">
+    </div>
+
+    <div id="loading-panel" style="display: none;">
+        <div>
+            <div class="spinner"></div>
+            در حال پردازش...
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

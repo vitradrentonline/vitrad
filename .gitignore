@@ -1,0 +1,16 @@
+# فایل‌های Node.js
+node_modules/
+npm-debug.log
+
+# فایل‌های موقتی
+.DS_Store
+Thumbs.db
+*.tmp
+*.log
+
+# فایل‌های حساس
+.env
+config.json
+
+# فولدر آپلودها (اگر وجود داره)
+backend/uploads/

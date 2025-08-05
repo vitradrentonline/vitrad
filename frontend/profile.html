@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>پروفایل کاربر</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+</head>
+<body>
+    <h2>👤 پروفایل کاربر</h2>
+    <p>نام کامل: <span id="profile-full-name"></span></p>
+    <p>کد ملی: <span id="profile-national-id"></span></p>
+    <p>ایمیل: <span id="profile-email"></span></p>
+    <p>موبایل: <span id="profile-mobile"></span></p>
+    <p>آدرس: <span id="profile-address"></span></p>
+    <p>کد پستی: <span id="profile-postal-code"></span></p>
+
+    <form id="profile-form">
+        <label for="address">آدرس جدید:</label>
+        <input type="text" id="address" name="address"><br><br>
+
+        <label for="postal-code">کد پستی جدید:</label>
+        <input type="text" id="postal-code" name="postal-code"><br><br>
+
+        <label for="whatsapp">واتس‌اپ (مثال: +989123456789):</label>
+        <input type="text" id="whatsapp" name="whatsapp"><br><br>
+
+        <label for="telegram">تلگرام (مثال: @username):</label>
+        <input type="text" id="telegram" name="telegram"><br><br>
+
+        <label for="instagram">اینستاگرام (مثال: username):</label>
+        <input type="text" id="instagram" name="instagram"><br><br>
+
+        <label for="eitaa">ایتا (مثال: @username):</label>
+        <input type="text" id="eitaa" name="eitaa"><br><br>
+
+        <label for="rubika">روبیکا (مثال: @username):</label>
+        <input type="text" id="rubika" name="rubika"><br><br>
+
+        <label for="bale">بله (مثال: @username):</label>
+        <input type="text" id="bale" name="bale"><br><br>
+
+        <label for="website">وبسایت:</label>
+        <input type="text" id="website" name="website"><br><br>
+
+        <label>لوکیشن خود را روی نقشه مشخص کنید:</label>
+        <div id="location-map" style="height: 200px;"></div>
+        <input type="hidden" id="location-lat" name="location-lat">
+        <input type="hidden" id="location-lng" name="location-lng"><br><br>
+
+        <label for="new-password">رمز عبور جدید:</label>
+        <div class="password-container">
+            <input type="password" id="new-password" name="new-password">
+            <span onclick="togglePassword('new-password')">👁️</span>
+        </div><br><br>
+
+        <label for="confirm-new-password">تأیید رمز عبور جدید:</label>
+        <div class="password-container">
+            <input type="password" id="confirm-new-password" name="confirm-new-password">
+            <span onclick="togglePassword('confirm-new-password')">👁️</span>
+        </div><br><br>
+
+        <button type="submit">ذخیره تغییرات</button>
+    </form>
+
+    <a href="shop-owner-panel.html">بازگشت به پنل</a>
+
+    <div id="loading-panel">
+        <div>
+            <div class="spinner"></div>
+            در حال پردازش...
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
