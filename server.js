@@ -71,8 +71,9 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, 'frontend')));
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 
 // تنظیم برای آپلود فایل‌ها
 const storage = multer.memoryStorage();
@@ -353,65 +354,102 @@ app.post('/api/auth', checkMongoConnection, upload.fields([
 });
 
 // روت برای ثبت‌نام مشتری
-app.post('/api/register-customer', checkMongoConnection, upload.none(), async (req, res) => {
+app.post('/api/register-customer', upload.none(), async (req, res) => {
     try {
-        const { fullName, email, mobile, password, 'confirm-password': confirmPassword, province, city } = req.body;
-        console.log('درخواست ثبت مشتری:', { fullName, email, mobile, province, city });
+        await connectMongoDB(); // مطمئن شو دیتابیس وصل باشه
 
-        if (province === 'تهران' && city === 'تهران' && !region) {
-            return res.status(400).json({ message: 'منطقه برای تهران اجباری است!' });
+        // گرفتن داده‌ها از req.body
+        const { fullName, email, mobile, province, city, region, password, confirmPassword, referralCode } = req.body;
+
+        // چک کردن فیلدهای ضروری
+        if (!fullName || !email || !mobile || !province || !city || !password || !confirmPassword) {
+            return res.status(400).json({ message: 'فیلدهای ضروری (نام، ایمیل، موبایل، استان، شهر، رمز) پر نشده‌اند' });
         }
 
-        if (!fullName || !email || !mobile || !password || !confirmPassword || !province || !city) {
-            console.log('داده‌های ناقص:', { fullName, email, mobile, password, confirmPassword, province, city });
-            return res.status(400).json({ message: 'همه فیلدها باید پر شوند' });
-        }
+        // چک رمز عبور
         if (password !== confirmPassword) {
-            console.log('رمزها مطابقت ندارند');
-            return res.status(400).json({ message: 'رمز عبور و تأیید رمز مطابقت ندارند' });
+            return res.status(400).json({ message: 'رمز عبور و تأیید آن مطابقت ندارند' });
         }
 
-        const usersCollection = db.collection('users');
-        if (await usersCollection.findOne({ email })) {
-            console.log('ایمیل تکراری:', email);
-            return res.status(400).json({ message: 'این ایمیل قبلاً ثبت شده است!' });
-        }
-        if (await usersCollection.findOne({ mobile })) {
-            console.log('موبایل تکراری:', mobile);
-            return res.status(400).json({ message: 'این موبایل قبلاً ثبت شده است!' });
+        // مدیریت فیلد region (الزامی فقط برای تهران)
+        const isTehran = province.toLowerCase() === 'تهران' && city.toLowerCase() === 'تهران';
+        if (isTehran && !region) {
+            return res.status(400).json({ message: 'برای تهران، منطقه الزامی است' });
         }
 
+        // hashing رمز عبور
         const hashedPassword = await bcrypt.hash(password, 10);
-        const code = generateVerificationCode();
-        const data = { 
-            fullName, 
-            email, 
-            mobile, 
-            password: hashedPassword, 
-            role: 'customer', 
-            verified: false,
-            approved: true, 
-            verificationCode: code,
+
+        // چک کردن موجودیت کاربر
+        const usersCollection = db.collection('users');
+        const existingUserByEmail = await usersCollection.findOne({ email });
+        if (existingUserByEmail) {
+            return res.status(400).json({ message: 'این ایمیل قبلاً ثبت شده است' });
+        }
+        const existingUserByMobile = await usersCollection.findOne({ mobile });
+        if (existingUserByMobile) {
+            return res.status(400).json({ message: 'این موبایل قبلاً ثبت شده است' });
+        }
+        
+        // ذخیره کاربر جدید
+        const newUser = {
+            fullName,
+            email,
+            mobile,
             province,
             city,
-            region: region || '',  // فیلد جدید
-            referralCode: referralCode || ''  // فیلد جدید
+            region: isTehran ? region : null,
+            password: hashedPassword,
+            referralCode: referralCode || '',
+            role: 'customer',
+            verified: false,
+            createdAt: new Date()
         };
 
-        const result = await usersCollection.insertOne(data);
-        const mailOptions = {
-            from: process.env.EMAIL_USER || 'sedghinahada@gmail.com',
-            to: email,
-            subject: 'کد تأیید ثبت‌نام مشتری',
-            text: `کد تأیید شما: ${code}`
-        };
+        const result = await usersCollection.insertOne(newUser);
 
-        await transporter.sendMail(mailOptions);
-        console.log('ایمیل ارسال شد:', { email, code });
-        res.json({ message: 'ثبت‌نام مشتری موفق. کد تأیید به ایمیل شما ارسال شد.', userId: mobile });
+        // تولید و ارسال کد تأیید
+        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+        await usersCollection.updateOne({ _id: result.insertedId }, { $set: { verificationCode: verificationCode } });
+
+        try {
+            console.log(`✅ در حال تلاش برای ارسال ایمیل تأیید به: ${email}`);
+            const info = await transporter.sendMail({
+                from: `ویترانا <${process.env.EMAIL_USER || 'sedghinahada@gmail.com'}>`,
+                to: email,
+                subject: 'کد تأیید ثبت‌نام در ویترانا',
+                html: `
+                    <div dir="rtl" style="font-family: Arial, sans-serif; text-align: right;">
+                        <h2>به ویترانا خوش آمدید!</h2>
+                        <p>کد تأیید شما برای تکمیل ثبت‌نام:</p>
+                        <p style="font-size: 24px; font-weight: bold; letter-spacing: 5px;">${verificationCode}</p>
+                        <p>این کد تا ۱۰ دقیقه دیگر معتبر است.</p>
+                        <hr>
+                        <em>اگر شما درخواست ثبت‌نام نداده‌اید، این ایمیل را نادیده بگیرید.</em>
+                    </div>
+                `
+            });
+            console.log('✅ ایمیل با موفقیت ارسال شد. Message ID:', info.messageId);
+        } catch (emailError) {
+            console.error('❌❌❌ خطا در ارسال ایمیل:', emailError);
+            // اگر ایمیل ارسال نشد، به کاربر اطلاع بده و از تابع خارج شو
+            return res.status(201).json({ 
+                success: true, 
+                message: 'ثبت‌نام شما انجام شد اما در ارسال ایمیل تأیید خطایی رخ داد. لطفاً بعداً از صفحه ورود، گزینه "ارسال مجدد کد" را امتحان کنید.',
+                userId: mobile 
+            });
+        }
+
+        // اگر ایمیل موفق ارسال شد، پاسخ را بفرست و از تابع خارج شو
+        return res.status(201).json({ success: true, message: 'ثبت‌نام موفق، کد تأیید به ایمیل شما ارسال شد', userId: mobile });
+        
     } catch (error) {
+        // این بلاک فقط خطاهایی را مدیریت می‌کند که قبل از ارسال هرگونه پاسخی رخ داده باشند
         console.error('خطا در ثبت مشتری:', error.message, error.stack);
-        res.status(500).json({ message: 'خطا در سرور', error: error.message });
+        // اگر پاسخی هنوز ارسال نشده باشد، پاسخ خطا را ارسال کن
+        if (!res.headersSent) {
+            return res.status(500).json({ message: 'خطا در سرور', error: error.message });
+        }
     }
 });
 

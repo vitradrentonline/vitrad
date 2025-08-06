@@ -298,12 +298,14 @@ window.onload = function () {
             showLoading(true);
             const formData = new FormData(customerRegisterForm);
             const password = formData.get('password');
-            const confirmPassword = formData.get('confirm-password');
+            // --- این خط اصلاح شد ---
+            const confirmPassword = formData.get('confirmPassword'); 
             const fullName = formData.get('fullName');
             const email = formData.get('email');
             const mobile = formData.get('mobile');
             const province = formData.get('province');
             const city = formData.get('city');
+
             if (!fullName || !email || !mobile || !password || !confirmPassword || !province || !city) {
                 console.log('فیلدهای ناقص:', { fullName, email, mobile, password, confirmPassword, province, city });
                 alert('لطفاً همه فیلدها را پر کنید!');
