@@ -3,8 +3,8 @@
   "app": "rent-online",
   "port": 3000,
   "build": {
-    "command": "npm install && npm start"
-  },
+  "command": "npm ci && npm start"
+},
   "disks": [
     {
       "name": "uploads",
