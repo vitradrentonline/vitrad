@@ -1816,84 +1816,76 @@ window.onload = function () {
 
     // لیست نمونه استان‌ها و شهرها
     const provincesAndCities = {
-        'تهران': ['تهران', 'شمیرانات', 'ری', 'ورامین'],
-        'اصفهان': ['اصفهان', 'کاشان', 'نجف‌آباد'],
-        'فارس': ['شیراز', 'مرودشت', 'جهرم'],
-        'خراسان رضوی': ['مشهد', 'نیشابور', 'سبزوار']
+        "تهران": ["تهران", "اسلامشهر", "پاکدشت", "پردیس", "دماوند", "ری", "شمیرانات", "فیروزکوه", "ورامین"],
+        "اصفهان": ["اصفهان", "کاشان", "نجف‌آباد", "خمینی‌شهر", "شاهین‌شهر"],
+        "فارس": ["شیراز", "مرودشت", "کازرون", "جهرم", "لارستان"],
     };
 
     // لیست مناطق تهران
-    const tehranRegions = Array.from({length: 22}, (_, i) => `منطقه ${i+1}`);
+    const tehranRegions = [
+        "منطقه 1", "منطقه 2", "منطقه 3", "منطقه 4", "منطقه 5", "منطقه 6", "منطقه 7", "منطقه 8",
+        "منطقه 9", "منطقه 10", "منطقه 11", "منطقه 12", "منطقه 13", "منطقه 14", "منطقه 15",
+        "منطقه 16", "منطقه 17", "منطقه 18", "منطقه 19", "منطقه 20", "منطقه 21", "منطقه 22"
+    ];
 
     // پر کردن دراپ‌دان استان، شهر و منطقه فقط در صفحات ثبت‌نام
-    if (window.location.pathname.includes('register.html') || window.location.pathname.includes('customer-register.html')) {
-        console.log('در حال پر کردن دراپ‌دان‌های استان و شهر برای صفحه:', window.location.pathname);
+    const isRegistrationPage = window.location.pathname.includes('customer-register.html') || window.location.pathname.includes('register.html');
+
+    if (isRegistrationPage) {
         const provinceInputs = document.querySelectorAll('input[name="province"]');
-        console.log('تعداد فیلدهای استان یافت‌شده:', provinceInputs.length);
-        if (provinceInputs.length === 0) {
-            console.error('هیچ فیلد استانی یافت نشد! HTML را چک کنید.');
-        }
         provinceInputs.forEach(input => {
             const provinceDatalistId = 'province-list';
             const provinceDatalist = document.getElementById(provinceDatalistId);
-            if (!provinceDatalist) {
-                console.error('datalist استان یافت نشد:', provinceDatalistId);
-                return;
-            }
-            input.setAttribute('list', provinceDatalistId);
+            if (input && provinceDatalist) {
+                input.setAttribute('list', provinceDatalistId);
+                // پر کردن گزینه‌های استان اگر خالی باشه
+                if (provinceDatalist.children.length === 0) {
+                    Object.keys(provincesAndCities).forEach(province => {
+                        const option = document.createElement('option');
+                        option.value = province;
+                        provinceDatalist.appendChild(option);
+                    });
+                    console.log('گزینه‌های استان پر شد');
+                }
 
-            if (provinceDatalist.children.length === 0) {
-                Object.keys(provincesAndCities).forEach(province => {
-                    const option = document.createElement('option');
-                    option.value = province;
-                    provinceDatalist.appendChild(option);
-                });
-                console.log('گزینه‌های استان پر شد');
-            } else {
-                console.log('گزینه‌های استان قبلاً پر شده‌اند');
-            }
+                const cityInput = input.parentNode.querySelector('input[name="city"]');
+                const cityDatalistId = 'city-list';
+                const cityDatalist = document.getElementById(cityDatalistId);
+                if (cityInput && cityDatalist) {
+                    cityInput.setAttribute('list', cityDatalistId);
+                    input.addEventListener('input', function () {
+                        cityDatalist.innerHTML = ''; // پاک کردن شهرهای قبلی
+                        const selectedProvince = this.value.trim();
+                        console.log('استان انتخاب‌شده:', selectedProvince);
+                        if (provincesAndCities[selectedProvince]) {
+                            provincesAndCities[selectedProvince].forEach(city => {
+                                const option = document.createElement('option');
+                                option.value = city;
+                                cityDatalist.appendChild(option);
+                            });
+                            console.log('گزینه‌های شهر پر شد برای:', selectedProvince);
+                        }
+                        updateRegionField(selectedProvince, cityInput.value);
+                    });
 
-            const cityInput = input.parentNode.querySelector('input[name="city"]');
-            const cityDatalistId = 'city-list';
-            const cityDatalist = document.getElementById(cityDatalistId);
-            if (cityInput && cityDatalist) {
-                cityInput.setAttribute('list', cityDatalistId);
-                input.addEventListener('input', function () {
-                    cityDatalist.innerHTML = ''; // پاک کردن شهرهای قبلی
-                    const selectedProvince = this.value;
-                    console.log('استان انتخاب‌شده:', selectedProvince);
-                    if (provincesAndCities[selectedProvince]) {
-                        provincesAndCities[selectedProvince].forEach(city => {
-                            const option = document.createElement('option');
-                            option.value = city;
-                            cityDatalist.appendChild(option);
-                        });
-                        console.log('گزینه‌های شهر پر شد برای:', selectedProvince);
-                    } else {
-                        console.log('استان نامعتبر:', selectedProvince);
-                    }
-                    updateRegionField(selectedProvince, cityInput.value);
-                });
-
-                cityInput.addEventListener('input', function () {
-                    updateRegionField(input.value, this.value);
-                });
-            } else {
-                console.error('فیلد شهر یا datalist شهر یافت نشد:', { cityInput: !!cityInput, cityDatalist: !!cityDatalist });
+                    cityInput.addEventListener('input', function () {
+                        updateRegionField(input.value, this.value);
+                    });
+                }
             }
         });
     }
 
-    // تابع برای مدیریت فیلد منطقه
+    // تابع برای مدیریت فیلد منطقه (فقط اگر تهران باشه)
     function updateRegionField(province, city) {
         const regionFields = document.getElementById('region-fields');
         const regionInput = document.getElementById('region');
         const regionDatalist = document.getElementById('region-list');
         if (regionFields && regionInput && regionDatalist) {
-            if (province.toLowerCase() === 'تهران' && city.toLowerCase() === 'تهران') {
-                regionFields.style.display = 'block';
-                regionInput.required = true;
-                // پر کردن گزینه‌های منطقه
+            const isTehran = province.toLowerCase() === 'تهران' && city.toLowerCase() === 'تهران';
+            regionFields.style.display = isTehran ? 'block' : 'none';
+            regionInput.required = isTehran;
+            if (isTehran) {
                 regionDatalist.innerHTML = '';
                 tehranRegions.forEach(region => {
                     const option = document.createElement('option');
@@ -1902,9 +1894,7 @@ window.onload = function () {
                 });
                 console.log('گزینه‌های منطقه تهران پر شد');
             } else {
-                regionFields.style.display = 'none';
-                regionInput.required = false;
-                regionInput.value = ''; // پاک کردن اگر لازم
+                regionInput.value = '';
             }
         } else {
             console.error('فیلد منطقه یافت نشد');

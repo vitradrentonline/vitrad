@@ -14,3 +14,7 @@ config.json
 
 # فولدر آپلودها (اگر وجود داره)
 backend/uploads/
+
+node_modules
+uploads
+.env
