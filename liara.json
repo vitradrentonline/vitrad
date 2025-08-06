@@ -11,5 +11,5 @@
       "mountTo": "uploads"
     }
   ],
-  "main": "backend/server.js"
+  "main": "server.js"
 }
