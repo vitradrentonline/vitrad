@@ -1,6 +1,6 @@
 {
   "platform": "node",
-  "app": "online-shop",
+  "app": "rent-online",
   "port": 3000,
   "build": {
     "command": "npm install && npm start"
