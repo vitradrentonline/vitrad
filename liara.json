@@ -3,12 +3,13 @@
   "app": "rent-online",
   "port": 3000,
   "build": {
-  "command": "npm ci && npm start"
-},
+    "command": "npm ci && npm start"
+  },
   "disks": [
     {
       "name": "uploads",
       "mountTo": "uploads"
     }
-  ]
+  ],
+  "main": "backend/server.js"
 }
