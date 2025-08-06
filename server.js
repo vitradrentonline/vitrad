@@ -1171,8 +1171,8 @@ app.post('/api/logout', checkMongoConnection, async (req, res) => {
 });
 
 // سرو فایل‌های استاتیک
-app.use('/uploads', express.static(path.join(__dirname, 'Uploads')));
-app.use(express.static(path.join(__dirname, '../frontend')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use(express.static(path.join(__dirname, 'frontend')));
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
