@@ -2,6 +2,9 @@
   "platform": "node",
   "app": "online-shop",
   "port": 3000,
+  "build": {
+    "command": "npm install && npm start"
+  },
   "disks": [
     {
       "name": "uploads",
