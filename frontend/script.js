@@ -27,7 +27,7 @@ window.onload = function () {
     }
 
     // تنظیم Base URL برای لوکال و Vercel
-    const baseUrl = window.location.hostname.includes('vercel.app') ? '' : 'http://localhost:3000';
+    const baseUrl = window.location.hostname.includes('liara.run') ? '' : 'http://localhost:3000';
 
     // مدیریت دکمه‌های ثبت‌نام و ورود
     const registerBtn = document.getElementById('register-btn');
