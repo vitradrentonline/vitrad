@@ -1,0 +1,20 @@
+const s3 = new AWS.S3({
+    accessKeyId: process.env.LIARA_ACCESS_KEY || 'q93lk9pelicu3rgn', // Access Key از لیارا
+    secretAccessKey: process.env.LIARA_SECRET_KEY || '8f609904-d779-428e-9108-1abb57171f3b', // Secret Key از لیارا
+    endpoint: process.env.LIARA_ENDPOINT || 'https://storage.c2.liara.space', // Endpoint لیارا
+    s3ForcePathStyle: true // برای سازگاری با لیارا
+});
+const bucketName = process.env.LIARA_BUCKET_NAME || 'rent-online'; // اسم Bucket (مثل amirshop-storage)
+
+
+ixlv wcje zolx fdir
+
+
+Add فایل‌ها:
+textgit add .
+
+Commit:
+textgit commit -m "Update for Liara deploy"
+
+Push:
+textgit push -u origin main

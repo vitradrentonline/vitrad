@@ -1,0 +1,30 @@
+<!-- verify-2fa.html (صفحه برای 2FA مغازه‌دار) -->
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تأیید دو مرحله‌ای</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="form-card">
+        <h2>تأیید کد دو مرحله‌ای</h2>
+        <p>کد 6 رقمی ارسال شده به ایمیل خود را وارد کنید.</p>
+
+        <label for="otp">کد OTP:</label>
+        <input type="text" id="otp" maxlength="6">
+
+        <button onclick="verify2FA()">تأیید</button>
+        <button onclick="resend2FA()">ارسال دوباره کد</button>
+        <p id="error-message" style="color: red; display: none;"></p>
+    </div>
+
+    <div id="loading" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p>در حال پردازش...</p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

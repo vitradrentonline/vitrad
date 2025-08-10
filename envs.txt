@@ -1,0 +1,8 @@
+PORT=3000
+NODE_ENV=production
+LIARA_ACCESS_KEY=q93lk9pelicu3rgn
+LIARA_SECRET_KEY=8f609904-d779-428e-9108-1abb57171f3b
+LIARA_ENDPOINT=https://storage.c2.liara.space
+LIARA_BUCKET_NAME=rent-online
+EMAIL_USER=sedghinahada@gmail.com
+EMAIL_PASS=otsh kgxk aaso hwuz

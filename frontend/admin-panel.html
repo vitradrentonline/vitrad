@@ -1,56 +1,120 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="fa">
 <head>
     <meta charset="UTF-8">
     <title>پنل ادمین</title>
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="user-panel" style="display: none;">
-        <h2 id="user-greeting"></h2>
-        <button id="logout-btn">خروج</button>
-    </div>
+    <div class="admin-container">
+        <div class="sidebar">
+            <h2>پنل ادمین</h2>
+            <ul>
+                <li><button onclick="showSection('shop-owners')">مغازه‌داران</button></li>
+                <li><button onclick="showSection('discount-codes')">کدهای تخفیف</button></li>
+                <li><button onclick="showSection('approvals')">تایید محصولات و مغازه‌داران</button></li>
+                <li><button onclick="showSection('messages')">ارسال پیام عمومی</button></li>
+                <li><button onclick="logoutAdmin()">خروج</button></li>
+            </ul>
+        </div>
+        <div class="main-content">
+            <!-- بخش مغازه‌داران -->
+            <div id="shop-owners" class="section" style="display: none;">
+                <h3>لیست مغازه‌داران</h3>
+                <table id="shop-owners-table">
+                    <thead>
+                        <tr>
+                            <th>نام مغازه</th>
+                            <th>نام کامل</th>
+                            <th>موبایل</th>
+                            <th>وضعیت</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div id="shop-owner-details" style="display: none;">
+                    <h4>جزئیات مغازه‌دار</h4>
+                    <p id="details-content"></p>
+                    <input type="text" id="message-to-owner" placeholder="پیام به مغازه‌دار">
+                    <button onclick="sendMessageToOwner()">ارسال پیام</button>
+                    <button onclick="toggleRestriction()">محدودیت/رفع محدودیت</button>
+                    <button onclick="banOwner()">بن/رفع بن</button>
+                    <h5>محصولات مغازه‌دار</h5>
+                    <ul id="products-list"></ul>
+                </div>
+            </div>
 
-    <section id="pending-users-section" class="panel-section">
-        <h2>کاربران در انتظار تأیید</h2>
-        <table>
-            <tr>
-                <th>شناسه مغازه</th>
-                <th>کد ملی</th>
-                <th>نام کامل</th>
-                <th>ایمیل</th>
-                <th>موبایل</th>
-                <th>کارت ملی</th>
-                <th>سلفی</th>
-                <th>جواز کسب</th>
-                <th>عملیات</th>
-            </tr>
-            <tbody id="pending-users-list"></tbody>
-        </table>
-    </section>
+            <!-- بخش کدهای تخفیف -->
+            <div id="discount-codes" class="section" style="display: none;">
+                <h3>مدیریت کدهای تخفیف</h3>
+                <input type="text" id="discount-code" placeholder="کد تخفیف">
+                <input type="number" id="discount-percent" placeholder="درصد تخفیف">
+                <input type="date" id="discount-expiry" placeholder="تاریخ انقضا">
+                <button onclick="createDiscountCode()">ایجاد کد</button>
+                <table id="discount-codes-table">
+                    <thead>
+                        <tr>
+                            <th>کد</th>
+                            <th>درصد</th>
+                            <th>انقضا</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
 
-    <section id="pending-products-section" class="panel-section">
-        <h2>محصولات در انتظار تأیید</h2>
-        <table>
-            <tr>
-                <th>شناسه محصول</th>
-                <th>شناسه صاحب</th>
-                <th>نام محصول</th>
-                <th>توضیحات</th>
-                <th>تصویر</th>
-                <th>عملیات</th>
-            </tr>
-            <tbody id="pending-products-list"></tbody>
-        </table>
-    </section>
+            <!-- بخش تاییدها -->
+            <div id="approvals" class="section" style="display: none;">
+                <h3>تایید محصولات و مغازه‌داران</h3>
+                <h4>مغازه‌داران در انتظار تایید</h4>
+                <table id="pending-owners-table">
+                    <thead>
+                        <tr>
+                            <th>نام مغازه</th>
+                            <th>نام کامل</th>
+                            <th>جزئیات</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <h4>محصولات در انتظار تایید</h4>
+                <table id="pending-products-table">
+                    <thead>
+                        <tr>
+                            <th>نام محصول</th>
+                            <th>مغازه‌دار</th>
+                            <th>جزئیات</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div id="approval-details" style="display: none;">
+                    <p id="approval-content"></p>
+                    <input type="text" id="feedback-message" placeholder="پیام برای ویرایش">
+                    <button onclick="approveItem()">تایید</button>
+                    <button onclick="rejectItem()">رد و ارسال پیام</button>
+                </div>
+            </div>
 
-    <div id="loading-panel">
-        <div>
-            <div class="spinner"></div>
-            در حال پردازش...
+            <!-- بخش پیام عمومی -->
+            <div id="messages" class="section" style="display: none;">
+                <h3>ارسال پیام عمومی</h3>
+                <select id="message-type">
+                    <option value="all">به همه مغازه‌داران</option>
+                    <option value="single">به یک مغازه‌دار خاص</option>
+                </select>
+                <input type="text" id="single-owner-id" placeholder="شناسه مغازه‌دار (برای تک)" style="display: none;">
+                <textarea id="public-message" placeholder="متن پیام"></textarea>
+                <button onclick="sendPublicMessage()">ارسال</button>
+            </div>
         </div>
     </div>
+
+    <div id="loading-panel" style="display: none;">در حال پردازش...</div>
 
     <script src="script.js"></script>
 </body>

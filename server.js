@@ -10,7 +10,7 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// تنظیمات لیارا Object Storage
+// تنظیمات S3
 const s3 = new AWS.S3({
     accessKeyId: process.env.LIARA_ACCESS_KEY || 'q93lk9pelicu3rgn',
     secretAccessKey: process.env.LIARA_SECRET_KEY || '8f609904-d779-428e-9108-1abb57171f3b',
@@ -19,7 +19,7 @@ const s3 = new AWS.S3({
 });
 const bucketName = process.env.LIARA_BUCKET_NAME || 'rent-online';
 
-// تنظیمات Nodemailer برای Gmail
+// تنظیمات Nodemailer
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -33,7 +33,7 @@ const mongoUri = 'mongodb+srv://amir:Amir1381@cluster0.1ahamnk.mongodb.net/asn?r
 let db;
 let mongoClient;
 
-// اتصال به MongoDB
+// اتصال به MongoDB با retry
 async function connectMongoDB() {
     if (db) return db;
     const maxRetries = 5;
@@ -51,7 +51,6 @@ async function connectMongoDB() {
             retries++;
             console.error(`MongoDB connection attempt ${retries}/${maxRetries} failed:`, error.message);
             if (retries === maxRetries) {
-                console.error('MongoDB connection failed after max retries:', error);
                 throw error;
             }
             await new Promise(resolve => setTimeout(resolve, 3000));
@@ -71,1172 +70,446 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use(express.static(path.join(__dirname, 'frontend')));
-app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'frontend'))); // سرو فایل‌های frontend اگر در فولدر frontend باشن
 
-// تنظیم برای آپلود فایل‌ها
+// Multer برای آپلود با محدودیت‌ها
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
-
-// تابع آپلود فایل به Liara
-async function uploadToS3(fileBuffer, fileName) {
-    const params = {
-        Bucket: bucketName,
-        Key: `${Date.now()}-${fileName}`,
-        Body: fileBuffer,
-        ContentType: 'image/jpeg',
-        ACL: 'public-read'
-    };
-    try {
-        const data = await s3.upload(params).promise();
-        console.log('File uploaded to Liara:', data.Location);
-        return data.Location;
-    } catch (error) {
-        console.error('Error uploading to Liara:', error.message);
-        throw new Error(`Failed to upload ${fileName} to S3: ${error.message}`);
+const upload = multer({
+    storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    fileFilter: (req, file, cb) => {
+        console.log(`فایل دریافتی: ${file.originalname}, نوع: ${file.mimetype}`);
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('فقط تصاویر مجاز هستند'), false);
+        }
     }
-}
+});
 
-// تابع تولید کد تأیید 6 رقمی
-function generateVerificationCode() {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
-// تابع برای تولید shopId 8 رقمی
-function generateShopId() {
-    return Math.floor(10000000 + Math.random() * 90000000).toString();
-}
-
-// Middleware برای چک کردن اتصال MongoDB
-const checkMongoConnection = async (req, res, next) => {
+// Helper برای آپلود به S3 با نام منحصر به فرد
+async function uploadToS3(file, folder, userEmail) {
+    console.log(`شروع آپلود فایل: ${file.originalname} به فولدر ${folder}`);
     try {
-        await connectMongoDB();
-        console.log('MongoDB connection verified for request:', req.path);
-        next();
-    } catch (error) {
-        console.error('MongoDB not connected for request:', req.path, error.message);
-        res.status(500).json({ message: 'اتصال به دیتابیس برقرار نیست', error: error.message });
-    }
-};
-
-// Middleware برای چک کردن نقش ادمین
-const checkAdmin = async (req, res, next) => {
-    const adminId = req.body.adminId || req.body.userId;
-    console.log('چک کردن نقش ادمین برای:', adminId);
-    try {
-        if (!adminId) {
-            console.log('adminId غایب');
-            return res.status(400).json({ message: 'شناسه ادمین لازم است' });
-        }
-        const usersCollection = db.collection('users');
-        const user = await usersCollection.findOne({ mobile: adminId, role: 'admin' });
-        if (!user) {
-            console.log('دسترسی غیرمجاز: کاربر ادمین نیست', adminId);
-            return res.status(403).json({ message: 'فقط ادمین‌ها مجاز هستند!' });
-        }
-        console.log('ادمین تأیید شد:', { mobile: adminId, role: user.role });
-        req.adminId = user._id.toString();
-        next();
-    } catch (error) {
-        console.error('خطا در چک کردن ادمین:', error.message);
-        res.status(500).json({ message: 'خطا در سرور', error: error.message });
-    }
-};
-
-// روت برای ارسال کد تأیید به ایمیل
-app.post('/api/send-code', checkMongoConnection, async (req, res) => {
-    const { email } = req.body;
-    console.log('درخواست /api/send-code:', { email });
-    try {
-        if (!email) {
-            console.log('ایمیل غایب');
-            return res.status(400).json({ message: 'ایمیل لازم است' });
-        }
-        const usersCollection = db.collection('users');
-        const user = await usersCollection.findOne({ email });
-        if (!user) {
-            console.log('کاربر یافت نشد:', email);
-            return res.status(404).json({ message: 'ایمیل ثبت نشده است!' });
-        }
-        const code = generateVerificationCode();
-        await usersCollection.updateOne({ email }, { $set: { verificationCode: code } });
-        const mailOptions = {
-            from: process.env.EMAIL_USER || 'sedghinahada@gmail.com',
-            to: email,
-            subject: 'کد تأیید',
-            text: `کد تأیید شما: ${code}`
+        const uniqueName = `${userEmail}-${Date.now()}-${file.originalname}`;
+        const params = {
+            Bucket: bucketName,
+            Key: `${folder}/${uniqueName}`,
+            Body: file.buffer,
+            ContentType: file.mimetype
         };
-        await transporter.sendMail(mailOptions);
-        console.log('ایمیل ارسال شد:', { email, code });
-        res.json({ message: 'کد تأیید به ایمیل شما ارسال شد.' });
+        const result = await s3.upload(params).promise();
+        console.log(`آپلود موفق: ${result.Location}`);
+        return result.Location;
     } catch (error) {
-        console.error('خطا در /api/send-code:', error.message);
-        res.status(500).json({ message: 'خطا در ارسال ایمیل', error: error.message });
+        console.error(`خطا در آپلود: ${error.message}`);
+        throw error;
     }
-});
+}
 
-// روت تست برای چک کردن سرور
-app.get('/api/health', async (req, res) => {
-    try {
-        await connectMongoDB();
-        console.log('Health check: MongoDB connected');
-        res.json({ status: 'Server is running', mongoConnected: !!db });
-    } catch (error) {
-        console.error('Health check failed:', error.message);
-        res.status(500).json({ status: 'Server is running, but MongoDB connection failed', error: error.message });
-    }
-});
+// تابع generateOTP (فرض می‌کنیم این تابع وجود دارد، اگر نه اضافه کنید)
+const otps = new Map(); // برای ذخیره OTPها
+function generateOTP(email) {
+    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 رقمی
+    const expires = Date.now() + 5 * 60 * 1000; // 5 دقیقه
+    otps.set(email, { otp, expires });
+    return otp;
+}
 
-// روت برای ثبت‌نام مغازه‌دار
-app.post('/api/auth', checkMongoConnection, upload.fields([
-    { name: 'national-card' }, 
-    { name: 'selfie' }, 
-    { name: 'business-license' },
-    { name: 'health-license', maxCount: 1 }
+// API register با logها
+app.post('/api/register', upload.fields([
+    { name: 'nationalCard', maxCount: 1 },
+    { name: 'selfie', maxCount: 1 },
+    { name: 'businessLicense', maxCount: 1 },
+    { name: 'healthLicense', maxCount: 1 }
 ]), async (req, res) => {
+    console.log('درخواست ثبت‌نام دریافت شد');
     try {
-        const { 
-            'full-name': fullName, 
-            'national-id': nationalId, 
-            email, 
-            mobile, 
-            password, 
-            'confirm-password': confirmPassword, 
-            'shop-name': shopName, 
-            province, 
-            city,
-            region,
-            'referral-code': referralCode,
-            'store-type': storeType,
-            'other-store-name': otherStoreName,
-            'other-store-description': otherStoreDescription,
-            'activity-type': activityType,
-            'business-type': businessType
-        } = req.body;
-
-        console.log('درخواست /api/auth:', { 
-            fullName, nationalId, email, mobile, province, city, region, referralCode, storeType, otherStoreName, otherStoreDescription, activityType, businessType,
-            hasNationalCard: !!req.files['national-card'],
-            hasSelfie: !!req.files['selfie'],
-            hasBusinessLicense: !!req.files['business-license'],
-            hasHealthLicense: !!req.files['health-license']
-        });
-
-        // اعتبارسنجی
-        if (!fullName || !nationalId || !email || !mobile || !password || !confirmPassword || !province || !city || !storeType || !activityType) {
-            console.log('داده‌های ناقص:', { fullName, nationalId, email, mobile, password, confirmPassword, province, city, storeType, activityType });
-            return res.status(400).json({ message: 'همه فیلدهای الزامی باید پر شوند' });
-        }
-        if (password !== confirmPassword) {
-            console.log('رمز عبور و تأیید رمز مطابقت ندارند');
-            return res.status(400).json({ message: 'رمز عبور و تأیید رمز عبور مطابقت ندارند' });
-        }
-        if (province === 'تهران' && city === 'تهران' && !region) {
-            return res.status(400).json({ message: 'منطقه برای تهران اجباری است!' });
-        }
-        if (!req.files['national-card'] || !req.files['selfie'] || !req.files['business-license']) {
-            console.log('فایل‌های مورد نیاز آپلود نشده‌اند:', {
-                nationalCard: !!req.files['national-card'],
-                selfie: !!req.files['selfie'],
-                businessLicense: !!req.files['business-license']
-            });
-            return res.status(400).json({ message: 'فایل‌های کارت ملی، سلفی و جواز کسب الزامی هستند' });
+        const { role, fullName, email, mobile, province, city, tehranArea, referralCode, password, storeType, activityType, shopName, nationalCode, businessName, description } = req.body;
+        const files = req.files;
+        console.log(`داده‌ها: role=${role}, fullName=${fullName}, email=${email}, mobile=${mobile}, province=${province}, city=${city}, tehranArea=${tehranArea || 'N/A'}, referralCode=${referralCode || 'N/A'}, storeType=${storeType || 'N/A'}, activityType=${activityType || 'N/A'}, shopName=${shopName || 'N/A'}, nationalCode=${nationalCode || 'N/A'}, businessName=${businessName || 'N/A'}, description=${description || 'N/A'}`);
+        console.log('--- درخواست ثبت‌نام جدید ---');
+        console.log('نقش کاربر:', role);
+        console.log('داده‌های متنی:', req.body);
+        // ✨ لاگ کردن نام فایل‌های دریافت شده
+        if (files) {
+            console.log('فایل‌های دریافت شده:', Object.keys(files).map(key => files[key][0].originalname));
         }
 
+        if (!role || !fullName || !email || !mobile || !province || !city || !password) {
+            console.log('داده‌های الزامی مفقود');
+            return res.status(400).json({ message: 'داده‌های الزامی پر نشده' });
+        }
+
+        await connectMongoDB();
         const usersCollection = db.collection('users');
-        if (await usersCollection.findOne({ nationalId })) {
-            console.log('کد ملی تکراری:', nationalId);
-            return res.status(400).json({ message: 'این کد ملی قبلاً ثبت شده است!' });
-        }
-        if (await usersCollection.findOne({ email })) {
-            console.log('ایمیل تکراری:', email);
-            return res.status(400).json({ message: 'این ایمیل قبلاً ثبت شده است!' });
-        }
-        if (await usersCollection.findOne({ mobile })) {
-            console.log('موبایل تکراری:', mobile);
-            return res.status(400).json({ message: 'این موبایل قبلاً ثبت شده است!' });
+        const existing = await usersCollection.findOne({ $or: [{ email }, { mobile }, { nationalCode: nationalCode || null }].filter(Boolean) });
+        if (existing) {
+            console.log('کاربر تکراری یافت شد');
+            return res.status(400).json({ message: 'ایمیل، موبایل یا کد ملی تکراری است' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        let nationalCardUrl = '';
-        let selfieUrl = '';
-        let businessLicenseUrl = '';
-        let healthLicenseUrl = '';
+        console.log('رمز عبور هش شد');
 
-        // آپلود فایل‌ها به S3 با لاگ
-        try {
-            console.time('upload_national_card');
-            nationalCardUrl = await uploadToS3(req.files['national-card'][0].buffer, `national-${nationalId}.jpg`);
-            console.timeEnd('upload_national_card');
-
-            console.time('upload_selfie');
-            selfieUrl = await uploadToS3(req.files['selfie'][0].buffer, `selfie-${nationalId}.jpg`);
-            console.timeEnd('upload_selfie');
-
-            console.time('upload_business_license');
-            businessLicenseUrl = await uploadToS3(req.files['business-license'][0].buffer, `license-${nationalId}.jpg`);
-            console.timeEnd('upload_business_license');
-
-            if (req.files['health-license'] && req.files['health-license'][0]) {
-                console.time('upload_health_license');
-                healthLicenseUrl = await uploadToS3(req.files['health-license'][0].buffer, `health-${nationalId}.jpg`);
-                console.timeEnd('upload_health_license');
+        let fileUrls = {};
+        if (role === 'shop_owner') {
+            if (!files.nationalCard || !files.selfie || !files.businessLicense) {
+                console.log('فایل‌های الزامی آپلود نشده');
+                return res.status(400).json({ message: 'فایل‌های الزامی آپلود نشده' });
             }
-        } catch (uploadError) {
-            console.error('خطا در آپلود به S3:', uploadError.message, uploadError.stack);
-            return res.status(500).json({ message: 'خطا در آپلود فایل‌ها به S3', error: uploadError.message });
+            fileUrls.nationalCard = await uploadToS3(files.nationalCard[0], 'national-cards', email);
+            fileUrls.selfie = await uploadToS3(files.selfie[0], 'selfies', email);
+            fileUrls.businessLicense = await uploadToS3(files.businessLicense[0], 'business-licenses', email);
+            if (files.healthLicense) {
+                fileUrls.healthLicense = await uploadToS3(files.healthLicense[0], 'health-licenses', email);
+            }
+            console.log('فایل‌ها آپلود شدند');
         }
 
-        const shopId = generateShopId();
-        const data = { 
-            shopId,
-            shopName: shopName || `${fullName} مارکت`,
-            fullName, 
-            nationalId, 
-            email, 
-            mobile, 
-            password: hashedPassword, 
-            nationalCardUrl, 
-            selfieUrl, 
-            businessLicenseUrl, 
-            healthLicenseUrl: healthLicenseUrl || '',
-            verified: false,
-            approved: false, 
-            bannerUrl: '', 
-            verificationCode: '', 
-            address: '', 
-            postalCode: '', 
-            role: 'shop_owner',
-            whatsapp: '',
-            telegram: '',
-            instagram: '',
-            eitaa: '',
-            rubika: '',
-            bale: '',
-            website: '',
-            province,
-            city,
-            region: region || '',
-            referralCode: referralCode || '',
-            storeType,
-            otherStoreName: otherStoreName || '',
-            otherStoreDescription: otherStoreDescription || '',
-            activityType,
-            businessType: businessType || '',
-            location: { lat: '', lng: '' }
-        };
-
-        const result = await usersCollection.insertOne(data);
-        const code = generateVerificationCode();
-        await usersCollection.updateOne({ _id: result.insertedId }, { $set: { verificationCode: code } });
-
-        const mailOptions = {
-            from: process.env.EMAIL_USER || 'sedghinahada@gmail.com',
-            to: email,
-            subject: 'کد تأیید ثبت‌نام مغازه‌دار',
-            text: `کد تأیید شما: ${code}\nشناسه مغازه شما: ${shopId}`
-        };
-
-        try {
-            await transporter.sendMail(mailOptions);
-            console.log('ایمیل ارسال شد:', { email, code, shopId });
-        } catch (emailError) {
-            console.error('خطا در ارسال ایمیل:', emailError.message, emailError.stack);
-            return res.status(500).json({ message: 'خطا در ارسال ایمیل تأیید', error: emailError.message });
-        }
-
-        res.json({ message: 'ثبت‌نام با موفقیت انجام شد. لطفاً کد تأیید را وارد کنید.', userId: shopId });
-    } catch (error) {
-        console.error('خطا در /api/auth:', error.message, error.stack);
-        res.status(500).json({ message: 'خطا در سرور', error: error.message });
-    }
-});
-
-// روت برای ثبت‌نام مشتری
-app.post('/api/register-customer', upload.none(), async (req, res) => {
-    try {
-        await connectMongoDB(); // مطمئن شو دیتابیس وصل باشه
-
-        // گرفتن داده‌ها از req.body
-        const { fullName, email, mobile, province, city, region, password, confirmPassword, referralCode } = req.body;
-
-        // چک کردن فیلدهای ضروری
-        if (!fullName || !email || !mobile || !province || !city || !password || !confirmPassword) {
-            return res.status(400).json({ message: 'فیلدهای ضروری (نام، ایمیل، موبایل، استان، شهر، رمز) پر نشده‌اند' });
-        }
-
-        // چک رمز عبور
-        if (password !== confirmPassword) {
-            return res.status(400).json({ message: 'رمز عبور و تأیید آن مطابقت ندارند' });
-        }
-
-        // مدیریت فیلد region (الزامی فقط برای تهران)
-        const isTehran = province.toLowerCase() === 'تهران' && city.toLowerCase() === 'تهران';
-        if (isTehran && !region) {
-            return res.status(400).json({ message: 'برای تهران، منطقه الزامی است' });
-        }
-
-        // hashing رمز عبور
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // چک کردن موجودیت کاربر
-        const usersCollection = db.collection('users');
-        const existingUserByEmail = await usersCollection.findOne({ email });
-        if (existingUserByEmail) {
-            return res.status(400).json({ message: 'این ایمیل قبلاً ثبت شده است' });
-        }
-        const existingUserByMobile = await usersCollection.findOne({ mobile });
-        if (existingUserByMobile) {
-            return res.status(400).json({ message: 'این موبایل قبلاً ثبت شده است' });
-        }
-        
-        // ذخیره کاربر جدید
-        const newUser = {
+        const user = {
+            role,
             fullName,
             email,
             mobile,
-            province,
-            city,
-            region: isTehran ? region : null,
-            password: hashedPassword,
+            address: { province, city, tehranArea: tehranArea || '' },
             referralCode: referralCode || '',
-            role: 'customer',
+            password: hashedPassword,
             verified: false,
-            createdAt: new Date()
+            ...(role === 'shop_owner' ? {
+                storeType,
+                activityType,
+                shopName,
+                nationalCode,
+                businessName: businessName || '',
+                description: description || '',
+                files: fileUrls
+            } : {})
         };
+        const insertResult = await usersCollection.insertOne(user);
+        console.log('کاربر جدید در دیتابیس ذخیره شد');
 
-        const result = await usersCollection.insertOne(newUser);
+        // ✨ تولید ID منحصر به فرد با فرمت جدید
+        let uniqueID;
+        const randomNumber = Math.floor(1000000 + Math.random() * 9000000); // تولید عدد 7 رقمی
 
-        // تولید و ارسال کد تأیید
-        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-        await usersCollection.updateOne({ _id: result.insertedId }, { $set: { verificationCode: verificationCode } });
-
-        try {
-            console.log(`✅ در حال تلاش برای ارسال ایمیل تأیید به: ${email}`);
-            const info = await transporter.sendMail({
-                from: `ویترانا <${process.env.EMAIL_USER || 'sedghinahada@gmail.com'}>`,
-                to: email,
-                subject: 'کد تأیید ثبت‌نام در ویترانا',
-                html: `
-                    <div dir="rtl" style="font-family: Arial, sans-serif; text-align: right;">
-                        <h2>به ویترانا خوش آمدید!</h2>
-                        <p>کد تأیید شما برای تکمیل ثبت‌نام:</p>
-                        <p style="font-size: 24px; font-weight: bold; letter-spacing: 5px;">${verificationCode}</p>
-                        <p>این کد تا ۱۰ دقیقه دیگر معتبر است.</p>
-                        <hr>
-                        <em>اگر شما درخواست ثبت‌نام نداده‌اید، این ایمیل را نادیده بگیرید.</em>
-                    </div>
-                `
-            });
-            console.log('✅ ایمیل با موفقیت ارسال شد. Message ID:', info.messageId);
-        } catch (emailError) {
-            console.error('❌❌❌ خطا در ارسال ایمیل:', emailError);
-            // اگر ایمیل ارسال نشد، به کاربر اطلاع بده و از تابع خارج شو
-            return res.status(201).json({ 
-                success: true, 
-                message: 'ثبت‌نام شما انجام شد اما در ارسال ایمیل تأیید خطایی رخ داد. لطفاً بعداً از صفحه ورود، گزینه "ارسال مجدد کد" را امتحان کنید.',
-                userId: mobile 
-            });
+        if (role === 'shop_owner') {
+            uniqueID = `s${randomNumber}`;
+        } else { // برای مشتری
+            uniqueID = `c${randomNumber}`;
         }
 
-        // اگر ایمیل موفق ارسال شد، پاسخ را بفرست و از تابع خارج شو
-        return res.status(201).json({ success: true, message: 'ثبت‌نام موفق، کد تأیید به ایمیل شما ارسال شد', userId: mobile });
-        
-    } catch (error) {
-        // این بلاک فقط خطاهایی را مدیریت می‌کند که قبل از ارسال هرگونه پاسخی رخ داده باشند
-        console.error('خطا در ثبت مشتری:', error.message, error.stack);
-        // اگر پاسخی هنوز ارسال نشده باشد، پاسخ خطا را ارسال کن
-        if (!res.headersSent) {
-            return res.status(500).json({ message: 'خطا در سرور', error: error.message });
-        }
-    }
-});
+        await usersCollection.updateOne({ _id: insertResult.insertedId }, { $set: { uniqueID } });
+        console.log(`ID منحصر به فرد با فرمت جدید تولید شد: ${uniqueID}`);
 
-// روت برای ثبت‌نام ادمین (برای تست، بعداً ایمن کنید)
-app.post('/api/register-admin', checkMongoConnection, upload.none(), async (req, res) => {
-    const { fullName, email, mobile, password, 'confirm-password': confirmPassword } = req.body;
-    console.log('درخواست ثبت ادمین:', { fullName, email, mobile });
-    try {
-        if (!fullName || !email || !mobile || !password || !confirmPassword) {
-            console.log('داده‌های ناقص:', { fullName, email, mobile, password, confirmPassword });
-            return res.status(400).json({ message: 'همه فیلدها باید پر شوند' });
-        }
-        if (password !== confirmPassword) {
-            console.log('رمزها مطابقت ندارند');
-            return res.status(400).json({ message: 'رمز عبور و تأیید رمز مطابقت ندارند' });
-        }
-        const usersCollection = db.collection('users');
-        if (await usersCollection.findOne({ email })) {
-            console.log('ایمیل تکراری:', email);
-            return res.status(400).json({ message: 'این ایمیل قبلاً ثبت شده است!' });
-        }
-        if (await usersCollection.findOne({ mobile })) {
-            console.log('موبایل تکراری:', mobile);
-            return res.status(400).json({ message: 'این موبایل قبلاً ثبت شده است!' });
-        }
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const code = generateVerificationCode();
-        const data = { 
-            fullName, 
-            email, 
-            mobile, 
-            password: hashedPassword, 
-            role: 'admin', 
-            verified: false,
-            approved: true, 
-            verificationCode: code 
-        };
-        const result = await usersCollection.insertOne(data);
-        const mailOptions = {
-            from: process.env.EMAIL_USER || 'sedghinahada@gmail.com',
+        // ارسال ایمیل ID
+        const mailIDOptions = {
+            from: process.env.EMAIL_USER,
             to: email,
-            subject: 'کد تأیید ثبت‌نام ادمین',
-            text: `کد تأیید شما: ${code}`
+            subject: 'ID منحصر به فرد شما',
+            text: `ثبت‌نام موفق! ID شما برای ورود آینده: ${uniqueID}`
         };
-        await transporter.sendMail(mailOptions);
-        console.log('ایمیل ارسال شد:', { email, code });
-        res.json({ message: 'ثبت‌نام ادمین موفق. کد تأیید به ایمیل شما ارسال شد.', userId: mobile });
-    } catch (error) {
-        console.error('خطا در ثبت ادمین:', error.message, error.stack);
-        res.status(500).json({ message: 'خطا در سرور', error: error.message });
-    }
-});
+        await transporter.sendMail(mailIDOptions);
+        console.log(`ایمیل ID ارسال شد به ${email}`);
 
-// روت برای تأیید کد احراز هویت
-app.post('/api/verify-auth', checkMongoConnection, upload.none(), async (req, res) => {
-    const { code, userId, role } = req.body;
-    console.log('درخواست /api/verify-auth:', { code, userId, role });
-    try {
-        if (!code || !userId || !role) {
-            console.log('داده‌های ناقص:', { code, userId, role });
-            return res.status(400).json({ message: 'کد تأیید، userId و نقش لازم است' });
-        }
-        const usersCollection = db.collection('users');
-        let user;
-        if (role === 'shop_owner') {
-            user = await usersCollection.findOne({ shopId: userId, role });
-            if (!user) {
-                user = await usersCollection.findOne({ nationalId: userId, role });
-            }
-        } else {
-            user = await usersCollection.findOne({ mobile: userId, role });
-        }
-        if (!user) {
-            console.log('کاربر یافت نشد:', userId, role);
-            return res.status(404).json({ message: 'کاربر یافت نشد!' });
-        }
-        if (code === user.verificationCode) {
-            await usersCollection.updateOne(
-                { _id: user._id },
-                { $set: { verified: true, verificationCode: '' } }
-            );
-            console.log('تأیید موفق، کاربر:', userId, role);
-            res.json({ message: 'احراز هویت با موفقیت انجام شد!', userId: role === 'shop_owner' ? user.shopId : user.mobile, role });
-        } else {
-            console.log('کد تأیید اشتباه:', code);
-            return res.status(400).json({ message: 'کد تأیید اشتباه است!' });
-        }
-    } catch (error) {
-        console.error('خطا در /api/verify-auth:', error.message, error.stack);
-        res.status(500).json({ message: 'خطا در سرور', error: error.message });
-    }
-});
-
-// روت برای ورود اولیه (چک کردن کد ملی/موبایل و رمز)
-app.post('/api/pre-login', checkMongoConnection, upload.none(), async (req, res) => {
-    const { userId, password, role } = req.body;
-    console.log('درخواست /api/pre-login:', { userId, role });
-    try {
-        if (!userId || !password || !role) {
-            console.log('داده‌های ناقص:', { userId, password, role });
-            return res.status(400).json({ message: 'شناسه، رمز عبور و نقش لازم است' });
-        }
-        const usersCollection = db.collection('users');
-        let user;
-        if (role === 'shop_owner') {
-            user = await usersCollection.findOne({ shopId: userId, role });
-            if (!user) {
-                user = await usersCollection.findOne({ nationalId: userId, role });
-            }
-        } else {
-            user = await usersCollection.findOne({ mobile: userId, role });
-        }
-        if (!user) {
-            console.log('کاربر یافت نشد:', userId, role);
-            return res.status(404).json({ message: 'شناسه یا نقش اشتباه است!' });
-        }
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-        if (!isPasswordValid) {
-            console.log('رمز عبور اشتباه:', userId);
-            return res.status(400).json({ message: 'رمز عبور اشتباه است!' });
-        }
-        const code = generateVerificationCode();
-        await usersCollection.updateOne(
-            { _id: user._id },
-            { $set: { verificationCode: code } }
-        );
+        // ارسال OTP
+        const otp = generateOTP(email);
         const mailOptions = {
-            from: process.env.EMAIL_USER || 'sedghinahada@gmail.com',
-            to: user.email,
-            subject: 'کد تأیید ورود',
-            text: `کد تأیید شما: ${code}`
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: 'کد تأیید ثبت‌نام',
+            text: `کد تأیید شما: ${otp}. این کد 5 دقیقه معتبر است.`
         };
         await transporter.sendMail(mailOptions);
-        console.log('ایمیل ورود ارسال شد:', { email: user.email, code });
-        res.json({ message: 'لطفاً کد تأیید را وارد کنید.', userId: role === 'shop_owner' ? user.shopId : user.mobile, email: user.email, role });
+        console.log(`OTP ارسال شد به ایمیل: ${email}`);
+
+        res.json({ success: true, message: 'ثبت‌نام موفق، OTP ارسال شد' });
     } catch (error) {
-        console.error('خطا در /api/pre-login:', error.message, error.stack);
-        res.status(500).json({ message: 'خطا در سرور', error: error.message });
+        console.error('خطا در /api/register:', error);
+        res.status(500).json({ message: 'خطا در ثبت‌نام', error: error.message });
     }
 });
 
-// روت برای تأیید کد ورود
-app.post('/api/login', checkMongoConnection, upload.none(), async (req, res) => {
-    const { email, code, userId, role } = req.body;
-    console.log('درخواست /api/login:', { email, code, userId, role });
+// API verify OTP
+app.post('/api/verify-otp', async (req, res) => {
+    console.log('درخواست تأیید OTP دریافت شد');
     try {
-        if (!email || !code || !userId || !role) {
-            console.log('داده‌های ناقص:', { email, code, userId, role });
-            return res.status(400).json({ message: 'ایمیل، کد تأیید، userId و نقش لازم است' });
+        const { email, otp } = req.body;
+        console.log(`داده‌ها: email=${email}, otp=${otp}`);
+
+        if (!email || !otp) {
+            console.log('داده‌های الزامی مفقود');
+            return res.status(400).json({ message: 'ایمیل یا OTP پر نشده' });
         }
-        const usersCollection = db.collection('users');
-        let user;
-        if (role === 'shop_owner') {
-            user = await usersCollection.findOne({ shopId: userId, email, role });
-            if (!user) {
-                user = await usersCollection.findOne({ nationalId: userId, email, role });
-            }
+
+        const stored = otps.get(email);
+        if (stored && stored.otp === otp && Date.now() < stored.expires) {
+            otps.delete(email);
+            await connectMongoDB();
+            const usersCollection = db.collection('users');
+            const updateResult = await usersCollection.updateOne({ email }, { $set: { verified: true } });
+            console.log(`کاربر تأیید شد: ${updateResult.modifiedCount} رکورد بروز شد`);
+            res.json({ success: true, message: 'تأیید موفق' });
         } else {
-            user = await usersCollection.findOne({ mobile: userId, email, role });
+            console.log('OTP نامعتبر یا منقضی شده');
+            res.status(400).json({ message: 'کد نامعتبر یا منقضی شده' });
         }
+    } catch (error) {
+        console.error('خطا در /api/verify-otp:', error);
+        res.status(500).json({ message: 'خطا در تأیید OTP', error: error.message });
+    }
+});
+
+// API resend OTP
+app.post('/api/resend-otp', async (req, res) => {
+    console.log('درخواست ارسال دوباره OTP دریافت شد');
+    try {
+        const { email } = req.body;
+        console.log(`داده‌ها: email=${email}`);
+
+        if (!email) {
+            console.log('ایمیل مفقود');
+            return res.status(400).json({ message: 'ایمیل پر نشده' });
+        }
+
+        await connectMongoDB();
+        const usersCollection = db.collection('users');
+        const user = await usersCollection.findOne({ email });
+        if (!user || user.verified) {
+            console.log('کاربر یافت نشد یا قبلاً تأیید شده');
+            return res.status(400).json({ message: 'کاربر یافت نشد یا قبلاً تأیید شده' });
+        }
+
+        // ارسال OTP جدید
+        const otp = generateOTP(email);
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: 'کد تأیید ثبت‌نام (ارسال دوباره)',
+            text: `کد تأیید جدید شما: ${otp}. این کد 5 دقیقه معتبر است.`
+        };
+        await transporter.sendMail(mailOptions);
+        console.log(`OTP جدید ارسال شد به ${email}`);
+
+        res.json({ success: true, message: 'OTP جدید ارسال شد' });
+    } catch (error) {
+        console.error('خطا در /api/resend-otp:', error);
+        res.status(500).json({ message: 'خطا در ارسال دوباره OTP', error: error.message });
+    }
+});
+
+// API برای ورود (تشخیص نقش بر اساس شناسه)
+app.post('/api/login', async (req, res) => {
+    console.log('درخواست ورود دریافت شد');
+    try {
+        const { identifier, password } = req.body;
+        console.log(`داده‌ها: identifier=${identifier}`);
+
+        await connectMongoDB();
+        const usersCollection = db.collection('users');
+        let user = await usersCollection.findOne({ uniqueID: identifier });
         if (!user) {
-            console.log('کاربر یافت نشد:', email, userId, role);
-            return res.status(404).json({ message: 'ایمیل یا شناسه ثبت نشده است!' });
+            console.warn(`کاربر با شناسه ${identifier} یافت نشد. تلاش با کد ملی/موبایل...`);
+            user = await usersCollection.findOne({ $or: [{ nationalCode: identifier }, { mobile: identifier }] });
         }
-        if (code === user.verificationCode) {
-            await usersCollection.updateOne(
-                { _id: user._id },
-                { $set: { verified: true, verificationCode: '' } }
-            );
-            console.log('ورود موفق، کاربر:', userId, role);
-            res.json({ message: 'ورود موفق!', userId: role === 'shop_owner' ? user.shopId : user.mobile, role });
+
+        if (!user) {
+            console.error(`ورود ناموفق: کاربری با شناسه ${identifier} در سیستم وجود ندارد.`);
+            return res.status(400).json({ message: 'کاربر یافت نشد' });
+        }
+        console.info(`کاربر ${user.email} پیدا شد. در حال بررسی رمز عبور...`);
+
+        const match = await bcrypt.compare(password, user.password);
+        if (!match) {
+            console.error(`ورود ناموفق: رمز عبور برای کاربر ${user.email} اشتباه است.`);
+            return res.status(400).json({ message: 'رمز عبور اشتباه' });
+        }
+        console.info(`رمز عبور برای ${user.email} صحیح است.`);
+
+        if (user.role === 'shop_owner') {
+            // 2FA برای مغازه‌دار
+            const otp = generateOTP(user.email);
+            const mail2FA = {
+                from: process.env.EMAIL_USER,
+                to: user.email,
+                subject: 'کد دو مرحله‌ای ورود',
+                text: `کد ورود شما: ${otp}`
+            };
+            await transporter.sendMail(mail2FA);
+            console.log(`OTP 2FA ارسال شد به ${user.email}`);
+            const tempToken = Math.random().toString(36).substring(2); // توکن موقت
+            await usersCollection.updateOne({ _id: user._id }, { $set: { tempToken } });
+            res.json({ success: true, role: user.role, tempToken });
         } else {
-            console.log('کد تأیید اشتباه:', code);
-            return res.status(400).json({ message: 'کد تأیید اشتباه است!' });
+            // برای مشتری، سشن توکن
+            const sessionToken = Math.random().toString(36).substring(2);
+            res.json({ success: true, role: user.role, sessionToken });
         }
     } catch (error) {
-        console.error('خطا در /api/login:', error.message, error.stack);
-        res.status(500).json({ message: 'خطا در سرور', error: error.message });
+        console.error('خطا در /api/login:', error);
+        res.status(500).json({ message: 'خطا در ورود', error: error.message });
     }
 });
 
-// روت برای بازیابی رمز
-app.post('/api/reset-password', checkMongoConnection, upload.none(), async (req, res) => {
-    const { email, code, 'new-password': newPassword, 'confirm-new-password': confirmNewPassword, userId, role } = req.body;
-    console.log('درخواست /api/reset-password:', { email, userId, role, code });
+// API جدید برای verify-2fa
+app.post('/api/verify-2fa', async (req, res) => {
+    console.log('درخواست تأیید 2FA دریافت شد');
     try {
-        if (!email || !code || !newPassword || !confirmNewPassword || !userId || !role) {
-            console.log('داده‌های ناقص:', { email, code, newPassword, userId, role });
-            return res.status(400).json({ message: 'ایمیل، کد تأیید، رمز جدید، userId و نقش لازم است' });
-        }
-        if (newPassword !== confirmNewPassword) {
-            console.log('رمز جدید و تأیید رمز مطابقت ندارند');
-            return res.status(400).json({ message: 'رمز جدید و تأیید رمز مطابقت ندارند' });
-        }
+        const { tempToken, otp } = req.body;
+        await connectMongoDB();
         const usersCollection = db.collection('users');
-        let userQuery;
-        if (role === 'shop_owner') {
-            userQuery = { shopId: userId, email, role };
-            const userByNationalId = await usersCollection.findOne({ nationalId: userId, email, role });
-            if (userByNationalId) userQuery = { _id: userByNationalId._id };
+        const user = await usersCollection.findOne({ tempToken });
+        if (!user) {
+            console.log('توکن موقت نامعتبر');
+            return res.status(400).json({ message: 'توکن نامعتبر' });
+        }
+
+        const stored = otps.get(user.email);
+        if (stored && stored.otp === otp && Date.now() < stored.expires) {
+            otps.delete(user.email);
+            await usersCollection.updateOne({ _id: user._id }, { $unset: { tempToken: "" } });
+            console.log('2FA تأیید شد');
+            res.json({ success: true, message: 'ورود موفق' });
         } else {
-            userQuery = { mobile: userId, email, role };
+            console.log('OTP 2FA نامعتبر');
+            res.status(400).json({ message: 'کد نامعتبر' });
         }
-        console.log('جستجوی کاربر با query:', userQuery);
-        const user = await usersCollection.findOne(userQuery);
+    } catch (error) {
+        console.error('خطا در /api/verify-2fa:', error);
+        res.status(500).json({ message: 'خطا در تأیید 2FA', error: error.message });
+    }
+});
+
+// API برای درخواست فراموشی رمز (بدون نقش)
+app.post('/api/forgot-password', async (req, res) => {
+    console.log('درخواست فراموشی رمز دریافت شد');
+    try {
+        const { identifier, email } = req.body;
+        console.log(`داده‌ها: identifier=${identifier}, email=${email}`);
+
+        await connectMongoDB();
+        const usersCollection = db.collection('users');
+        const user = await usersCollection.findOne({ email, $or: [{ nationalCode: identifier }, { mobile: identifier }] });
         if (!user) {
-            console.log('کاربر یافت نشد با query:', userQuery);
-            return res.status(404).json({ message: 'ایمیل یا شناسه ثبت نشده است!' });
+            console.log('کاربر یافت نشد');
+            return res.status(400).json({ message: 'کاربر یافت نشد' });
         }
-        console.log('کاربر یافت شد:', { id: user._id, email: user.email, [role === 'shop_owner' ? 'nationalId' : 'mobile']: user[role === 'shop_owner' ? 'nationalId' : 'mobile'], role: user.role });
-        if (code === user.verificationCode) {
-            const hashedPassword = await bcrypt.hash(newPassword, 10);
-            await usersCollection.updateOne(
-                userQuery,
-                { $set: { password: hashedPassword, verificationCode: '' } }
-            );
-            console.log('رمز عبور بازیابی شد:', userId, role);
-            res.json({ message: 'رمز عبور با موفقیت بازیابی شد!' });
+
+        // ارسال OTP برای بازنشانی
+        const otp = generateOTP(email);
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: 'کد بازنشانی رمز عبور',
+            text: `کد بازنشانی شما: ${otp}. این کد 5 دقیقه معتبر است.`
+        };
+        await transporter.sendMail(mailOptions);
+        console.log(`OTP بازنشانی ارسال شد به ${email}`);
+
+        res.json({ success: true, message: 'OTP بازنشانی ارسال شد' });
+    } catch (error) {
+        console.error('خطا در /api/forgot-password:', error);
+        res.status(500).json({ message: 'خطا در درخواست بازنشانی', error: error.message });
+    }
+});
+
+// API برای verify-reset-otp
+app.post('/api/verify-reset-otp', async (req, res) => {
+    console.log('درخواست تأیید OTP بازنشانی دریافت شد');
+    try {
+        const { email, otp } = req.body;
+        const stored = otps.get(email);
+        if (stored && stored.otp === otp && Date.now() < stored.expires) {
+            otps.delete(email);
+            // ایجاد توکن موقت برای reset
+            const resetToken = Math.random().toString(36).substring(2); // ساده برای مثال
+            await connectMongoDB();
+            const usersCollection = db.collection('users');
+            await usersCollection.updateOne({ email }, { $set: { resetToken } });
+            console.log('توکن reset ذخیره شد');
+            res.json({ success: true, resetToken });
         } else {
-            console.log('کد تأیید اشتباه:', code, 'انتظار:', user.verificationCode);
-            return res.status(400).json({ message: 'کد تأیید اشتباه است!' });
+            res.status(400).json({ message: 'کد نامعتبر یا منقضی شده' });
         }
     } catch (error) {
-        console.error('خطا در /api/reset-password:', error.message, error.stack);
-        res.status(500).json({ message: 'خطا در سرور', error: error.message });
+        console.error('خطا در /api/verify-reset-otp:', error);
+        res.status(500).json({ message: 'خطا در تأیید OTP', error: error.message });
     }
 });
 
-// روت برای گرفتن اطلاعات پروفایل
-app.get('/api/user-profile', checkMongoConnection, async (req, res) => {
-    const userId = req.query.userId;
-    console.log('درخواست /api/user-profile با userId:', userId);
+// API برای resend-reset-otp
+app.post('/api/resend-reset-otp', async (req, res) => {
+    console.log('درخواست ارسال دوباره OTP بازنشانی دریافت شد');
     try {
-        if (!userId) {
-            console.log('userId غایب');
-            return res.status(400).json({ message: 'userId لازم است' });
+        const { email } = req.body;
+        console.log(`داده‌ها: email=${email}`);
+
+        if (!email) {
+            console.log('ایمیل مفقود');
+            return res.status(400).json({ message: 'ایمیل پر نشده' });
         }
+
+        await connectMongoDB();
         const usersCollection = db.collection('users');
-        let user;
-        user = await usersCollection.findOne({ shopId: userId, role: 'shop_owner' });
+        const user = await usersCollection.findOne({ email });
         if (!user) {
-            user = await usersCollection.findOne({ mobile: userId, role: { $in: ['customer', 'admin'] } });
+            console.log('کاربر یافت نشد');
+            return res.status(400).json({ message: 'کاربر یافت نشد' });
         }
-        if (user) {
-            console.log('کاربر یافت شد:', { shopId: user.shopId, mobile: user.mobile, role: user.role, approved: user.approved });
-            res.json({
-                shopName: user.shopName || 'نام فروشگاه ثبت نشده',
-                fullName: user.fullName || 'نام کامل ثبت نشده',
-                nationalId: user.nationalId || 'کد ملی ثبت نشده',
-                email: user.email || 'ایمیل ثبت نشده',
-                mobile: user.mobile || 'موبایل ثبت نشده',
-                address: user.address || 'آدرس ثبت نشده',
-                postalCode: user.postalCode || 'کد پستی ثبت نشده',
-                whatsapp: user.whatsapp || '',
-                telegram: user.telegram || '',
-                instagram: user.instagram || '',
-                eitaa: user.eitaa || '',
-                rubika: user.rubika || '',
-                bale: user.bale || '',
-                website: user.website || '',
-                bannerUrl: user.bannerUrl || '',
-                province: user.province || 'نامشخص',
-                city: user.city || 'نامشخص',
-                region: user.region || '',  // فیلد جدید
-                location: user.location || { lat: '', lng: '' },
-                approved: user.approved || false
-            });
-        } else {
-            console.log('کاربر یافت نشد برای userId:', userId);
-            return res.status(404).json({ message: 'کاربر یافت نشد!' });
-        }
+
+        // ارسال OTP جدید
+        const otp = generateOTP(email);
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: 'کد بازنشانی رمز عبور (ارسال دوباره)',
+            text: `کد بازنشانی جدید شما: ${otp}. این کد 5 دقیقه معتبر است.`
+        };
+        await transporter.sendMail(mailOptions);
+        console.log(`OTP جدید ارسال شد به ${email}`);
+
+        res.json({ success: true, message: 'OTP جدید ارسال شد' });
     } catch (error) {
-        console.error('خطا در /api/user-profile:', error.message, error.stack);
-        res.status(500).json({ message: 'خطا در سرور', error: error.message });
+        console.error('خطا در /api/resend-reset-otp:', error);
+        res.status(500).json({ message: 'خطا در ارسال دوباره OTP', error: error.message });
     }
 });
 
-// روت برای گرفتن لیست کاربران (برای جستجوی مغازه‌ها)
-app.get('/api/users', checkMongoConnection, async (req, res) => {
-    console.log('درخواست /api/users');
+// API برای reset-password
+app.post('/api/reset-password', async (req, res) => {
+    console.log('درخواست تغییر رمز دریافت شد');
     try {
-        const usersCollection = db.collection('users');
-        const shopUsers = await usersCollection
-            .find({ role: 'shop_owner', approved: true })
-            .project({ shopId: 1, _id: 0 })
-            .toArray();
-        
-        const userIds = shopUsers.map(u => u.shopId);
-        console.log('لیست مغازه‌های تایید شده:', userIds);
-        res.json(userIds);
-    } catch (error) {
-        console.error('خطا در /api/users:', error.message, error.stack);
-        res.status(500).json({ message: 'خطا در سرور', error: error.message });
-    }
-});
+        const { resetToken, newPassword } = req.body;
+        console.log(`داده‌ها: resetToken=${resetToken}`);
 
-// روت برای گرفتن کاربران در انتظار تأیید
-app.post('/api/pending-users', checkMongoConnection, checkAdmin, async (req, res) => {
-    console.log('درخواست /api/pending-users');
-    try {
-        const usersCollection = db.collection('users');
-        const pendingUsers = await usersCollection
-            .find({ role: 'shop_owner', approved: false })
-            .toArray();
-        console.log('کاربران در انتظار تأیید:', pendingUsers);
-        res.json(pendingUsers.map(user => ({
-            shopId: user.shopId,
-            nationalId: user.nationalId,
-            fullName: user.fullName,
-            email: user.email,
-            mobile: user.mobile,
-            nationalCardUrl: user.nationalCardUrl || '',
-            selfieUrl: user.selfieUrl || '',
-            businessLicenseUrl: user.businessLicenseUrl || ''
-        })));
-    } catch (error) {
-        console.error('خطا در /api/pending-users:', error.message, error.stack);
-        res.status(500).json({ message: 'خطا در سرور', error: error.message });
-    }
-});
-
-// روت برای تأیید کاربر توسط ادمین
-app.post('/api/approve-user', checkMongoConnection, checkAdmin, async (req, res) => {
-    const { userId, adminId } = req.body;
-    console.log('درخواست /api/approve-user:', { userId, adminId });
-    try {
-        if (!userId || !adminId) {
-            console.log('userId یا adminId غایب');
-            return res.status(400).json({ message: 'userId و adminId لازم است' });
+        if (!resetToken || !newPassword) {
+            console.log('داده‌های الزامی مفقود');
+            return res.status(400).json({ message: 'توکن یا رمز جدید پر نشده' });
         }
+
+        await connectMongoDB();
         const usersCollection = db.collection('users');
-        const user = await usersCollection.findOne({ shopId: userId, role: 'shop_owner' });
+        const user = await usersCollection.findOne({ resetToken });
         if (!user) {
-            console.log('کاربر یافت نشد:', userId);
-            return res.status(404).json({ message: 'کاربر یافت نشد!' });
+            console.log('توکن نامعتبر');
+            return res.status(400).json({ message: 'توکن نامعتبر' });
         }
-        await usersCollection.updateOne(
-            { shopId: userId },
-            { $set: { approved: true } }
-        );
-        console.log('کاربر تأیید شد:', userId);
-        res.json({ message: 'کاربر با موفقیت تأیید شد!' });
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await usersCollection.updateOne({ resetToken }, { $set: { password: hashedPassword, resetToken: null } });
+        console.log('رمز بروز شد');
+
+        res.json({ success: true, message: 'رمز تغییر یافت' });
     } catch (error) {
-        console.error('خطا در /api/approve-user:', error.message, error.stack);
-        res.status(500).json({ message: 'خطا در سرور', error: error.message });
-    }
-});
-
-// روت برای آپلود بنر
-app.post('/api/upload-banner', checkMongoConnection, upload.fields([{ name: 'banner-image' }]), async (req, res) => {
-    const { userId } = req.body;
-    let bannerUrl = '';
-    console.log('درخواست /api/upload-banner:', { userId });
-    try {
-        if (!userId) {
-            console.log('userId غایب');
-            return res.status(400).json({ message: 'userId لازم است' });
-        }
-        const usersCollection = db.collection('users');
-        const user = await usersCollection.findOne({ shopId: userId, role: 'shop_owner', approved: true });
-        if (!user) {
-            console.log('کاربر غیرمجاز یا تأییدنشده:', userId);
-            return res.status(403).json({ message: 'لطفاً ابتدا توسط ادمین تأیید شوید!' });
-        }
-        if (req.files['banner-image'] && req.files['banner-image'][0]) {
-            bannerUrl = await uploadToS3(req.files['banner-image'][0].buffer, `banner-${userId}.jpg`);
-        }
-        await usersCollection.updateOne({ shopId: userId }, { $set: { bannerUrl } });
-        console.log('بنر آپلود شد:', bannerUrl);
-        res.json({ message: 'بنر با موفقیت آپلود شد!' });
-    } catch (error) {
-        console.error('خطا در /api/upload-banner:', error.message, error.stack);
-        res.status(500).json({ message: 'خطا در سرور', error: error.message });
-    }
-});
-
-// روت برای اضافه کردن محصول
-app.post('/api/add-product', checkMongoConnection, upload.fields([{ name: 'product-image' }]), async (req, res) => {
-    const { 'product-name': name, 'product-description': description, userId, 'product-instagram-link': instagramLink } = req.body;
-    let imageUrl = '';
-    console.log('درخواست /api/add-product:', { name, description, userId, instagramLink });
-    try {
-        if (!userId || !name || !description) {
-            console.log('داده‌های ناقص:', { name, description, userId });
-            return res.status(400).json({ message: 'userId، نام و توضیحات محصول لازم است' });
-        }
-        const usersCollection = db.collection('users');
-        const user = await usersCollection.findOne({ shopId: userId, role: 'shop_owner', approved: true });
-        if (!user) {
-            console.log('کاربر غیرمجاز یا تأییدنشده:', userId);
-            return res.status(403).json({ message: 'لطفاً ابتدا توسط ادمین تأیید شوید!' });
-        }
-        const productsCollection = db.collection('products');
-
-        // چک محدودیت 30 عکس
-        const productCountWithImage = await productsCollection.countDocuments({ userId, imageUrl: { $ne: '' } });
-        const hasImage = req.files['product-image'] && req.files['product-image'][0];
-        if (hasImage && productCountWithImage >= 30) {
-            console.log('محدودیت 30 عکس برای کاربر:', userId);
-            // ذخیره محصول بدون عکس
-            const product = { userId, name, description, imageUrl: '', approved: false, instagramLink: instagramLink || '', order: 0 };
-            await productsCollection.insertOne(product);
-            return res.json({ message: 'شما به محدودیت 30 عکس محصول رسیده‌اید. محصول بدون عکس اضافه شد و در انتظار تأیید ادمین است!' });
-        }
-
-        if (hasImage) {
-            imageUrl = await uploadToS3(req.files['product-image'][0].buffer, `product-${name}-${userId}.jpg`);
-        }
-        const existingProduct = await productsCollection.findOne({ userId, name });
-        if (existingProduct) {
-            console.log('محصول تکراری:', name);
-            return res.status(400).json({ message: 'این محصول قبلاً برای شما ثبت شده است!' });
-        }
-        const product = { userId, name, description, imageUrl, approved: false, instagramLink: instagramLink || '', order: 0 };
-        await productsCollection.insertOne(product);
-        console.log('محصول اضافه شد:', product);
-        res.json({ message: 'محصول با موفقیت اضافه شد و در انتظار تأیید ادمین است!' });
-    } catch (error) {
-        console.error('خطا در /api/add-product:', error.message, error.stack);
-        res.status(500).json({ message: 'خطا در سرور', error: error.message });
-    }
-});
-
-// روت برای ویرایش محصول
-app.put('/api/edit-product', checkMongoConnection, upload.fields([{ name: 'product-image' }]), async (req, res) => {
-    const { 'product-name': name, 'product-description': description, userId, productId, 'product-instagram-link': instagramLink } = req.body;
-    let imageUrl = '';
-    console.log('درخواست /api/edit-product:', { name, description, userId, productId, instagramLink });
-    try {
-        if (!userId || !productId || !name || !description) {
-            console.log('داده‌های ناقص:', { name, description, userId, productId });
-            return res.status(400).json({ message: 'userId، productId، نام و توضیحات محصول لازم است' });
-        }
-        const usersCollection = db.collection('users');
-        const user = await usersCollection.findOne({ shopId: userId, role: 'shop_owner', approved: true });
-        if (!user) {
-            console.log('کاربر غیرمجاز یا تأییدنشده:', userId);
-            return res.status(403).json({ message: 'لطفاً ابتدا توسط ادمین تأیید شوید!' });
-        }
-        const productsCollection = db.collection('products');
-        let productObjectId;
-        try {
-            productObjectId = new ObjectId(productId);
-        } catch (error) {
-            console.error('خطا در تبدیل productId به ObjectId:', error.message);
-            return res.status(400).json({ message: 'شناسه محصول نامعتبر است', error: error.message });
-        }
-        const existingProduct = await productsCollection.findOne({ _id: productObjectId, userId });
-        if (!existingProduct) {
-            console.log('محصول یافت نشد:', productId);
-            return res.status(404).json({ message: 'محصول یافت نشد!' });
-        }
-        if (req.files['product-image'] && req.files['product-image'][0]) {
-            imageUrl = await uploadToS3(req.files['product-image'][0].buffer, `product-${name}-${userId}.jpg`);
-        } else {
-            imageUrl = existingProduct.imageUrl;
-        }
-        await productsCollection.updateOne(
-            { _id: productObjectId },
-            { $set: { name, description, imageUrl, approved: false, instagramLink: instagramLink || '' } }
-        );
-        console.log('محصول ویرایش شد:', { productId, name, description, imageUrl, instagramLink });
-        res.json({ message: 'محصول با موفقیت ویرایش شد و در انتظار تأیید ادمین است!' });
-    } catch (error) {
-        console.error('خطا در /api/edit-product:', error.message, error.stack);
-        res.status(500).json({ message: 'خطا در سرور', error: error.message });
-    }
-});
-
-// روت برای حذف محصول
-app.delete('/api/delete-product', checkMongoConnection, async (req, res) => {
-    const { productId, userId } = req.body;
-    console.log('درخواست /api/delete-product:', { productId, userId });
-    try {
-        if (!userId || !productId) {
-            console.log('داده‌های ناقص:', { productId, userId });
-            return res.status(400).json({ message: 'userId و productId لازم است' });
-        }
-        const usersCollection = db.collection('users');
-        const user = await usersCollection.findOne({ shopId: userId, role: 'shop_owner', approved: true });
-        if (!user) {
-            console.log('کاربر غیرمجاز یا تأییدنشده:', userId);
-            return res.status(403).json({ message: 'لطفاً ابتدا توسط ادمین تأیید شوید!' });
-        }
-        const productsCollection = db.collection('products');
-        let productObjectId;
-        try {
-            productObjectId = new ObjectId(productId);
-        } catch (error) {
-            console.error('خطا در تبدیل productId به ObjectId:', error.message);
-            return res.status(400).json({ message: 'شناسه محصول نامعتبر است', error: error.message });
-        }
-        const result = await productsCollection.deleteOne({ _id: productObjectId, userId });
-        if (result.deletedCount === 0) {
-            console.log('محصول یافت نشد:', productId);
-            return res.status(404).json({ message: 'محصول یافت نشد!' });
-        }
-        console.log('محصول حذف شد:', productId);
-        res.json({ message: 'محصول با موفقیت حذف شد!' });
-    } catch (error) {
-        console.error('خطا در /api/delete-product:', error.message, error.stack);
-        res.status(500).json({ message: 'خطا در سرور', error: error.message });
-    }
-});
-
-// روت برای گرفتن محصولات
-app.get('/api/products', checkMongoConnection, async (req, res) => {
-    const userId = req.query.userId;
-    console.log('درخواست /api/products:', { userId });
-    try {
-        if (!userId) {
-            console.log('userId غایب');
-            return res.status(400).json({ message: 'userId لازم است' });
-        }
-        const productsCollection = db.collection('products');
-        const products = await productsCollection.find({ userId }).sort({ order: 1 }).toArray();
-        console.log('محصولات:', products);
-        res.json(products);
-    } catch (error) {
-        console.error('خطا در /api/products:', error.message, error.stack);
-        res.status(500).json({ message: 'خطا در سرور', error: error.message });
-    }
-});
-
-// روت برای گرفتن اطلاعات کاربر (برای مغازه‌ها)
-app.get('/api/user', checkMongoConnection, async (req, res) => {
-    const userId = req.query.userId;
-    console.log('درخواست /api/user با userId:', userId);
-    try {
-        if (!userId) {
-            console.log('userId غایب');
-            return res.status(400).json({ message: 'userId لازم است' });
-        }
-        const usersCollection = db.collection('users');
-        const user = await usersCollection.findOne({ shopId: userId, role: 'shop_owner', approved: true });
-        if (user) {
-            console.log('کاربر یافت شد:', { shopId: user.shopId, role: user.role });
-            res.json({
-                shopName: user.shopName,
-                owner: user.fullName,
-                phone: user.mobile,
-                whatsapp: user.whatsapp || '',
-                telegram: user.telegram || '',
-                instagram: user.instagram || '',
-                eitaa: user.eitaa || '',
-                rubika: user.rubika || '',
-                bale: user.bale || '',
-                website: user.website || '',
-                bannerUrl: user.bannerUrl || '',
-                province: user.province || 'نامشخص',
-                city: user.city || 'نامشخص',
-                region: user.region || '',  // فیلد جدید
-                location: user.location || { lat: '', lng: '' }  // برگردوندن لوکیشن
-            });
-        } else {
-            console.log('کاربر یافت نشد یا تأییدنشده برای userId:', userId);
-            return res.status(404).json({ message: 'کاربر یافت نشد یا تأیید نشده است!' });
-        }
-    } catch (error) {
-        console.error('خطا در /api/user:', error.message, error.stack);
-        res.status(500).json({ message: 'خطا در سرور', error: error.message });
-    }
-});
-
-// روت برای گرفتن محصولات در انتظار تأیید
-app.post('/api/pending-products', checkMongoConnection, checkAdmin, async (req, res) => {
-    console.log('درخواست /api/pending-products');
-    try {
-        const productsCollection = db.collection('products');
-        const pendingProducts = await productsCollection
-            .find({ approved: false })
-            .toArray();
-        console.log('محصولات در انتظار تأیید:', pendingProducts);
-        res.json(pendingProducts.map(product => ({
-            _id: product._id.toString(),
-            userId: product.userId,
-            name: product.name,
-            description: product.description,
-            imageUrl: product.imageUrl || '',
-            instagramLink: product.instagramLink || ''
-        })));
-    } catch (error) {
-        console.error('خطا در /api/pending-products:', error.message, error.stack);
-        res.status(500).json({ message: 'خطا در سرور', error: error.message });
-    }
-});
-
-// روت برای تأیید محصول توسط ادمین
-app.post('/api/approve-product', checkMongoConnection, checkAdmin, async (req, res) => {
-    const { productId, adminId } = req.body;
-    console.log('درخواست /api/approve-product:', { productId, adminId });
-    try {
-        if (!productId || !adminId) {
-            console.log('productId یا adminId غایب');
-            return res.status(400).json({ message: 'productId و adminId لازم است' });
-        }
-        const productsCollection = db.collection('products');
-        let productObjectId;
-        try {
-            productObjectId = new ObjectId(productId);
-        } catch (error) {
-            console.error('خطا در تبدیل productId به ObjectId:', error.message);
-            return res.status(400).json({ message: 'شناسه محصول نامعتبر است', error: error.message });
-        }
-        const product = await productsCollection.findOne({ _id: productObjectId });
-        if (!product) {
-            console.log('محصول یافت نشد:', productId);
-            return res.status(404).json({ message: 'محصول یافت نشد!' });
-        }
-        await productsCollection.updateOne(
-            { _id: productObjectId },
-            { $set: { approved: true } }
-        );
-        console.log('محصول تأیید شد:', productId);
-        res.json({ message: 'محصول با موفقیت تأیید شد!' });
-    } catch (error) {
-        console.error('خطا در /api/approve-product:', error.message, error.stack);
-        res.status(500).json({ message: 'خطا در سرور', error: error.message });
-    }
-});
-
-// روت برای به‌روزرسانی ترتیب محصولات
-app.post('/api/update-product-order', checkMongoConnection, async (req, res) => {
-    const { userId, order } = req.body;
-    console.log('درخواست /api/update-product-order:', { userId, order });
-    try {
-        if (!userId || !Array.isArray(order)) {
-            return res.status(400).json({ message: 'userId و order (آرایه) لازم است' });
-        }
-        const productsCollection = db.collection('products');
-        for (let i = 0; i < order.length; i++) {
-            const productId = order[i];
-            let productObjectId;
-            try {
-                productObjectId = new ObjectId(productId);
-            } catch (error) {
-                console.error('خطا در تبدیل productId به ObjectId:', error.message);
-                continue;
-            }
-            await productsCollection.updateOne(
-                { _id: productObjectId, userId },
-                { $set: { order: i } }
-            );
-        }
-        console.log('ترتیب محصولات ذخیره شد');
-        res.json({ message: 'ترتیب محصولات با موفقیت ذخیره شد!' });
-    } catch (error) {
-        console.error('خطا در /api/update-product-order:', error.message, error.stack);
-        res.status(500).json({ message: 'خطا در سرور', error: error.message });
-    }
-});
-
-// روت برای به‌روزرسانی پروفایل (با ذخیره lat و lng)
-app.post('/api/update-profile', checkMongoConnection, upload.none(), async (req, res) => {
-    const { userId, role, 'new-address': address, 'new-postal-code': postalCode, 'location-lat': lat, 'location-lng': lng, whatsapp, telegram, instagram, eitaa, rubika, bale, website, 'new-password': newPassword, 'confirm-new-password': confirmNewPassword, 'new-shop-name': shopName } = req.body;
-    console.log('درخواست به‌روزرسانی پروفایل:', { userId, role, address, postalCode, lat, lng, shopName });
-    try {
-        if (!userId || !role) {
-            return res.status(400).json({ message: 'userId و role لازم است' });
-        }
-        if (newPassword && newPassword !== confirmNewPassword) {
-            return res.status(400).json({ message: 'رمز عبور جدید و تأیید رمز مطابقت ندارند' });
-        }
-        const usersCollection = db.collection('users');
-        let user;
-        if (role === 'shop_owner') {
-            user = await usersCollection.findOne({ shopId: userId, role });
-        } else {
-            user = await usersCollection.findOne({ mobile: userId, role });
-        }
-        if (!user) {
-            return res.status(404).json({ message: 'کاربر یافت نشد!' });
-        }
-        const updateData = {};
-        if (address) updateData.address = address;
-        if (postalCode) updateData.postalCode = postalCode;
-        if (lat && lng && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng))) {
-            updateData.location = { lat: parseFloat(lat), lng: parseFloat(lng) };  // ذخیره لوکیشن
-        }
-        if (whatsapp) updateData.whatsapp = whatsapp;
-        if (telegram) updateData.telegram = telegram;
-        if (instagram) updateData.instagram = instagram;
-        if (eitaa) updateData.eitaa = eitaa;
-        if (rubika) updateData.rubika = rubika;
-        if (bale) updateData.bale = bale;
-        if (website) updateData.website = website;
-        if (shopName) updateData.shopName = shopName;
-        if (newPassword) {
-            const hashedPassword = await bcrypt.hash(newPassword, 10);
-            updateData.password = hashedPassword;
-        }
-        if (Object.keys(updateData).length === 0) {
-            return res.status(400).json({ message: 'هیچ داده‌ای برای به‌روزرسانی ارائه نشده است' });
-        }
-        await usersCollection.updateOne({ _id: user._id }, { $set: updateData });
-        console.log('پروفایل به‌روزرسانی شد:', updateData);
-        res.json({ message: 'پروفایل با موفقیت به‌روزرسانی شد!' });
-    } catch (error) {
-        console.error('خطا در به‌روزرسانی پروفایل:', error.message, error.stack);
-        res.status(500).json({ message: 'خطا در سرور', error: error.message });
-    }
-});
-
-// روت برای گرفتن تصویر محصول
-app.get('/api/image/:userId/:index', checkMongoConnection, async (req, res) => {
-    const { userId, index } = req.params;
-    console.log('درخواست /api/image:', { userId, index });
-    try {
-        if (!userId || isNaN(index)) {
-            console.log('داده‌های ناقص:', { userId, index });
-            return res.status(400).json({ message: 'userId و index معتبر لازم است' });
-        }
-        const productsCollection = db.collection('products');
-        const products = await productsCollection.find({ userId, approved: true }).sort({ order: 1 }).toArray();
-        if (products[index] && products[index].imageUrl) {
-            res.redirect(products[index].imageUrl);
-        } else {
-            console.log('تصویر یافت نشد:', { userId, index });
-            return res.status(404).json({ message: 'تصویر یافت نشد' });
-        }
-    } catch (error) {
-        console.error('خطا در /api/image:', error.message, error.stack);
-        res.status(500).json({ message: 'خطا در سرور', error: error.message });
-    }
-});
-
-// روت برای خروج
-app.post('/api/logout', checkMongoConnection, async (req, res) => {
-    const { userId, role } = req.body;
-    console.log('درخواست خروج دریافت شد:', { userId, role });
-    try {
-        if (!userId || !role) {
-            console.log('userId یا role غایب است');
-            return res.status(400).json({ message: 'userId و نقش لازم است' });
-        }
-        const usersCollection = db.collection('users');
-        let user;
-        if (role === 'shop_owner') {
-            user = await usersCollection.findOne({ shopId: userId, role });
-        } else {
-            user = await usersCollection.findOne({ mobile: userId, role });
-        }
-        if (!user) {
-            console.log('کاربر یافت نشد:', userId, role);
-            return res.status(404).json({ message: 'کاربر یافت نشد' });
-        }
-        await usersCollection.updateOne(
-            { _id: user._id },
-            { $set: { verified: false } }
-        );
-        console.log('خروج موفق برای کاربر:', userId, role);
-        res.json({ message: 'خروج با موفقیت انجام شد' });
-    } catch (error) {
-        console.error('خطا در خروج:', error.message, error.stack);
-        res.status(500).json({ message: 'خطا در سرور', error: error.message });
-    }
-});
-
-// سرو فایل‌های استاتیک
-app.use('/uploads', express.static(path.join(__dirname, 'Uploads')));
-app.use(express.static(path.join(__dirname, '../frontend')));
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-    console.log('SIGTERM received. Closing MongoDB connection...');
-    if (mongoClient) {
-        mongoClient.close().then(() => {
-            console.log('MongoDB connection closed');
-            process.exit(0);
-        });
-    } else {
-        process.exit(0);
+        console.error('خطا در /api/reset-password:', error);
+        res.status(500).json({ message: 'خطا در تغییر رمز', error: error.message });
     }
 });
 
 // راه‌اندازی سرور
-connectMongoDB().then(() => {
-    app.listen(port, () => {
-        console.log(`The Server is Running at http://localhost:${port}`);
-    });
-}).catch(error => {
-    console.error('Failed to start server due to MongoDB connection error:', error.message);
-    process.exit(1);
-});
-
-// اطمینان از پاسخ JSON در خطاها
-app.use((err, req, res, next) => {
-    console.error('Server error:', err.message, err.stack);
-    res.status(500).json({ message: 'خطا در سرور', error: err.message });
+app.listen(port, async () => {
+    await connectMongoDB();
+    console.log(`Server running on port ${port}`);
 });

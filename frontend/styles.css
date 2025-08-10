@@ -1,439 +1,199 @@
-body {
-    font-family: Arial, sans-serif;
+/* فونت کلی (Vazir رو دانلود کن و در فولدر fonts بگذار، یا از CDN استفاده کن) */
+@font-face {
+    font-family: 'Vazir';
+    src: url('fonts/Vazir.woff2') format('woff2');
+}
+
+body, button, input, select, textarea {
+    font-family: 'Vazir', Arial, sans-serif !important;
     margin: 0;
     padding: 0;
-    background-color: #f4f4f4;
+    background-color: #ffffff; /* fallback */
+    background-image: url('persian-lotus.png'); /* عکس گل لوتوس باستانی */
+    background-size: cover; /* پوشش کامل */
+    background-position: center;
+    background-repeat: repeat; /* تکرار برای صفحات بلند */
+    color: #000000;
     direction: rtl;
     box-sizing: border-box;
 }
 
 header {
-    background-color: #f8f9fa;
-    padding: 10px;
-    text-align: center;
-}
-
-header h1 {
-    margin: 0;
-    font-size: 24px;
-}
-
-#auth-controls button {
-    background-color: #007bff;
-    color: white;
-    padding: 10px 20px;
-    margin: 5px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-#auth-controls button:hover {
-    background-color: #0056b3;
-}
-
-#shops-section {
-    max-width: 800px;
-    margin: 20px auto;
-}
-
-#shops-list li {
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    padding: 10px;
-    margin-bottom: 10px;
-    list-style: none;
-    cursor: pointer;
-}
-
-#shops-list li:hover {
-    background-color: #e9ecef;
-}
-
-#shops-list img {
-    max-width: 100px;
-    margin-bottom: 10px;
-}
-
-#user-panel {
-    max-width: 400px;
-    margin: 20px auto;
-    text-align: center;
-}
-
-#user-panel button {
-    background-color: #dc3545;
-    color: white;
-    padding: 10px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-#user-panel button:hover {
-    background-color: #c82333;
-}
-
-.form-card,
-.customer-form-card,
-.panel-section {
-    border: 2px solid #007bff;
-    border-radius: 10px;
-    max-width: 400px;
-    margin: 20px auto;
+    background-color: #ffffff;
     padding: 20px;
-    background-color: white;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    border-bottom: 3px solid #D4AF37;
+}
+
+header h2 {
+    margin: 0;
+    font-size: 28px;
+    color: #003366; /* آبی عمیق */
+}
+
+/* فرم‌ها با کنتراست بالا و semi-transparent */
+.form-card, .customer-form-card {
+    border: 4px solid #003366; /* آبی عمیق برای border */
+    border-radius: 15px;
+    max-width: 450px;
+    margin: 30px auto;
+    padding: 30px;
+    background-color: rgba(255, 255, 255, 0.8); /* semi-transparent برای دیدن بک‌گراند */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
 .customer-form-card {
-    border-color: #28a745;
+    border-color: #003366; /* آبی برای تمایز، اما یکسان برای هماهنگی */
 }
 
-.customer-form-card h2 {
-    color: #28a745;
-}
-
-.form-card h2,
-.panel-section h2 {
-    color: #007bff;
+.form-card h2, .customer-form-card h2 {
+    color: #003366; /* آبی */
     text-align: center;
+    font-size: 24px;
+    margin-bottom: 20px;
 }
 
-.form-card label,
-.customer-form-card label,
-.panel-section label {
+.form-card label, .customer-form-card label {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
     font-weight: bold;
+    color: #000000;
 }
 
 .form-card input[type="text"],
 .form-card input[type="email"],
 .form-card input[type="tel"],
 .form-card input[type="password"],
-.form-card input[type="file"],
 .form-card select,
 .customer-form-card input[type="text"],
 .customer-form-card input[type="email"],
 .customer-form-card input[type="tel"],
 .customer-form-card input[type="password"],
-.customer-form-card select,
-.panel-section input[type="text"],
-.panel-section input[type="number"],
-.panel-section input[type="file"],
-.panel-section select,
-.panel-section textarea {
+.customer-form-card select {
     width: 100%;
-    padding: 8px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-sizing: border-box;
-}
-
-.form-card button,
-.customer-form-card button,
-.panel-section button {
-    background-color: #007bff;
-    color: white;
-    padding: 10px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    width: 100%;
-    margin-top: 10px;
-}
-
-.customer-form-card button {
-    background-color: #28a745;
-}
-
-.form-card button:hover,
-.panel-section button:hover {
-    background-color: #0056b3;
-}
-
-.customer-form-card button:hover {
-    background-color: #218838;
-}
-
-.password-container {
-    position: relative;
-}
-
-.password-container input {
-    width: calc(100% - 30px);
-}
-
-.password-container span {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
-}
-
-.form-card p,
-.customer-form-card p {
-    text-align: center;
-    font-size: 12px;
-    color: #666;
-}
-
-#search-input {
-    width: 100%;
-    max-width: 400px;
-    padding: 8px;
-    margin: 10px auto;
-    display: block;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-
-#shop-details {
-    max-width: 600px;
-    margin: 20px auto;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    background-color: white;
-}
-
-#shop-details img {
-    max-width: 200px;
-    margin-bottom: 10px;
-}
-
-#shop-product-list li {
-    list-style: none;
-    margin-bottom: 10px;
-}
-
-#shop-product-list img {
-    max-width: 50px;
-    margin-right: 10px;
-}
-
-.edit-btn,
-.delete-btn,
-.approve-btn,
-.approve-product-btn {
-    background-color: #ffc107;
-    color: black;
-    padding: 5px 10px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-left: 5px;
-}
-
-.delete-btn {
-    background-color: #dc3545;
-    color: white;
-}
-
-.approve-btn,
-.approve-product-btn {
-    background-color: #28a745;
-    color: white;
-}
-
-.edit-btn:hover {
-    background-color: #e0a800;
-}
-
-.delete-btn:hover {
-    background-color: #c82333;
-}
-
-.approve-btn:hover,
-.approve-product-btn:hover {
-    background-color: #218838;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-}
-
-table,
-th,
-td {
-    border: 1px solid #ccc;
-}
-
-th,
-td {
-    padding: 10px;
-    text-align: center;
-}
-
-th {
-    background-color: #f8f9fa;
-}
-
-#register-dropdown {
-    position: absolute;
-    background-color: #fff;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-#register-dropdown button {
-    background-color: #28a745;
-    color: white;
-    padding: 10px 20px;
-    margin: 5px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-    display: block;
-    width: 100%;
-    text-align: center;
-}
-
-#register-dropdown button:hover {
-    background-color: #218838;
-}
-
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.8);
-}
-
-.modal-content {
-    margin: 15% auto;
-    display: block;
-    max-width: 80%;
-    max-height: 80%;
-}
-
-.modal-close {
-    position: absolute;
-    top: 20px;
-    right: 30px;
-    color: white;
-    font-size: 40px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.modal-close:hover,
-.modal-close:focus {
-    color: #bbb;
-    text-decoration: none;
-}
-
-#product-search-input {
-    width: 100%;
-    max-width: 400px;
-    padding: 8px;
-    margin: 10px 0;
-    display: block;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 16px;
-}
-
-.contact-icon {
-    width: 24px;
-    height: 24px;
-    vertical-align: middle;
-    margin-left: 5px;
-}
-
-#contact-info p {
-    margin: 10px 0;
-}
-
-#shop-location-link {
-    color: #007bff;
-    text-decoration: none;
-}
-
-#shop-location-link:hover {
-    text-decoration: underline;
-}
-
-#location-map, #shop-map {
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-
-/* استایل‌های نقشه */
-#location-map, #shop-map {
-    border: 1px solid #ccc;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 2px solid #D4AF37; /* طلایی */
     border-radius: 8px;
-    z-index: 0;
+    background-color: rgba(255, 255, 255, 0.8); /* opacity کمتر برای دیدن بیشتر بک‌گراند */
+    background-image: none;
+    color: #000000; /* سیاه برای کنتراست و نمایش متن */
+    font-size: 16px;
 }
 
-/* استایل‌های اطلاعات تماس */
-#contact-info a {
-    display: inline-block;
-    margin: 5px 10px 5px 0;
-    padding: 8px 12px;
-    border-radius: 20px;
-    text-decoration: none;
-    color: white;
-    font-size: 14px;
-    transition: transform 0.2s;
+.form-card input[type="text"]::placeholder,
+.form-card input[type="email"]::placeholder,
+.form-card input[type="tel"]::placeholder,
+.form-card input[type="password"]::placeholder,
+.customer-form-card input[type="text"]::placeholder,
+.customer-form-card input[type="email"]::placeholder,
+.customer-form-card input[type="tel"]::placeholder,
+.customer-form-card input[type="password"]::placeholder {
+    color: #555555; /* خاکستری تیره برای placeholder */
 }
 
-#contact-info a:hover {
-    transform: scale(1.05);
+.form-card input[type="file"] {
+    margin-bottom: 15px;
+    border: 2px dashed #003366; /* آبی dashed */
+    padding: 10px;
+    background-color: #ffffff; /* opacity کمتر */
+    background-image: none
 }
 
-#contact-info .fa-whatsapp { background-color: #25D366; }
-#contact-info .fa-telegram { background-color: #0088cc; }
-#contact-info .fa-instagram { background: #d6249f; background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%,#d6249f 60%,#285AEB 90%); }
-#contact-info .fa-comment { background-color: #4A90E2; }
-#contact-info .fa-rocket { background-color: #6a5acd; }
-#contact-info .fa-leaf { background-color: #4CAF50; }
-
-#contact-info i {
-    margin-right: 8px;
+/* دکمه‌ها با گرادیانت آبی به طلایی */
+button, input[type="submit"], input[type="button"] {
+    background: linear-gradient(to right, #003366, #D4AF37); /* آبی به طلایی */
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    padding: 15px 30px;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+    font-size: 18px;
+    margin: 10px 5px;
 }
 
-/* استایل برای پنل لودینگ */
-#loading-panel {
+button:hover, input[type="submit"]:hover, input[type="button"]:hover {
+    background: linear-gradient(to right, #D4AF37, #003366); /* معکوس */
+    transform: scale(1.08);
+    box-shadow: 0 6px 15px rgba(0, 51, 102, 0.6); /* سایه آبی */
+}
+
+/* progress bar */
+.progress-bar {
+    width: 100%;
+    height: 15px;
+    background-color: #e0e0e0;
+    margin-bottom: 30px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+.progress {
+    height: 100%;
+    background: linear-gradient(to right, #003366, #D4AF37);
+    width: 0;
+    transition: width 0.5s ease;
+}
+
+/* wizard */
+.wizard-step {
     display: none;
+    animation: fadeIn 0.6s ease-in-out;
+}
+
+.wizard-step.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(25px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* لوگو */
+.logo {
+    display: block;
+    margin: 0 auto 20px;
+    width: 300px; /* اندازه مناسب */
+    height: auto;
+}
+
+/* پیام محفوظ */
+.privacy-note {
+    text-align: center;
+    font-size: 14px;
+    color: #333333; /* تیره‌تر برای کنتراست با بک‌گراند */
+    margin-top: 20px;
+}
+
+/* دکمه بازگشت */
+.back-btn {
+    background: linear-gradient(to right, #8B4513, #D4AF37); /* قرمز به طلایی برای تمایز */
+}
+/* styles.css - اضافه کردن لودینگ */
+.loading-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.5);
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 2000;
+    z-index: 1000;
 }
 
-#loading-panel div {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
-}
-
-.spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #007bff;
+.loading-spinner {
+    border: 8px solid #f3f3f3;
+    border-top: 8px solid #003366; /* آبی تم */
     border-radius: 50%;
-    width: 30px;
-    height: 30px;
+    width: 60px;
+    height: 60px;
     animation: spin 1s linear infinite;
-    margin: 0 auto 10px;
 }
 
 @keyframes spin {
@@ -441,65 +201,8 @@ th {
     100% { transform: rotate(360deg); }
 }
 
-/* استایل برای فیلدهای جدید در ثبت‌نام */
-#other-store-fields, #health-license-field {
-    margin-top: 10px;
-}
-
-/* استایل برای sortable (درگ اند دراپ) */
-.sortable-list {
-    list-style-type: none;
-    padding: 0;
-}
-
-.sortable-list li {
-    cursor: move;
-    padding: 10px;
-    border: 1px solid #ccc;
-    margin-bottom: 5px;
-    background-color: #f9f9f9;
-}
-
-.sortable-list li:hover {
-    background-color: #e0e0e0;
-}
-.sortable-ghost {
-    opacity: 0.4;
-    background: #c8ebfb;
-}
-#location-map, #shop-map {
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    height: 300px; /* افزایش ارتفاع برای نمایش بهتر */
-    z-index: 1; /* اطمینان از اولویت نمایش */
-}
-/* استایل برای دراپ‌دان شهر */
-input[list] {
-    width: 100%;
-    padding: 8px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-sizing: border-box;
-}
-/* استایل برای دراپ‌دان‌های استان و شهر */
-input[list] {
-    width: 100%;
-    padding: 8px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-sizing: border-box;
-}
-.file-input-options {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-
-.file-input-options select {
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+.loading-overlay p {
+    margin-top: 20px;
+    font-size: 18px;
+    color: #003366;
 }
