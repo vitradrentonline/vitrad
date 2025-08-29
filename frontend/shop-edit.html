@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مدیریت مغازه</title>
+    <link rel="stylesheet" href="css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+</head>
+<body>
+    <header>
+        <button onclick="window.location.href='user-panel.html?my=true'">بازگشت به لیست مغازه‌های من</button>
+    </header>
+
+    <div id="edit-panel" class="edit-panel">
+        <h2>مدیریت مغازه <span id="shop-score-display" class="shop-score-badge"></span></h2>
+
+        <div class="edit-section" id="banner-management-section">
+            <h3>آپلود یا تغییر بنر</h3>
+            <div class="section-content">
+                <input type="file" id="banner-upload" accept="image/*">
+                <button class="btn" onclick="uploadBanner()">آپلود بنر</button>
+            </div>
+        </div>
+
+        <div class="edit-section">
+            <h3>افزودن محصول جدید</h3>
+            <div class="section-content">
+                <input type="text" id="product-name" placeholder="نام محصول">
+                <textarea id="product-desc" placeholder="توضیحات محصول"></textarea>
+                <input type="url" id="product-instagram-link" placeholder="لینک اینستاگرام محصول (اختیاری)">
+                <input type="file" id="product-image" accept="image/*">
+                <button class="btn" onclick="addProduct()">اضافه کردن محصول</button>
+            </div>
+        </div>
+
+        <div class="edit-section">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                <h3>لیست و ترتیب محصولات</h3>
+                <span class="accordion-icon">▼</span>
+            </div>
+            <div class="accordion-content" style="display: none;">
+                <p>برای تغییر ترتیب، محصولات را بکشید و رها کنید. تغییرات به صورت خودکار ذخیره می‌شود.</p>
+                <div class="products-grid" id="products-grid"></div>
+            </div>
+        </div>
+
+        <div class="edit-section">
+            <h3>ویرایش اطلاعات و راه‌های ارتباطی</h3>
+            <div class="section-content">
+                <input type="text" id="edit-description" placeholder="توضیحات جدید مغازه">
+                <input type="tel" id="edit-phone" placeholder="شماره تماس جدید">
+                <input type="tel" id="edit-whatsapp" placeholder="شماره واتس‌اپ (مثال: 989123456789)">
+                <input type="text" id="edit-telegram" placeholder="آیدی تلگرام (بدون @)">
+                <input type="text" id="edit-instagram" placeholder="آیدی اینستاگرام (بدون @)">
+                <input type="text" id="edit-eitaa" placeholder="آیدی ایتا">
+                <input type="text" id="edit-rubika" placeholder="آیدی روبیکا">
+                <input type="text" id="edit-bale" placeholder="آیدی بله">
+                <button class="btn" onclick="updateShopInfo()">ذخیره تغییرات</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loading-overlay" style="display:none;">
+        <div class="loading-spinner"></div>
+        <p>در حال پردازش...</p>
+    </div>
+    <div id="image-modal" class="image-modal">
+        <span class="close-modal-btn">&times;</span>
+        <img class="modal-content" id="modal-image">
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

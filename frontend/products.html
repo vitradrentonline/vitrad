@@ -1,36 +1,0 @@
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <title>مدیریت محصولات</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <div class="product-card">
-        <h2>🛍️ افزودن محصول جدید</h2>
-        <form id="product-form">
-            <label for="product-name">نام محصول:</label>
-            <input type="text" id="product-name" name="product-name" placeholder="مثل تخم مرغ محلی" required><br><br>
-            <label for="product-description">توضیحات محصول:</label>
-            <textarea id="product-description" name="product-description" placeholder="توضیحات محصول" required></textarea><br><br>
-            <label for="product-image">عکس محصول:</label>
-            <input type="file" id="product-image" name="product-image" accept="image/*"><br><br>
-            <button type="submit">اضافه کردن محصول</button>
-        </form>
-        <a href="index.html">بازگشت به صفحه اصلی</a>
-        <h3>لیست محصولات فعلی:</h3>
-        <ul id="product-list"></ul>
-    </div>
-
-    <div id="image-modal" class="modal" style="display: none;">
-        <span class="modal-close">&times;</span>
-        <img id="modal-image" class="modal-content">
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/compressorjs@1.2.1/dist/compressor.min.js"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="script.js"></script>
-</body>
-</html>

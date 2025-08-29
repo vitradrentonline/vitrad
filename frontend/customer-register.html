@@ -1,86 +1,0 @@
-<!-- customer-register.html (برای مشتری) -->
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ثبت‌نام مشتری</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <div class="customer-form-card">
-        <h2>ثبت‌نام مشتری (الهام از امپراتوری ساسانی)</h2>
-        <div class="progress-bar">
-            <div class="progress" id="progress"></div>
-        </div>
-
-        <div id="step1" class="wizard-step">
-            <label for="full-name">نام کامل:</label>
-            <input type="text" id="full-name" required>
-
-            <label for="email">ایمیل:</label>
-            <input type="email" id="email" required>
-
-            <label for="mobile">موبایل:</label>
-            <input type="tel" id="mobile" required>
-
-            <button onclick="validateAndNext(2)">بعدی</button>
-            <button class="back-btn" onclick="window.location.href='index.html'">بازگشت به صفحه اصلی</button>
-        </div>
-
-        <div id="step2" class="wizard-step">
-            <label for="province">استان:</label>
-            <select id="province" onchange="updateCities();" required>
-                <!-- گزینه‌ها از JS -->
-            </select>
-
-            <label for="city">شهر:</label>
-            <select id="city" onchange="showTehranArea();" required>
-                <!-- گزینه‌ها از JS -->
-            </select>
-
-            <div id="tehran-area-field" style="display: none;">
-                <label for="tehran-area">منطقه تهران:</label>
-                <select id="tehran-area" required>
-                    <!-- گزینه‌ها از JS -->
-                </select>
-            </div>
-
-            <label for="referral-code">کد معرف (اختیاری):</label>
-            <input type="text" id="referral-code">
-
-            <button onclick="validateAndNext(3)">بعدی</button>
-            <button onclick="prevStep(1)">بازگشت به مرحله قبل</button>
-        </div>
-
-        <div id="step3" class="wizard-step">
-            <label for="password">رمز عبور:</label>
-            <input type="password" id="password" required>
-            <span class="password-toggle" onclick="togglePassword('password')">👁️</span>
-
-            <label for="confirm-password">تأیید رمز عبور:</label>
-            <input type="password" id="confirm-password" required>
-            <span class="password-toggle" onclick="togglePassword('confirm-password')">👁️</span>
-
-            <button onclick="validateAndNext(4)">بعدی</button>
-            <button onclick="prevStep(2)">بازگشت به مرحله قبل</button>
-        </div>
-
-        <div id="step4" class="wizard-step">
-            <h3>بررسی اطلاعات و ارسال فرم</h3>
-            <!-- نمایش اطلاعات برای چک، می‌تونی از JS اضافه کنی -->
-            <button onclick="validateAndSubmit()">ارسال فرم</button>
-            <button onclick="prevStep(3)">بازگشت به مرحله قبل</button>
-        </div>
-
-        <p class="privacy-note">اطلاعات شما فقط برای اهداف احراز هویت استفاده می‌شود و به طور کامل محفوظ خواهد ماند. ما متعهد به حفظ حریم خصوصی شما هستیم.</p>
-    </div>
-
-    <div id="loading" class="loading-overlay" style="display: none;">
-        <div class="loading-spinner"></div>
-        <p>در حال پردازش...</p>
-    </div>
-
-    <script src="script.js"></script>
-</body>
-</html>

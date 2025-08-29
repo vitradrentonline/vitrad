@@ -1,10 +1,13 @@
 {
   "dependencies": {
-    "aws-sdk": "^2.1692.0",
+    "@aws-sdk/client-s3": "^3.878.0",
+    "@aws-sdk/lib-storage": "^3.878.0",
     "bcrypt": "^6.0.0",
     "body-parser": "^2.2.0",
+    "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "mongodb": "^6.18.0",
+    "mongoose": "^8.17.2",
     "multer": "^2.0.2",
     "nodemailer": "^7.0.5",
     "socket.io": "^4.8.1"
@@ -19,5 +22,13 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/asedghinahad/rent-online.git"
+  },
+  "bugs": {
+    "url": "https://github.com/asedghinahad/rent-online/issues"
+  },
+  "homepage": "https://github.com/asedghinahad/rent-online#readme"
 }

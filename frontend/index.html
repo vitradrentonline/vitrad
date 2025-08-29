@@ -2,36 +2,41 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>مغازه آنلاین</title>
+    <title>ویتراد - کسب و کارهای آنلاین</title>
+    <link rel="stylesheet" href="css/all.min.css">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <header>
-        <div id="auth-controls">
-            <button id="register-btn">ثبت‌نام</button>
-            <div id="register-dropdown" style="display: none;">
-                <a href="customer-register.html">ثبت‌نام مشتری</a>
-                <a href="register.html">ثبت‌نام مغازه‌دار</a>
-                <a href="index.html" class="home-link">بازگشت به صفحه اصلی</a> <!-- اضافه‌شده -->
+        <div class="header-left">
+            <div id="auth-controls">
+                <button onclick="window.location.href='register.html'">ثبت‌نام</button>
+                <button onclick="window.location.href='login.html'">ورود</button>
             </div>
-            <button id="login-btn">ورود</button>
         </div>
+        <div class="header-center">
+            <img src="images/logo.png" alt="لوگو" class="logo" id="main-logo">
+        </div>
+        <div class="header-right">
+             </div>
     </header>
-    <section id="shops-section">
-        <h2>لیست مغازه‌ها</h2>
-        <input type="text" id="search-input" placeholder="جستجوی مغازه‌ها...">
-        <ul id="shops-list"></ul>
-    </section>
-    <div id="image-modal" class="modal">
-        <span class="modal-close">&times;</span>
+
+    <div class="main-content">
+        <h2 style="text-align: center; color: #003366;">جدیدترین کسب‌وکارهای ثبت شده</h2>
+        <div id="shops-grid" class="shops-grid">
+            </div>
+    </div>
+
+    <div class="loading-overlay" id="loading" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p>در حال بارگذاری...</p>
+    </div>
+
+    <div id="image-modal" class="image-modal">
+        <span class="close-modal-btn">&times;</span>
         <img class="modal-content" id="modal-image">
     </div>
-    <div id="loading-panel">
-        <div>
-            <div class="spinner"></div>
-            در حال پردازش...
-        </div>
-    </div>
+
     <script src="script.js"></script>
 </body>
 </html>

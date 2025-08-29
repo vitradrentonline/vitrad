@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تأیید ایجاد کسب‌وکار</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="form-card">
+        <h2>تأیید نهایی کسب‌وکار</h2>
+        <p>یک کد ۶ رقمی برای نهایی کردن ثبت کسب‌وکار به ایمیل شما ارسال شد. لطفاً آن را وارد کنید.</p>
+        <p>این کد به مدت ۱۰ دقیقه معتبر است.</p>
+
+        <label for="otp">کد تأیید:</label>
+        <input type="text" id="otp" maxlength="6" required>
+
+        <button onclick="verifyShopOTP()">تأیید و ثبت نهایی</button>
+    </div>
+
+    <div class="loading-overlay" id="loading" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p>در حال پردازش...</p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <title>ایجاد مغازه جدید</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        /* استایل اولیه برای نقشه */
+        #map {
+            height: 300px; /* ارتفاع نقشه */
+            width: 100%;
+            margin-bottom: 15px;
+            border: 2px solid #D4AF37;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-card">
+        <h2>ایجاد کسب‌وکار جدید</h2>
+
+        <div id="step1" class="wizard-step active">
+            <label for="shop_name">نام کسب‌وکار:</label>
+            <input type="text" id="shop_name" required>
+
+            <label for="shop_description">توضیحات:</label>
+            <textarea id="shop_description" required></textarea>
+
+            <label for="activity-type">نوع فعالیت:</label>
+            <select id="activity-type" onchange="handleActivityChange()" required></select>
+
+            <div id="job-category-section" style="display:none;">
+                <label for="job-category">رسته شغلی:</label>
+                <select id="job-category" required></select>
+            </div>
+
+            <label for="shop_phone">شماره تماس:</label>
+            <input type="tel" id="shop_phone" required>
+
+            <label for="shop_email">ایمیل کسب‌وکار (اختیاری):</label>
+            <input type="email" id="shop_email">
+
+            <button onclick="validateShopStep1()">بعدی</button>
+            <a href="user-panel.html">بازگشت به پنل</a>
+        </div>
+
+        <div id="step2" class="wizard-step">
+            <label for="province">استان:</label>
+            <select id="province" onchange="updateCities()"></select>
+
+            <label for="city">شهر:</label>
+            <select id="city" onchange="handleCityChange()"></select>
+
+            <div id="tehran-area-section" style="display:none;">
+                <label for="tehran_area">منطقه تهران:</label>
+                <select id="tehran_area"></select>
+            </div>
+            
+            <label for="address">آدرس پستی:</label>
+            <textarea id="address" required></textarea>
+
+            <label>موقعیت روی نقشه:</label>
+            <div id="map"></div>
+            <button onclick="getUserLocation()">نمایش موقعیت فعلی من</button>
+
+            <input type="hidden" id="latitude">
+            <input type="hidden" id="longitude">
+
+            <button onclick="nextStep(3)">بعدی</button>
+            <button onclick="prevStep(1)">بازگشت</button>
+        </div>
+
+        <div id="step3" class="wizard-step">
+            <h4>احراز هویت مالک کسب‌وکار</h4>
+            <label for="nationalCardImage">تصویر کارت ملی:</label>
+            <input type="file" id="nationalCardImage" accept="image/*" onchange="validateFile(this)" required>
+            <p id="nationalCardImage-error" class="error-message"></p>
+
+            <label for="selfieImage">تصویر سلفی:</label>
+            <input type="file" id="selfieImage" accept="image/*" onchange="validateFile(this)" required>
+            <p id="selfieImage-error" class="error-message"></p>
+
+            <hr>
+            <h4>مدارک کسب‌وکار</h4>
+            <label for="businessLicenseImage">تصویر جواز کسب:</label>
+            <input type="file" id="businessLicenseImage" accept="image/*" onchange="validateFile(this)" required>
+            <p id="businessLicenseImage-error" class="error-message"></p>
+            
+            <div id="health-license-section" style="display: none;">
+                <label for="healthLicenseImage">تصویر مجوز بهداشت:</label>
+                <input type="file" id="healthLicenseImage" accept="image/*" onchange="validateFile(this)">
+                <p id="healthLicenseImage-error" class="error-message"></p>
+            </div>
+
+            <button onclick="submitCreateShop()">ایجاد و ارسال کد تایید</button>
+            <button onclick="prevStep(2)">بازگشت</button>
+        </div>
+
+        <p class="privacy-note">اطلاعات شما نزد ما محفوظ خواهد ماند.</p>
+    </div>
+
+    <div id="loading" class="loading-overlay" style="display:none;">
+        <div class="loading-spinner"></div>
+        <p>در حال پردازش...</p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,136 +1,0 @@
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <title>پنل مغازه‌دار</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-</head>
-<body>
-    <div id="user-panel" style="display: none;">
-        <span id="user-greeting"></span>
-        <button id="logout-btn">خروج</button>
-    </div>
-
-    <div id="pending-approval-message" style="display: none;"></div>
-
-    <div class="panel-section" id="shop-owner-panel" style="display: none;">
-        <h2>پنل مغازه‌دار</h2>
-        <p>نام فروشگاه: <span id="profile-shop-name"></span></p>
-        <p>نام کامل: <span id="profile-full-name"></span></p>
-        <p>کد ملی: <span id="profile-national-id"></span></p>
-        <p>ایمیل: <span id="profile-email"></span></p>
-        <p>موبایل: <span id="profile-mobile"></span></p>
-        <p>آدرس: <span id="profile-address"></span></p>
-        <p>کد پستی: <span id="profile-postal-code"></span></p>
-    </div>
-
-    <div class="panel-section">
-        <h2>👤 پروفایل و اطلاعات تماس</h2>
-        <form id="profile-form">
-            <label for="new-shop-name">نام فروشگاه جدید:</label>
-            <input type="text" id="new-shop-name" name="new-shop-name"><br><br>
-
-            <label for="new-address">آدرس جدید:</label>
-            <input type="text" id="new-address" name="new-address"><br><br>
-
-            <label for="new-postal-code">کد پستی جدید:</label>
-            <input type="text" id="new-postal-code" name="new-postal-code"><br><br>
-
-            <label for="whatsapp">واتس‌اپ (مثال: 989123456789):</label>
-            <input type="text" id="whatsapp" name="whatsapp"><br><br>
-
-            <label for="telegram">تلگرام (مثال: myusername):</label>
-            <input type="text" id="telegram" name="telegram"><br><br>
-
-            <label for="instagram">اینستاگرام (مثال: myusername):</label>
-            <input type="text" id="instagram" name="instagram"><br><br>
-
-            <label for="eitaa">ایتا (مثال: myusername):</label>
-            <input type="text" id="eitaa" name="eitaa"><br><br>
-
-            <label for="rubika">روبیکا (مثال: myusername):</label>
-            <input type="text" id="rubika" name="rubika"><br><br>
-
-            <label for="bale">بله (مثال: myusername):</label>
-            <input type="text" id="bale" name="bale"><br><br>
-
-            <label for="website">وبسایت:</label>
-            <input type="text" id="website" name="website"><br><br>
-
-            <label>لوکیشن خود را روی نقشه مشخص کنید:</label>
-            <div id="location-map" style="height: 300px;"></div>
-            <input type="hidden" id="location-lat" name="location-lat">
-            <input type="hidden" id="location-lng" name="location-lng">
-            <br><br>
-
-            <label for="new-password">رمز عبور جدید:</label>
-            <div class="password-container">
-                <input type="password" id="new-password" name="new-password">
-                <span onclick="togglePassword('new-password')">👁️</span>
-            </div><br><br>
-
-            <label for="confirm-new-password">تأیید رمز عبور جدید:</label>
-            <div class="password-container">
-                <input type="password" id="confirm-new-password" name="confirm-new-password">
-                <span onclick="togglePassword('confirm-new-password')">👁️</span>
-            </div><br><br>
-
-            <button type="submit">به‌روزرسانی پروفایل</button>
-        </form>
-    </div>
-
-    <div class="panel-section">
-        <h2>🛒 افزودن محصول</h2>
-        <form id="product-form">
-            <label for="product-name">نام محصول:</label>
-            <input type="text" id="product-name" name="product-name" required>
-
-            <label for="product-description">توضیحات محصول:</label>
-            <input type="text" id="product-description" name="product-description" required>
-
-            <label for="product-image">عکس محصول (اختیاری، حداکثر 4MB):</label>
-            <div class="file-input-options">
-                <select id="product-image-source" name="image-source">
-                    <option value="gallery">انتخاب از گالری</option>
-                    <option value="camera">گرفتن عکس با دوربین</option>
-                </select>
-                <input type="file" id="product-image" name="product-image" accept="image/*">
-            </div>
-
-            <label for="product-instagram-link">لینک اینستاگرام (اختیاری):</label>
-            <input type="text" id="product-instagram-link" name="product-instagram-link">
-
-            <button type="submit">اضافه کردن محصول</button>
-        </form>
-    </div>
-
-    <div class="panel-section">
-        <h2>📋 لیست محصولات</h2>
-        <ul id="product-list"></ul>
-    </div>
-
-    <div id="image-modal" class="modal" style="display: none;">
-        <span class="modal-close">&times;</span>
-        <img class="modal-content" id="modal-image">
-    </div>
-    <!-- ... کدهای قبلی ... -->
-    <div id="messages-section">
-        <h3>پیام‌های ادمین</h3>
-        <ul id="messages-list"></ul>
-        <div id="notification" style="color: red;"></div> <!-- برای بن/محدودیت -->
-        <button onclick="editAndResubmit()">ویرایش و ارسال دوباره</button> <!-- برای رد شده‌ها -->
-    </div>
-
-    <div id="loading-panel" style="display: none;">
-        <div>
-            <div class="spinner"></div>
-            در حال پردازش...
-        </div>
-    </div>
-
-    <script src="script.js"></script>
-</body>
-</html>

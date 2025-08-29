@@ -1,43 +1,43 @@
-<!-- login.html -->
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="fa">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ورود</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <button class="back-btn" onclick="window.location.href='index.html'">بازگشت به صفحه اصلی</button>
+    <a href="index.html">بازگشت به صفحه اصلی</a>
 
-    <div class="form-card">
+    <div class="form-card" id="login-section">
         <h2>ورود</h2>
 
-        <label for="identifier">شناسه (کد ملی برای مغازه‌دار، موبایل برای مشتری):</label>
-        <input type="text" id="identifier" required>
+        <label for="identifier">شناسه کاربری:</label>
+        <input type="text" id="identifier">
 
         <label for="password">رمز عبور:</label>
-        <input type="password" id="password" required>
-        <span class="password-toggle" onclick="togglePassword('password')">👁️</span>
+        <div class="password-wrapper">
+            <input type="password" id="password">
+            <span class="password-toggle" onclick="togglePassword('password')">👁️</span>
+        </div>
 
         <button onclick="loginUser()">ورود</button>
-        <button onclick="showForgotPassword()">فراموشی رمز عبور</button>
+        <a href="#" onclick="showForgotPassword()">فراموشی رمز عبور</a>
     </div>
 
-    <div id="forgot-password" class="form-card" style="display: none;">
+    <div id="forgot-password" style="display: none;" class="form-card">
         <h2>بازیابی رمز عبور</h2>
 
-        <label for="forgot-identifier">شناسه (کد ملی برای مغازه‌دار، موبایل برای مشتری):</label>
-        <input type="text" id="forgot-identifier" required>
+        <label for="forgot-identifier">شناسه کاربری:</label>
+        <input type="text" id="forgot-identifier">
 
         <label for="forgot-email">ایمیل:</label>
-        <input type="email" id="forgot-email" required>
+        <input type="email" id="forgot-email">
 
         <button onclick="requestPasswordReset()">دریافت کد</button>
-        <button onclick="hideForgotPassword()">بازگشت</button>
+        <a href="#" onclick="hideForgotPassword()">بازگشت به صفحه ورود</a>
     </div>
 
-    <div id="loading" class="loading-overlay" style="display: none;">
+    <div id="loading" class="loading-overlay" style="display:none;">
         <div class="loading-spinner"></div>
         <p>در حال پردازش...</p>
     </div>
