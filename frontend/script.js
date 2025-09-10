@@ -1,4 +1,3 @@
-
 console.log('اسکریپت لود شد');
 
 // تنظیم Base URL
@@ -21,225 +20,43 @@ window.togglePassword = function (id) {
     }
 };
 
-// آرایه‌های مورد نیاز
-const provinces = [
-    { value: 'tehran', text: 'تهران' },
-    { value: 'alborz', text: 'البرز' },
-    { value: 'ardabil', text: 'اردبیل' },
-    { value: 'bushehr', text: 'بوشهر' },
-    { value: 'chaharmahal', text: 'چهارمحال و بختیاری' },
-    { value: 'east_azerbaijan', text: 'آذربایجان شرقی' },
-    { value: 'esfahan', text: 'اصفهان' },
-    { value: 'fars', text: 'فارس' },
-    { value: 'gilan', text: 'گیلان' },
-    { value: 'golestan', text: 'گلستان' },
-    { value: 'hamadan', text: 'همدان' },
-    { value: 'hormozgan', text: 'هرمزگان' },
-    { value: 'ilam', text: 'ایلام' },
-    { value: 'kerman', text: 'کرمان' },
-    { value: 'kermanshah', text: 'کرمانشاه' },
-    { value: 'khorasan_north', text: 'خراسان شمالی' },
-    { value: 'khorasan_razavi', text: 'خراسان رضوی' },
-    { value: 'khorasan_south', text: 'خراسان جنوبی' },
-    { value: 'khuzestan', text: 'خوزستان' },
-    { value: 'kohgiluyeh', text: 'کهگیلویه و بویراحمد' },
-    { value: 'kurdistan', text: 'کردستان' },
-    { value: 'lorestan', text: 'لرستان' },
-    { value: 'markazi', text: 'مرکزی' },
-    { value: 'mazandaran', text: 'مازندران' },
-    { value: 'qazvin', text: 'قزوین' },
-    { value: 'qom', text: 'قم' },
-    { value: 'semnan', text: 'سمنان' },
-    { value: 'sistan', text: 'سیستان و بلوچستان' },
-    { value: 'west_azerbaijan', text: 'آذربایجان غربی' },
-    { value: 'yazd', text: 'یزد' },
-    { value: 'zanjan', text: 'زنجان' },
-];
+let provinces = [];
+let citiesByProvince = {};
+let tehranAreas = [];
 
-const citiesByProvince = {
-    tehran: [
-        { value: 'tehran-city', text: 'تهران' },
-        { value: 'rey', text: 'ری' },
-        { value: 'shemiranat', text: 'شمیرانات' },
-        { value: 'islamshahr', text: 'اسلامشهر' },
-        // اضافه کردن بقیه شهرها اگر نیاز
-    ],
-    alborz: [
-        { value: 'karaj', text: 'کرج' },
-        // ...
-    ],
-    ardabil: [
-        { value: 'ardabil-city', text: 'اردبیل' },
-        // ...
-    ],
-    bushehr: [
-        { value: 'bushehr-city', text: 'بوشهر' },
-        // ...
-    ],
-    chaharmahal: [
-        { value: 'shahrekord', text: 'شهرکرد' },
-        // ...
-    ],
-    east_azerbaijan: [
-        { value: 'tabriz', text: 'تبریز' },
-        // ...
-    ],
-    esfahan: [
-        { value: 'esfahan-city', text: 'اصفهان' },
-        { value: 'kashan', text: 'کاشان' },
-        { value: 'najafabad', text: 'نجف‌آباد' },
-        // ...
-    ],
-    fars: [
-        { value: 'shiraz', text: 'شیراز' },
-        // ...
-    ],
-    gilan: [
-        { value: 'rasht', text: 'رشت' },
-        // ...
-    ],
-    golestan: [
-        { value: 'gonbad', text: 'گنبد کاووس' },
-        // ...
-    ],
-    hamadan: [
-        { value: 'hamadan-city', text: 'همدان' },
-        // ...
-    ],
-    hormozgan: [
-        { value: 'bandarabbas', text: 'بندرعباس' },
-        // ...
-    ],
-    ilam: [
-        { value: 'ilam-city', text: 'ایلام' },
-        // ...
-    ],
-    kerman: [
-        { value: 'kerman-city', text: 'کرمان' },
-        // ...
-    ],
-    kermanshah: [
-        { value: 'kermanshah-city', text: 'کرمانشاه' },
-        // ...
-    ],
-    khorasan_north: [
-        { value: 'bojnord', text: 'بجنورد' },
-        // ...
-    ],
-    khorasan_razavi: [
-        { value: 'mashhad', text: 'مشهد' },
-        // ...
-    ],
-    khorasan_south: [
-        { value: 'birjand', text: 'بیرجند' },
-        // ...
-    ],
-    khuzestan: [
-        { value: 'ahvaz', text: 'اهواز' },
-        // ...
-    ],
-    kohgiluyeh: [
-        { value: 'yasuj', text: 'یاسوج' },
-        // ...
-    ],
-    kurdistan: [
-        { value: 'sanandaj', text: 'سنندج' },
-        // ...
-    ],
-    lorestan: [
-        { value: 'khorramabad', text: 'خرم‌آباد' },
-        // ...
-    ],
-    markazi: [
-        { value: 'arak', text: 'اراک' },
-        // ...
-    ],
-    mazandaran: [
-        { value: 'sari', text: 'ساری' },
-        // ...
-    ],
-    qazvin: [
-        { value: 'qazvin-city', text: 'قزوین' },
-        // ...
-    ],
-    qom: [
-        { value: 'qom-city', text: 'قم' },
-        // ...
-    ],
-    semnan: [
-        { value: 'semnan-city', text: 'سمنان' },
-        // ...
-    ],
-    sistan: [
-        { value: 'zahedan', text: 'زاهدان' },
-        // ...
-    ],
-    west_azerbaijan: [
-        { value: 'urmia', text: 'ارومیه' },
-        // ...
-    ],
-    yazd: [
-        { value: 'yazd-city', text: 'یزد' },
-        // ...
-    ],
-    zanjan: [
-        { value: 'zanjan-city', text: 'زنجان' },
-        // ...
-    ],
-};
+async function loadLocations() {
+    try {
+        const response = await fetch('locations.json');
+        if (!response.ok) {
+            throw new Error('فایل موقعیت‌ها یافت نشد.');
+        }
+        const data = await response.json();
+        provinces = data.provinces;
+        citiesByProvince = data.citiesByProvince;
+        tehranAreas = data.tehranAreas;
+        console.log('✅ موقعیت‌ها (استان، شهر، منطقه) با موفقیت از فایل JSON بارگذاری شد.');
+    } catch (error) {
+        console.error('خطا در بارگذاری موقعیت‌ها:', error);
+    }
+}
 
-const tehranAreas = [
-    { value: 'area1', text: 'منطقه 1' },
-    { value: 'area2', text: 'منطقه 2' },
-    { value: 'area3', text: 'منطقه 3' },
-    { value: 'area4', text: 'منطقه 4' },
-    { value: 'area5', text: 'منطقه 5' },
-    { value: 'area6', text: 'منطقه 6' },
-    { value: 'area7', text: 'منطقه 7' },
-    { value: 'area8', text: 'منطقه 8' },
-    { value: 'area9', text: 'منطقه 9' },
-    { value: 'area10', text: 'منطقه 10' },
-    { value: 'area11', text: 'منطقه 11' },
-    { value: 'area12', text: 'منطقه 12' },
-    { value: 'area13', text: 'منطقه 13' },
-    { value: 'area14', text: 'منطقه 14' },
-    { value: 'area15', text: 'منطقه 15' },
-    { value: 'area16', text: 'منطقه 16' },
-    { value: 'area17', text: 'منطقه 17' },
-    { value: 'area18', text: 'منطقه 18' },
-    { value: 'area19', text: 'منطقه 19' },
-    { value: 'area20', text: 'منطقه 20' },
-    { value: 'area21', text: 'منطقه 21' },
-    { value: 'area22', text: 'منطقه 22' },
-];
+let activityTypes = [];
+let jobCategories = {};
 
-// ✅ در ابتدای فایل script.js، این متغیرها را اضافه کنید
-const activityTypes = [
-    { value: 'food', text: 'غذایی و خوراکی' },
-    { value: 'clothing', text: 'پوشاک' },
-    { value: 'digital', text: 'کالای دیجیتال' },
-    { value: 'services', text: 'خدماتی' }
-];
-
-const jobCategories = {
-    food: [
-        { value: 'restaurant', text: 'رستوران' },
-        { value: 'fast-food', text: 'فست فود' },
-        { value: 'cafe', text: 'کافی شاپ' }
-    ],
-    clothing: [
-        { value: 'mens-wear', text: 'پوشاک آقایان' },
-        { value: 'womens-wear', text: 'پوشاک بانوان' }
-    ],
-    digital: [
-        { value: 'mobile-shop', text: 'فروشگاه موبایل' },
-        { value: 'computer-parts', text: 'قطعات کامپیوتر' }
-    ],
-    services: [
-        { value: 'barber-shop', text: 'آرایشگاه' },
-        { value: 'car-repair', text: 'تعمیرگاه خودرو' }
-    ]
-};
+async function loadCategories() {
+    try {
+        const response = await fetch('categories.json');
+        if (!response.ok) {
+            throw new Error('فایل دسته‌بندی‌ها یافت نشد.');
+        }
+        const data = await response.json();
+        activityTypes = data.activityTypes;
+        jobCategories = data.jobCategories;
+        console.log('✅ دسته‌بندی‌ها با موفقیت از فایل JSON بارگذاری شد.');
+    } catch (error) {
+        console.error('خطا در بارگذاری دسته‌بندی‌ها:', error);
+    }
+}
 
 // متغیر سراسری برای نقشه
 let map;
@@ -409,6 +226,7 @@ window.validateAndNextStep = async function (step) {
 }
 
 // ✅ تابع جدید برای بارگذاری مغازه‌ها در index.html
+// in script.js
 async function loadPublicShops() {
     const shopsGrid = document.getElementById('shops-grid');
     if (!shopsGrid) return;
@@ -418,19 +236,56 @@ async function loadPublicShops() {
         const shops = await response.json();
         
         shopsGrid.innerHTML = '';
+
+        if (!Array.isArray(shops)) {
+            console.error("پاسخ دریافتی از سرور برای مغازه‌ها یک آرایه نیست!", shops);
+            shopsGrid.innerHTML = '<p>خطایی در دریافت اطلاعات از سرور رخ داده است.</p>';
+            return;
+        }
         if (shops.length === 0) {
             shopsGrid.innerHTML = '<p>در حال حاضر هیچ مغازه‌ای برای نمایش وجود ندارد.</p>';
             return;
         }
+
         shops.forEach(shop => {
             const card = document.createElement('div');
-            card.className = 'shop-card';
-            card.onclick = () => window.location.href = `shop-details.html?shop_id=${shop._id}`;
+            // از یک کلاس جدید برای استایل‌دهی استفاده می‌کنیم
+            card.className = 'shop-card-horizontal'; 
             
-            const bannerHTML = shop.banner ? `<img src="${shop.banner}" alt="بنر مغازه">` : '';
-            const scoreHTML = typeof shop.score !== 'undefined' ? `<span class="shop-score">⭐ ${shop.score}</span>` : '';
+            // --- بخش جدید: ساخت HTML برای محصولات برتر ---
+            let topProductsHTML = '';
+            if (shop.products && shop.products.length > 0) {
+                shop.products.forEach(product => {
+                    // هر محصول یک لینک به صفحه جزئیات خودش خواهد بود
+                    topProductsHTML += `
+                        <a href="product-details.html?product_id=${product._id}" class="product-preview">
+                            <img src="${product.image}" alt="${product.name}">
+                        </a>
+                    `;
+                });
+            } else {
+                topProductsHTML = '<p class="no-products-msg">محصولی برای نمایش وجود ندارد</p>';
+            }
 
-            card.innerHTML = `${bannerHTML}${scoreHTML}<h3>${shop.shop_name}</h3><p>${shop.shop_description || ''}</p>`;
+            // --- ساختار HTML نهایی کارت ---
+            card.innerHTML = `
+                <div class="card-top-section">
+                    <img src="${shop.logo || 'images/default-logo.png'}" alt="لوگوی ${shop.shop_name}" class="shop-logo">
+                    <div class="shop-info">
+                        <h3 class="shop-name">${shop.shop_name}</h3>
+                        <div class="shop-meta">
+                            <span>${shop.city_name || 'شهر نامشخص'}</span>
+                            <span class="separator">|</span>
+                            <span>${shop.owner_full_name || 'نام مالک'}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-bottom-section">
+                    <div class="top-products-grid">
+                        ${topProductsHTML}
+                    </div>
+                </div>
+            `;
             shopsGrid.appendChild(card);
         });
     } catch (error) {
@@ -530,10 +385,14 @@ window.validateShopStep1 = function() {
         alert('لطفاً تمام فیلدهای ستاره‌دار را پر کنید.');
         return;
     }
-    nextStep(2); // اگر همه چیز اوکی بود به مرحله بعد برو
-    
-    // نقشه را فقط زمانی که به مرحله ۲ می‌رویم مقداردهی اولیه کن
-    setTimeout(initMap, 100); 
+    nextStep(2); // به مرحله بعد که حاوی نقشه است می‌رویم
+    setTimeout(function() {
+        if (!map) { // اگر نقشه هنوز ساخته نشده، آن را بساز
+            initMap();
+        } else { // اگر از قبل ساخته شده، فقط اندازه‌اش را اصلاح کن
+            map.invalidateSize();
+        }
+    }, 100); // تأخیر ۱۰۰ میلی‌ثانیه‌ای برای اطمینان از نمایش کامل بخش نقشه
 };
 
 
@@ -576,7 +435,8 @@ window.submitCreateShop = async function () {
 
     const formData = new FormData();
     // اطلاعات کاربر و مرحله ۱
-    formData.append('user_id', localStorage.getItem('user_id'));
+    const user = JSON.parse(localStorage.getItem('user'));
+    formData.append('user_id', user._id);
     formData.append('shop_name', document.getElementById('shop_name').value);
     formData.append('shop_description', document.getElementById('shop_description').value);
     formData.append('activity_type', document.getElementById('activity-type').value);
@@ -909,9 +769,17 @@ window.resetPassword = async function () {
 // این رویداد زمانی اجرا می‌شود که تمام محتوای صفحه بارگذاری شده باشد
 // در انتهای فایل script.js، این بخش را پیدا کرده و به طور کامل با کد زیر جایگزین کنید
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadCategories();
+    await loadLocations();
+    initHeaderSearch();
+    initCitySelector();
+    populateCategoriesMenu_FixedScroll(); // ✅ سپس منوی هدر با آن اطلاعات پر می‌شود
     const path = window.location.pathname;
-
+    
+    if (path.endsWith('index.html') || path === '/') {
+        loadPublicShops();
+    }
     // ✅ شرط جدید برای صفحه اصلی
     if (path.endsWith('index.html') || path === '/') {
         loadPublicShops();
@@ -928,7 +796,6 @@ document.addEventListener('DOMContentLoaded', () => {
         populateSelect('province', provinces);
         populateSelect('activity-type', activityTypes);
         handleActivityChange();
-        setTimeout(initMap, 100); 
     }
 
     // پنل کاربری (نمایش مغازه‌های عمومی)
@@ -1132,34 +999,43 @@ const filterBtn = document.getElementById('filter-btn');
 if (filterBtn) {
     filterBtn.addEventListener('click', openFilterModal);
 }
-function openFilterModal() { const m = document.getElementById('filter-modal'); if (m) m.style.display = 'block'; }
+// script.js
+
+// این تابع را پیدا کرده و جایگزین کن
+function openFilterModal() { 
+    populateFilterModal(); // این خط جدید است
+    const m = document.getElementById('filter-modal'); 
+    if (m) m.style.display = 'block'; 
+}
 
 // تابع بستن پنجره فیلتر (modal)
 window.closeFilterModal = function() { const m = document.getElementById('filter-modal'); if (m) m.style.display = 'none'; }
 
 // تابع اعمال فیلترها (اصلاح‌شده با اعتبارسنجی)
 window.applyFilters = async function () {
-    const storeType = document.getElementById('filter-store-type').value;
     const activity = document.getElementById('filter-activity').value;
     const subActivity = document.getElementById('filter-sub-activity').value;
     const province = document.getElementById('filter-province').value;
     const city = document.getElementById('filter-city').value;
     const sort = document.getElementById('sort-by').value;
 
-    // بررسی اینکه آیا حداقل یک فیلتر انتخاب شده است
-    if (!storeType && !activity && !subActivity && !province && !city && !sort) {
+    // اعتبارسنجی هم اصلاح شد
+    if (!activity && !subActivity && !province && !city && !sort) {
         alert('لطفاً حداقل یک فیلتر را برای اعمال انتخاب کنید.');
-        return; // اجرای تابع متوقف می‌شود
+        return;
     }
 
     showLoading();
 
     try {
-        const params = new URLSearchParams({ storeType, activity, subActivity, province, city, sort });
-        const response = await fetch(`/api/filter-shops?${params}`); // استفاده از مسیر نسبی
+        // پارامتر storeType هم از اینجا حذف شد
+        const params = new URLSearchParams({ activity, subActivity, province, city, sort });
+        const response = await fetch(`${baseUrl}/api/filter-shops?${params}`);
         const shops = await response.json();
-        displayShops(shops);
-        closeFilterModal(); // بستن پنجره پس از اعمال فیلتر
+        
+        displayShops(shops); // نمایش مغازه‌های فیلتر شده
+        closeFilterModal();  // بستن پنجره پس از اعمال فیلتر
+
     } catch (error) {
         console.error('خطا در فیلتر:', error);
         alert('خطایی در هنگام اعمال فیلترها رخ داد.');
@@ -1246,15 +1122,27 @@ function renderShops(shops) {
 
 function displayShops(shops) {
     const grid = document.getElementById('shops-grid');
-    grid.innerHTML = '';
+    grid.innerHTML = ''; // پاک کردن نتایج قبلی
+
+    if (!shops || shops.length === 0) {
+        // تغییر اینجا: اضافه کردن یک div با کلاس برای استایل دهی
+        grid.innerHTML = `
+            <div class="no-results-message">
+                <p>هیچ مغازه‌ای با این مشخصات یافت نشد.</p>
+            </div>
+        `;
+        return;
+    }
+
     shops.forEach(shop => {
         const card = document.createElement('div');
         card.className = 'shop-card';
+        const bannerHTML = shop.banner ? `<img src="${shop.banner}" alt="بنر مغازه">` : '';
+
         card.innerHTML = `
-            <img src="${shop.banner || 'default-banner.png'}" alt="بنر">
+            ${bannerHTML}
             <h3>${shop.shop_name}</h3>
-            <p>${shop.category}</p>
-            <p>${shop.city} / ${shop.province}</p>
+            <p>${shop.shop_description || ''}</p>
         `;
         card.onclick = () => window.location.href = `shop-details.html?shop_id=${shop._id}`;
         grid.appendChild(card);
@@ -1342,7 +1230,7 @@ window.updateProfile = async function() {
 };
 
 // فانکشن لود لیست مغازه‌ها
-// ✅ این تابع را به طور کامل با نسخه جدید جایگزین کنید
+// in script.js
 async function loadShops() {
     const urlParams = new URLSearchParams(window.location.search);
     const isMyShops = urlParams.get('my') === 'true';
@@ -1354,37 +1242,28 @@ async function loadShops() {
 
     const headerContent = document.getElementById('header-dynamic-content');
     const mainLogo = document.getElementById('main-logo');
-    if (isMyShops) {
-        mainLogo.style.display = 'none';
-        headerContent.style.display = 'flex';
-        headerContent.innerHTML = `<h4>لیست مغازه‌های من</h4><button onclick="window.location.href='user-panel.html'">بازگشت</button>`;
-    } else {
-        mainLogo.style.display = 'block';
-        headerContent.style.display = 'none';
+
+    if (headerContent && mainLogo) {
+        if (isMyShops) {
+            mainLogo.style.display = 'none';
+            headerContent.style.display = 'flex';
+            headerContent.innerHTML = `<h4>لیست مغازه‌های من</h4><button onclick="window.location.href='user-panel.html'">بازگشت</button>`;
+        } else {
+            mainLogo.style.display = 'block';
+            headerContent.style.display = 'none';
+        }
     }
 
     try {
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user) {
-            alert('لطفاً ابتدا وارد حساب کاربری خود شوید.');
             window.location.href = 'login.html';
             return;
         }
 
-        let endpoint = '';
-        if (isMyShops) {
-            // اگر کاربر مغازه‌های خودش را خواست، از API قدیمی استفاده می‌کنیم
-            endpoint = `${baseUrl}/api/get-shops?user_id=${user._id}`;
-        } else {
-            // در غیر این صورت، از API جدید و هوشمند مرتب‌سازی استفاده می‌کنیم
-            const queryParams = new URLSearchParams({
-                userId: user._id,
-                province: user.province || '',
-                city: user.city || '',
-                tehran_area: user.tehran_area || ''
-            });
-            endpoint = `${baseUrl}/api/sorted-shops?${queryParams.toString()}`;
-        }
+        let endpoint = isMyShops 
+            ? `${baseUrl}/api/get-shops?user_id=${user._id}`
+            : `${baseUrl}/api/sorted-shops?userId=${user._id}&province=${user.province || ''}&city=${user.city || ''}&tehran_area=${user.tehran_area || ''}`;
         
         const response = await fetch(endpoint);
         if (!response.ok) throw new Error('پاسخ سرور نامعتبر');
@@ -1393,7 +1272,7 @@ async function loadShops() {
 
         if (shops.length === 0) {
             shopsGrid.innerHTML = isMyShops 
-                ? "<p>شما هنوز مغازه‌ای ثبت نکرده‌اید. برای شروع از منو گزینه 'ایجاد مغازه' را انتخاب کنید.</p>"
+                ? "<p>شما هنوز مغازه‌ای ثبت نکرده‌اید.</p>"
                 : "<p>در حال حاضر هیچ مغازه‌ای برای نمایش وجود ندارد.</p>";
             return;
         }
@@ -1401,19 +1280,31 @@ async function loadShops() {
         shops.forEach(shop => {
             const card = document.createElement('div');
             card.className = 'shop-card';
-            card.onclick = () => {
-                const destination = isMyShops ? 'shop-edit.html' : 'shop-details.html';
-                window.location.href = `${destination}?shop_id=${shop._id}`;
-            };
-            const bannerHTML = shop.banner ? `<img src="${shop.banner}" alt="بنر مغازه">` : '';
-            // نمایش امتیاز در کارت مغازه (اختیاری)
-            const scoreHTML = !isMyShops && shop.score ? `<span class="shop-score">⭐ ${shop.score}</span>` : '';
+            const destination = isMyShops ? 'shop-edit.html' : 'shop-details.html';
+            card.onclick = () => window.location.href = `${destination}?shop_id=${shop._id}`;
+
+            const bannerHTML = shop.banner ? `<img src="${shop.banner}" alt="بنر ${shop.shop_name}">` : '<div class="shop-card-no-banner"></div>';
+
+            let ratingHTML = '<p class="shop-card-rating">امتیازی ثبت نشده</p>';
+            if (shop.rating_average && shop.rating_count > 0) {
+                ratingHTML = `
+                    <p class="shop-card-rating">
+                        ⭐ ${shop.rating_average} <span>(${shop.rating_count} نظر)</span>
+                    </p>
+                `;
+            }
+            
+            // ✅ بهینه‌سازی: حذف activityTranslations و خواندن مستقیم از داده‌ها
+            const activityObject = activityTypes.find(at => at.value === shop.activity_type);
+            const activityText = activityObject ? activityObject.text : 'نامشخص';
 
             card.innerHTML = `
-                ${bannerHTML}
-                ${scoreHTML}
-                <h3>${shop.shop_name}</h3>
-                <p>${shop.shop_description || 'توضیحات ثبت نشده'}</p>
+                <div class="shop-card-image">${bannerHTML}</div>
+                <div class.shop-card-content">
+                    <h3>${shop.shop_name}</h3>
+                    <p class="shop-card-activity">${activityText}</p>
+                    ${ratingHTML}
+                </div>
             `;
             shopsGrid.appendChild(card);
         });
@@ -1579,7 +1470,7 @@ async function loadProducts(shop_id) {
                 <div class="product-info-wrapper">
                     <h4>${name}</h4>
                     <p>${description}</p>
-                    ${instagram ? `<a href="${instagram}" target="_blank">لینک اینستاگرام</a>` : ''}
+                    ${instagram ? `<a href="${instagram.startsWith('http') ? instagram : 'https://www.instagram.com/' + instagram}" target="_blank" class="product-instagram-link" title="مشاهده در اینستاگرام"><i class="fab fa-instagram"></i></a>` : ''}
                 </div>
                 <div class="product-actions">
                     <button class="btn-edit" onclick="showEditForm('${product._id}', '${name}', '${description}', '${instagram}')">ویرایش</button>
@@ -1725,10 +1616,15 @@ async function loadPublicProducts(shop_id) {
             products.forEach(product => {
                 const card = document.createElement('div');
                 card.className = 'product-card'; // از استایل کارت محصول عمومی استفاده می‌شود
+                const instagram = product.instagram_link;
+                const instagramHTML = instagram
+                    ? `<a href="${instagram.startsWith('http') ? instagram : 'https://www.instagram.com/' + instagram}" target="_blank" class="product-instagram-link" title="مشاهده در اینستاگرام"><i class="fab fa-instagram"></i></a>`
+                    : '';
                 card.innerHTML = `
                     <img src="${product.image}" alt="${product.name}">
                     <h4>${product.name}</h4>
                     <p>${product.description}</p>
+                    ${instagramHTML} 
                 `;
                 grid.appendChild(card);
             });
@@ -1776,33 +1672,34 @@ async function loadShopDetails() {
             ? `<img src="${shop.banner}" alt="بنر مغازه" class="shop-banner-img">` 
             : '';
 
+
         shopInfo.innerHTML = `
-            ${bannerHTML}
-            <h2>${shop.shop_name}</h2>
-            <p><strong>صاحب کسب‌وکار:</strong> ${shop.owner_full_name}</p>
-            <p><strong>توضیحات:</strong> ${shop.shop_description || 'ثبت نشده'}</p>
-            <p><strong>تلفن:</strong> ${shop.shop_phone || 'ثبت نشده'}</p>
-            <p><strong>آدرس:</strong> ${shop.address || 'ثبت نشده'}</p>
-            <div id="social-links-container" class="social-links" style="display: none;"></div>
-            
-            <div class="rating-section">
-                <h4>امتیاز این کسب‌وکار</h4>
-                <p id="average-rating-display">هنوز امتیازی ثبت نشده است.</p>
+            <div class="shop-details-header" style="background-image: url('${shop.banner || 'images/default-banner.png'}')">
+            </div>
+            <div class="shop-details-content">
+                <h2>${shop.shop_name}</h2>
+                <div id="average-rating-display" class="rating-display">
+                    </div>
+                <p class="shop-description">${shop.shop_description || 'توضیحات ثبت نشده'}</p>
+                
+                <div id="social-links-container" class="social-links">
+                    </div>
+                
                 <div class="stars-wrapper" id="stars-wrapper" style="display:none;">
                     <p>امتیاز شما:</p>
                     <div class="stars">
-                        <span onclick="submitRating(1)">★</span>
-                        <span onclick="submitRating(2)">★</span>
-                        <span onclick="submitRating(3)">★</span>
-                        <span onclick="submitRating(4)">★</span>
                         <span onclick="submitRating(5)">★</span>
+                        <span onclick="submitRating(4)">★</span>
+                        <span onclick="submitRating(3)">★</span>
+                        <span onclick="submitRating(2)">★</span>
+                        <span onclick="submitRating(1)">★</span>
                     </div>
                 </div>
+                
+                <hr>
+                <h3>محصولات این کسب‌وکار:</h3>
+                <div class="products-grid" id="public-products-grid"></div>
             </div>
-
-            <hr>
-            <h3>محصولات این کسب‌وکار:</h3>
-            <div class="products-grid" id="public-products-grid"></div>
         `;
 
         // بررسی وضعیت ورود کاربر
@@ -2083,4 +1980,265 @@ async function submitRating(rating) {
     } finally {
         hideLoading();
     }
+}
+
+// script.js
+
+// این توابع جدید را به انتهای فایل اضافه کن
+
+/**
+ * محتوای اولیه مودال فیلتر (لیست استان‌ها و فعالیت‌ها) را پر می‌کند.
+ */
+function populateFilterModal() {
+    // اگر قبلا پر شده بود، دوباره این کار را نکن
+    if (document.getElementById('filter-province').options.length > 1) {
+        return;
+    }
+    populateSelect('filter-province', provinces);
+    populateSelect('filter-activity', activityTypes);
+}
+
+/**
+ * لیست شهرهای مودال فیلتر را بر اساس استان انتخاب شده آپدیت می‌کند.
+ */
+function updateCitiesForFilter() {
+    const provinceSelect = document.getElementById('filter-province');
+    const selectedProvince = provinceSelect.value;
+    const cities = citiesByProvince[selectedProvince] || [];
+    populateSelect('filter-city', cities);
+}
+
+/**
+ * لیست زیرمجموعه فعالیت‌ها را در مودال فیلتر آپدیت می‌کند.
+ */
+function updateSubActivitiesForFilter() {
+    const activitySelect = document.getElementById('filter-activity');
+    const subActivitySection = document.getElementById('filter-sub-activity-section');
+    const selectedActivity = activitySelect.value;
+
+    if (selectedActivity && jobCategories[selectedActivity]) {
+        populateSelect('filter-sub-activity', jobCategories[selectedActivity]);
+        subActivitySection.style.display = 'block';
+    } else {
+        subActivitySection.style.display = 'none';
+    }
+}
+
+window.clearFilters = function() {
+    // ۱. تمام فیلدهای select را به حالت اولیه برمی‌گردانیم
+    document.getElementById('filter-activity').selectedIndex = 0;
+    document.getElementById('filter-sub-activity').selectedIndex = 0;
+    document.getElementById('filter-province').selectedIndex = 0;
+    document.getElementById('filter-city').innerHTML = '<option value="">انتخاب کنید</option>';
+    document.getElementById('sort-by').selectedIndex = 0;
+    
+    // ۲. بخش زیرمجموعه فعالیت را دوباره مخفی می‌کنیم
+    document.getElementById('filter-sub-activity-section').style.display = 'none';
+
+    // ۳. لیست کامل و پیش‌فرض مغازه‌ها را دوباره بارگذاری می‌کنیم
+    loadShops();
+
+    // ۴. پنجره فیلتر را می‌بندیم
+    closeFilterModal();
+};
+
+window.validateShopStep2 = function() {
+    // ۱. مقادیر فیلدهای آدرس را می‌خوانیم
+    const province = document.getElementById('province').value;
+    const city = document.getElementById('city').value;
+    const address = document.getElementById('address').value;
+
+    // ۲. بررسی می‌کنیم که هیچکدام خالی نباشند
+    if (!province || !city || !address.trim()) {
+        alert('لطفاً تمام فیلدهای مربوط به آدرس (استان، شهر و آدرس پستی) را تکمیل کنید.');
+        return; // اگر فیلدی خالی بود، از ادامه تابع جلوگیری می‌کنیم
+    }
+
+    // ۳. اگر همه فیلدها پر بودند، به مرحله بعد می‌رویم
+    nextStep(3);
+};
+
+// --- ۱. جستجوی زنده ---
+function initHeaderSearch() {
+    const searchInput = document.getElementById('header-search-input');
+    if (!searchInput) return;
+
+    // جستجو همزمان با تایپ کردن (با کمی تاخیر)
+    searchInput.addEventListener('input', debounce(async () => {
+        const query = searchInput.value;
+        if (query.length > 2) { // فقط برای جستجوهای بیشتر از ۲ حرف
+            await searchAndDisplayShops(query);
+        } else if (query.length === 0) {
+            loadPublicShops(); // اگر جستجو پاک شد، همه را نشان بده
+        }
+    }, 500)); // 500 میلی‌ثانیه تاخیر
+
+    // جستجوی نهایی با زدن کلید Enter
+    searchInput.addEventListener('keydown', async (event) => {
+        if (event.key === 'Enter') {
+            await searchAndDisplayShops(searchInput.value);
+        }
+    });
+}
+
+// تابع جدید برای جستجو و نمایش نتایج
+async function searchAndDisplayShops(query) {
+    const shopsGrid = document.getElementById('shops-grid');
+    if (!shopsGrid) return;
+    showLoading();
+    try {
+        // این API endpoint باید در سرور شما وجود داشته باشد
+        const response = await fetch(`${baseUrl}/api/search-shops?query=${encodeURIComponent(query)}`);
+        const shops = await response.json();
+        displayShops(shops); // از تابع displayShops برای نمایش استفاده می‌کنیم
+    } catch (error) {
+        console.error('خطا در جستجو:', error);
+    } finally {
+        hideLoading();
+    }
+}
+
+// --- ۲. انتخاب شهر ---
+function initCitySelector() {
+    const cityBtn = document.getElementById('city-selector-btn');
+    const cityModal = document.getElementById('city-modal');
+    const closeModalBtn = document.getElementById('close-city-modal');
+
+    if (!cityBtn || !cityModal || !closeModalBtn) return;
+
+    // باز کردن مودال
+    cityBtn.onclick = () => {
+        cityModal.style.display = 'flex';
+        populateProvincesInModal();
+    };
+
+    // بستن مودال
+    closeModalBtn.onclick = () => cityModal.style.display = 'none';
+    window.onclick = (event) => {
+        if (event.target == cityModal) {
+            cityModal.style.display = 'none';
+        }
+    };
+}
+
+function populateProvincesInModal() {
+    const provinceList = document.getElementById('province-list-modal');
+    provinceList.innerHTML = '';
+    provinces.forEach(province => {
+        const li = document.createElement('li');
+        li.textContent = province.text;
+        li.onclick = () => {
+            // هایلایت کردن استان انتخاب شده
+            document.querySelectorAll('#province-list-modal li').forEach(el => el.classList.remove('active'));
+            li.classList.add('active');
+            populateCitiesInModal(province.value);
+        };
+        provinceList.appendChild(li);
+    });
+}
+
+function populateCitiesInModal(provinceKey) {
+    const cityList = document.getElementById('city-list-modal');
+    cityList.innerHTML = '';
+    const cities = citiesByProvince[provinceKey] || [];
+    cities.forEach(city => {
+        const li = document.createElement('li');
+        li.textContent = city.text;
+        li.onclick = async () => {
+            // به‌روزرسانی نام شهر در هدر
+            document.getElementById('selected-city-name').textContent = city.text;
+            // بستن مودال
+            document.getElementById('city-modal').style.display = 'none';
+            // بارگذاری مغازه‌های شهر انتخاب شده
+            await loadShopsByCity(city.value);
+        };
+        cityList.appendChild(li);
+    });
+}
+
+// تابع جدید برای فیلتر کردن مغازه‌ها بر اساس شهر
+async function loadShopsByCity(cityValue) {
+    const shopsGrid = document.getElementById('shops-grid');
+    if (!shopsGrid) return;
+    showLoading();
+    try {
+        // این API endpoint باید در سرور شما وجود داشته باشد
+        const response = await fetch(`${baseUrl}/api/shops-by-city?city=${cityValue}`);
+        const shops = await response.json();
+        displayShops(shops);
+    } catch (error) {
+        console.error('خطا در بارگذاری مغازه‌های شهر:', error);
+    } finally {
+        hideLoading();
+    }
+}
+
+
+// --- ۳. منوی دسته‌بندی با اسکرول ---
+// نام تابع را برای خوانایی بهتر تغییر می‌دهیم
+function populateCategoriesMenu_FixedScroll() {
+    const mainListContainer = document.getElementById('main-categories-list');
+    if (!mainListContainer) return;
+
+    const iconMap = {
+        'آرایشی-بهداشتی-و-شوینده': 'fas fa-pump-soap',
+        'خودرو-و-قطعات': 'fas fa-car',
+        'کالای-دیجیتال': 'fas fa-laptop',
+        'مد-و-پوشاک': 'fas fa-tshirt',
+        'مواد-غذایی': 'fas fa-utensils',
+        'گل-و-گیاه': 'fas fa-leaf'
+        // ... سایر دسته‌ها
+    };
+
+    let mainListHTML = '';
+    activityTypes.forEach(activity => {
+        const iconClass = iconMap[activity.value] || 'fas fa-store';
+        mainListHTML += `<li data-key="${activity.value}"><i class="${iconClass}"></i><span>${activity.text}</span></li>`;
+    });
+    mainListContainer.innerHTML = mainListHTML;
+
+    const mainCategoryItems = mainListContainer.querySelectorAll('li');
+    mainCategoryItems.forEach(item => {
+        item.addEventListener('mouseover', () => {
+            mainCategoryItems.forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            const categoryKey = item.getAttribute('data-key');
+            displaySubCategories_FixedScroll(categoryKey); // فراخوانی تابع جدید
+        });
+    });
+
+    if (mainCategoryItems.length > 0) {
+        mainCategoryItems[0].classList.add('active');
+        const defaultKey = mainCategoryItems[0].getAttribute('data-key');
+        displaySubCategories_FixedScroll(defaultKey);
+    }
+}
+
+// تابع جدید برای نمایش زیردسته‌ها
+function displaySubCategories_FixedScroll(categoryKey) {
+    const subCategoryContainer = document.getElementById('sub-categories-display');
+    if (!subCategoryContainer) return;
+
+    const mainCategory = activityTypes.find(activity => activity.value === categoryKey);
+    const mainCategoryName = mainCategory ? mainCategory.text : '';
+    const subCategories = jobCategories[categoryKey] || [];
+    
+    let contentHTML = `<h3>همه دسته‌های ${mainCategoryName}</h3><div class="sub-categories-grid">`;
+    if (subCategories.length > 0) {
+        subCategories.forEach(sub => { contentHTML += `<a href="#">${sub.text}</a>`; });
+    } else {
+        contentHTML += '<p>زیرمجموعه‌ای یافت نشد.</p>';
+    }
+    contentHTML += '</div>';
+    subCategoryContainer.innerHTML = contentHTML;
+}
+
+// تابع کمکی Debounce برای جلوگیری از اجرای مکرر جستجو
+function debounce(func, delay) {
+    let timeout;
+    return function(...args) {
+        const context = this;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(context, args), delay);
+    };
 }

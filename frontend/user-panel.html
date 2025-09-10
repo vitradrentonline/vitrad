@@ -6,23 +6,17 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <header>
-        <div class="header-left">
-            <button id="search-btn">🔍</button>
-            <button id="filter-btn">⚙️ فیلتر</button> 
-            <input type="text" id="search-input" placeholder="جستجو نام مغازه یا محصول..." style="display: none;">
-        </div>
-        <div class="header-center">
-            <div id="header-dynamic-content"></div> 
-            <img src="images/logo.png" alt="لوگو" class="logo" id="main-logo"> 
-        </div>
+    <header class="main-header">
         <div class="header-right">
-            <div id="referral-section" class="header-referral" style="display:none;">
-                <span class="referral-label">کد معرف:</span>
-                <span id="referral-code-display"></span>
-                <button onclick="copyReferralCode()" title="کپی کردن کد معرف">📋</button>
-            </div>
-            <button id="menu-btn">☰</button>
+            <img src="images/logo.png" alt="لوگو" class="logo"> </div>
+        <nav class="header-nav">
+            <a href="index.html">صفحه اصلی</a>
+            <a href="user-panel.html">فروشگاه‌ها</a>
+            <a href="#">درباره ما</a>
+            <a href="#">تماس با ما</a>
+        </nav>
+        <div class="header-left">
+            <a href="login.html" class="btn-login">ورود / ثبت نام</a>
         </div>
     </header>
 
@@ -39,7 +33,45 @@
 
     <div class="main-content">
         <div id="filter-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close-modal-btn" onclick="closeFilterModal()">&times;</span>
+                <h3>فیلتر پیشرفته</h3>
+
+                <div class="form-group">
+                    <label for="filter-activity">نوع فعالیت:</label>
+                    <select id="filter-activity" onchange="updateSubActivitiesForFilter()"></select>
+                </div>
+
+                <div class="form-group" id="filter-sub-activity-section" style="display: none;">
+                    <label for="filter-sub-activity">زیرمجموعه فعالیت:</label>
+                    <select id="filter-sub-activity"></select>
+                </div>
+
+                <div class="form-group">
+                    <label for="filter-province">استان:</label>
+                    <select id="filter-province" onchange="updateCitiesForFilter()"></select>
+                </div>
+
+                <div class="form-group">
+                    <label for="filter-city">شهر:</label>
+                    <select id="filter-city"></select>
+                </div>
+
+                <div class="form-group">
+                    <label for="sort-by">مرتب‌سازی بر اساس:</label>
+                    <select id="sort-by">
+                        <option value="">پیش‌فرض</option>
+                        <option value="name">نام کسب‌وکار</option>
+                        <option value="date">جدیدترین</option>
+                    </select>
+                </div>
+
+                <div class="filter-buttons">
+                    <button class="btn-secondary" onclick="clearFilters()">حذف فیلتر</button>
+                    <button class="btn-primary" onclick="applyFilters()">اعمال فیلتر</button>
+                </div>
             </div>
+        </div>
         
         <div id="shops-view-header" style="text-align: center; margin-bottom: 20px;"></div>
         <div id="shops-grid" class="shops-grid"></div>

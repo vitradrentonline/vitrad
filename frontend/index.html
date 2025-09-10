@@ -1,40 +1,76 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="fa">
 <head>
     <meta charset="UTF-8">
-    <title>ویتراد - کسب و کارهای آنلاین</title>
-    <link rel="stylesheet" href="css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>صفحه اصلی - پلتفرم شما</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="css/all.min.css">
 </head>
 <body>
-    <header>
-        <div class="header-left">
-            <div id="auth-controls">
-                <button onclick="window.location.href='register.html'">ثبت‌نام</button>
-                <button onclick="window.location.href='login.html'">ورود</button>
+
+    <header class="main-header">
+        <div class="header-row-1">
+            <div class="header-right">
+                <img src="images/logo.png" alt="لوگو" class="logo">
+                <div class="header-search-container">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="header-search-input" placeholder="جستجو...">
+                </div>
+            </div>
+            <div class="header-left">
+                <div class="nav-item categories-menu">
+                    <a href="#"><i class="fas fa-bars"></i> دسته‌بندی‌ها</a>
+                    <div class="mega-menu-container">
+                        <div class="main-categories-panel">
+                            <ul id="main-categories-list">
+                                </ul>
+                        </div>
+                        <div class="sub-categories-panel" id="sub-categories-display">
+                            </div>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="header-center">
-            <img src="images/logo.png" alt="لوگو" class="logo" id="main-logo">
+
+        <div class="header-row-2">
+            <nav class="header-nav">
+                <a href="#">کالاهای با تخفیف</a>
+                <span class="nav-separator">|</span>
+                <a href="#">عمده‌فروش‌ها</a>
+                <a href="#">تک‌فروش‌ها</a>
+            </nav>
+            <div class="header-bottom-left">
+                <div class="city-selector-container">
+                    <button id="city-selector-btn">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span id="selected-city-name">انتخاب شهر</span>
+                    </button>
+                </div>
+                <a href="login.html" class="btn-login">
+                    <i class="fas fa-user-circle"></i>
+                    <span>ورود | ثبت‌نام</span>
+                </a>
+            </div>
         </div>
-        <div class="header-right">
-             </div>
     </header>
 
-    <div class="main-content">
-        <h2 style="text-align: center; color: #003366;">جدیدترین کسب‌وکارهای ثبت شده</h2>
-        <div id="shops-grid" class="shops-grid">
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1>هرچی بخوای، اینجا پیدا میشه</h1>
+            <p>بهترین کسب‌وکارهای محلی رو در نزدیکی خودت پیدا کن</p>
+        </div>
+    </section>
+
+    <main class="main-content">
+        <h2>محبوب ترین ها</h2>
+        <div class="shops-grid" id="shops-grid">
             </div>
-    </div>
+    </main>
 
-    <div class="loading-overlay" id="loading" style="display: none;">
+    <div id="loading" class="loading-overlay" style="display:none;">
         <div class="loading-spinner"></div>
-        <p>در حال بارگذاری...</p>
-    </div>
-
-    <div id="image-modal" class="image-modal">
-        <span class="close-modal-btn">&times;</span>
-        <img class="modal-content" id="modal-image">
+        <p>در حال پردازش...</p>
     </div>
 
     <script src="script.js"></script>

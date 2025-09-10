@@ -2,41 +2,65 @@
 <html lang="fa">
 <head>
     <meta charset="UTF-8">
-    <title>ورود</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ورود به حساب کاربری</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-    <a href="index.html">بازگشت به صفحه اصلی</a>
 
-    <div class="form-card" id="login-section">
-        <h2>ورود</h2>
-
-        <label for="identifier">شناسه کاربری:</label>
-        <input type="text" id="identifier">
-
-        <label for="password">رمز عبور:</label>
-        <div class="password-wrapper">
-            <input type="password" id="password">
-            <span class="password-toggle" onclick="togglePassword('password')">👁️</span>
+    <header class="main-header">
+        <div class="header-right">
+            <img src="images/logo.png" alt="لوگو" class="logo">
         </div>
 
-        <button onclick="loginUser()">ورود</button>
-        <a href="#" onclick="showForgotPassword()">فراموشی رمز عبور</a>
-    </div>
+        <nav class="header-nav">
+            <a href="index.html">صفحه اصلی</a>
+            
+            <div class="nav-item categories-menu">
+                <a href="#">دسته‌بندی‌ها <i class="fas fa-chevron-down"></i></a>
+                <div class="mega-menu-container">
+                    <div class="main-categories-panel">
+                        <ul id="main-categories-list">
+                            </ul>
+                    </div>
+                    <div class="sub-categories-panel" id="sub-categories-display">
+                        </div>
+                </div>
+            </div>
+            
+            <a href="user-panel.html">فروشگاه‌ها</a>
+            <a href="#">درباره ما</a>
+        </nav>
 
-    <div id="forgot-password" style="display: none;" class="form-card">
-        <h2>بازیابی رمز عبور</h2>
+        <div class="header-left-actions">
+            <a href="login.html" class="btn-login">ورود / ثبت نام</a>
+        </div>
+    </header>
 
-        <label for="forgot-identifier">شناسه کاربری:</label>
-        <input type="text" id="forgot-identifier">
+    <main>
+        <div class="form-card">
+            <h2>ورود به حساب کاربری</h2>
 
-        <label for="forgot-email">ایمیل:</label>
-        <input type="email" id="forgot-email">
+            <label for="identifier">ایمیل یا شماره موبایل:</label>
+            <input type="text" id="identifier" required>
 
-        <button onclick="requestPasswordReset()">دریافت کد</button>
-        <a href="#" onclick="hideForgotPassword()">بازگشت به صفحه ورود</a>
-    </div>
+            <label for="password">رمز عبور:</label>
+            <div class="password-wrapper">
+                <input type="password" id="password" required>
+                <span class="password-toggle" onclick="togglePassword('password')">👁️</span>
+            </div>
 
+            <a href="forgot-password.html" class="forgot-password-link">فراموشی رمز عبور</a>
+            
+            <button onclick="loginUser()">ورود</button>
+
+            <div class="register-link">
+                هنوز حساب کاربری نداری؟ <a href="register.html">ثبت نام کن</a>
+            </div>
+        </div>
+    </main>
+    
     <div id="loading" class="loading-overlay" style="display:none;">
         <div class="loading-spinner"></div>
         <p>در حال پردازش...</p>

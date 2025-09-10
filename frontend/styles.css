@@ -8,27 +8,10 @@ body, button, input, select, textarea {
     font-family: 'Vazir', Arial, sans-serif !important;
     margin: 0;
     padding: 0;
-    background-color: #ffffff; /* fallback */
-    background-image: url('persian-lotus.png'); /* عکس گل لوتوس باستانی */
-    background-size: cover; /* پوشش کامل */
-    background-position: center;
-    background-repeat: repeat; /* تکرار برای صفحات بلند */
-    color: #000000;
+    background-color: #f8f9fa; /* << رنگ جدید و ملایم */
+    color: #333; /* رنگ متن اصلی کمی تیره‌تر برای خوانایی بهتر */
     direction: rtl;
     box-sizing: border-box;
-}
-
-header {
-    background-color: #ffffff;
-    padding: 20px;
-    text-align: center;
-    border-bottom: 3px solid #D4AF37;
-}
-
-header h2 {
-    margin: 0;
-    font-size: 28px;
-    color: #003366; /* آبی عمیق */
 }
 
 /* فرم‌ها با کنتراست بالا و semi-transparent */
@@ -286,21 +269,6 @@ button.logout-btn {
     display: block;
 }
 
-/* هدر */
-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 5px 15px; /* کاهش پدینگ */
-    background-color: rgba(255, 255, 255, 0.85); /* کمی شفافیت کمتر برای خوانایی بهتر */
-    border-bottom: 2px solid #D4AF37; /* ضخامت کمتر */
-}
-
-.header-left, .header-right {
-    display: flex;
-    align-items: center;
-}
-
 #search-input {
     margin-right: 10px;
     padding: 8px;
@@ -404,21 +372,6 @@ header {
     margin-bottom: 10px;
 }
 
-.shops-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 20px;
-}
-
-.shop-card {
-    background: rgba(255, 255, 255, 0.8);
-    border: 2px solid #D4AF37;
-    border-radius: 15px;
-    padding: 15px;
-    text-align: center;
-    cursor: pointer;
-}
-
 .shop-card img {
     width: 100%;
     height: 150px;
@@ -443,7 +396,8 @@ header {
 .product-card img {
     width: 100%;
     height: 120px;
-    object-fit: cover;
+    object-fit: contain; /* <<<<<<< تغییر از cover به contain */
+    background-color: #f8f9fa; /* پس‌زمینه روشن برای فضای خالی احتمالی */
 }
 
 .modal select {
@@ -576,24 +530,6 @@ textarea {
     background: #005599;
 }
 
-/* استایل آکاردیون */
-.accordion-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-}
-.accordion-header h3 {
-    border-bottom: none; /* خط زیرین عنوان را حذف می‌کنیم چون کل هدر کلیک‌خور است */
-    padding-bottom: 0;
-}
-.accordion-icon {
-    font-size: 20px;
-    transition: transform 0.3s;
-}
-.accordion-header.active .accordion-icon {
-    transform: rotate(180deg);
-}
 .product-card-edit { /* استایل جدید برای کارت محصول در پنل مدیریت */
     position: relative;
     padding-bottom: 50px; /* فضا برای اینپوت اولویت */
@@ -620,7 +556,8 @@ textarea {
 .product-img-preview {
     width: 60px;
     height: 60px;
-    object-fit: cover;
+    object-fit: contain; /* <<<<<<< تغییر از cover به contain */
+    background-color: #f8f9fa; /* پس‌زمینه روشن برای فضای خالی احتمالی */
     border-radius: 5px;
     margin-left: 15px;
 }
@@ -652,39 +589,6 @@ textarea {
     object-fit: cover;
     border-radius: 10px;
     margin-bottom: 20px;
-}
-
-/* ======== استایل جدید برای هدر داینامیک ======== */
-
-#header-dynamic-content {
-    display: none; /* در حالت عادی مخفی است */
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-}
-
-#header-dynamic-content h4 {
-    margin: 0;
-    color: #003366;
-    font-size: 16px;
-}
-
-#header-dynamic-content button {
-    background: none;
-    border: 1px solid #003366;
-    color: #003366;
-    padding: 3px 10px;
-    font-size: 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-top: 5px;
-    transition: all 0.3s ease;
-}
-
-#header-dynamic-content button:hover {
-    background: #003366;
-    color: white;
-    transform: scale(1.05);
 }
 
 /* ======== استایل مودال تصویر (کد جدید) ======== */
@@ -812,29 +716,15 @@ textarea {
 }
 
 .rating-section { text-align: center; margin: 20px 0; }
-.stars-wrapper .stars { font-size: 30px; color: #ccc; cursor: pointer; }
-.stars span:hover, .stars span:hover ~ span { color: #ffd700; }
-
-/* استایل کد معرف در هدر */
-.header-referral {
-    display: flex;
-    align-items: center;
-    background-color: #f0f0f0;
-    border-radius: 20px;
-    padding: 5px 10px;
-    margin-right: 20px; /* فاصله از لوگو */
-}
-.header-referral span {
-    font-weight: bold;
-    color: #003366;
-    margin-left: 8px;
-}
-.header-referral button {
-    background: none;
-    border: none;
-    font-size: 18px;
+.stars-wrapper .stars {
+    font-size: 30px;
+    color: #ccc;
     cursor: pointer;
+    display: flex;
+    flex-direction: row-reverse; /* ستاره‌ها را بصری برعکس می‌کند */
+    justify-content: center;     /* ستاره‌ها را در وسط قرار می‌دهد */
 }
+.stars span:hover, .stars span:hover ~ span { color: #ffd700; }
 
 /* استایل بج امتیاز در صفحه ویرایش */
 .shop-score-badge {
@@ -849,32 +739,840 @@ textarea {
     margin-right: 10px;
 }
 
-/* استایل نهایی کد معرف در هدر */
-.header-referral {
-    display: flex;
-    align-items: center;
-    background-color: #e9ecef; /* کمی تیره‌تر برای تمایز */
-    border: 1px solid #dee2e6;
-    border-radius: 20px;
-    padding: 5px 12px;
-    margin-left: 15px; /* فاصله از دکمه منو */
-}
 .referral-label {
     font-size: 13px;
     color: #555;
     margin-left: 5px;
 }
-.header-referral #referral-code-display {
-    font-weight: bold;
-    font-size: 15px;
-    color: #003366;
-    margin-left: 8px;
+
+/* اصلاح مودال */
+.modal {
+    display: none; /* پیش‌فرض مخفی */
+    position: fixed;
+    z-index: 1000;
+    left: 50;
+    top: 50;
+    width: 100%;
+    height: 100%;
+
+    /* ✅ حذف پس‌زمینه سفید اضافی */
+    background: none !important;
 }
-.header-referral button {
+
+.modal-content {
+    background-color: #fff;   /* جعبه سفید */
+    padding: 25px;
+    border: 2px solid #003366;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+
+    /* ✅ وسط‌چین شدن */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    
+    /* سایه برای زیبایی */
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+}
+
+.close-modal-btn {
+    color: #aaa;
+    position: absolute;
+    right: 15px; /* دکمه بستن را به سمت راست بالا منتقل می‌کنیم */
+    top: 10px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-modal-btn:hover,
+.close-modal-btn:focus {
+    color: black;
+    text-decoration: none;
+}
+
+/* styles.css */
+
+/* این استایل‌ها را به انتهای فایل اضافه کنید */
+.filter-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.filter-buttons button {
+    width: 48%; /* هر دکمه تقریبا نصف عرض را بگیرد */
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.2s;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+/* استایل برای پیام "هیچ نتیجه‌ای یافت نشد" */
+.no-results-message {
+    width: 80%; /* یا هر عرض دلخواه دیگر */
+    max-width: 400px; /* حداکثر عرض برای ظاهر بهتر */
+    margin: 50px auto; /* وسط چین افقی و فاصله از بالا و پایین */
+    padding: 30px;
+    background-color: rgba(255, 255, 255, 0.8); /* سفید با 80% شفافیت */
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* سایه ملایم */
+    text-align: center;
+    font-size: 1.1em;
+    color: #333;
+}
+
+.no-results-message p {
+    margin: 0; /* حذف مارجین پیش‌فرض پاراگراف */
+    line-height: 1.6;
+}
+
+/* styles.css */
+
+.shop-card {
+    /* ... استایل‌های قبلی شما برای shop-card ... */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* جلوگیری از بیرون زدن محتوا از گوشه‌های گرد */
+}
+
+.shop-card img {
+    width: 100%;
+    height: 160px; /* ارتفاع ثابت برای بنر */
+    object-fit: cover; /* عکس را به بهترین شکل در کادر جا می‌دهد */
+}
+
+.shop-card-no-banner {
+    width: 100%;
+    height: 160px;
+    background-color: #e9ecef; /* رنگ خاکستری برای مغازه‌های بدون بنر */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+}
+
+.shop-card-info {
+    padding: 15px;
+    background-color: #fff;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.shop-card-info h3 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 1.1em;
+    color: #333;
+}
+
+.shop-card-activity {
+    font-size: 12px; /* ✅ فونت نوع فعالیت کوچکتر شد */
+    color: #777;
+    margin-bottom: 8px;
+}
+
+.shop-card-rating {
+    font-size: 13px; /* ✅ فونت امتیاز کوچکتر شد */
+    color: #D4AF37;
+    font-weight: bold;
+}
+
+.shop-card-rating span {
+    font-size: 11px; /* ✅ فونت تعداد نظرات کوچکتر شد */
+}
+
+.product-instagram-link {
+    font-size: 24px; /* اندازه آیکون */
+    color: #333; /* رنگ پیش‌فرض */
+    text-decoration: none;
+    transition: color 0.3s ease;
+    margin-top: 5px; /* کمی فاصله از بالا */
+    display: inline-block;
+}
+
+.product-instagram-link:hover {
+    color: #C13584; /* رنگ برند اینستاگرام در زمان هاور */
+}
+
+/* استایل بخش Hero */
+.hero-section {
+    background-image: url('images/hero-background.jpg'); /* یک عکس پس‌زمینه جذاب انتخاب کن */
+    background-size: cover;
+    background-position: center;
+    color: white;
+    text-align: center;
+    padding: 100px 20px;
+}
+
+.hero-content h1 {
+    font-size: 48px;
+    margin-bottom: 10px;
+}
+
+.search-bar {
+    max-width: 600px;
+    margin: 10px auto 0;
+    display: flex;
+}
+
+.search-bar input {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 0 25px 25px 0;
+    font-size: 16px;
+}
+
+.search-bar button {
+    padding: 15px 30px;
+    border: none;
+    border-radius: 25px 0 0 25px;
+    background-color: #D4AF37;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+/* استایل بخش دسته‌بندی */
+.categories-section {
+    padding: 50px 20px;
+    text-align: center;
+}
+
+.categories-section h2, .main-content h2 {
+    font-size: 32px;
+    margin-bottom: 30px;
+}
+
+.category-grid {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.category-card {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    text-align: center;
+    width: 150px;
+}
+
+.category-card i {
+    font-size: 40px;
+    color: #D4AF37;
+    margin-bottom: 15px;
+}
+
+.category-card span {
+    font-weight: bold;
+}
+
+.shops-grid {
+    display: grid;
+    /* ✅ عرض کارت‌ها کوچکتر شد تا تعداد بیشتری در هر ردیف جا شوند */
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
+    gap: 20px;
+    padding: 0 30px;
+}
+.shop-card {
+    background: #ffffff;
+    box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+
+    /* حاشیه گرادیانت */
+    border: 3px solid transparent;
+    border-image: linear-gradient(45deg, #003366, #D4AF37) 1;
+    
+    /* گرد کردن گوشه‌ها */
+    border-radius: 15px; 
+    
+    /* ✅ این خط کد مشکل را حل می‌کند */
+    overflow: hidden; 
+}
+
+.shop-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 20px rgba(0,0,0,0.15);
+}
+
+.shop-card-image img, .shop-card-image .shop-card-no-banner {
+    width: 100%;
+    height: 120px; /* ✅ ارتفاع عکس کمتر شد */
+    object-fit: cover;
+}
+
+.shop-card-content {
+    padding: 15px; /* ✅ فاصله داخلی کمتر شد */
+}
+
+
+.shop-card-content h3 {
+    margin: 0 0 5px;
+    font-size: 16px; /* ✅ فونت نام مغازه کوچکتر شد */
+}
+
+/* in styles.css */
+.shop-info { /* استایل کانتینر اصلی */
+    max-width: 900px;
+    border: none;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    background: white;
+    padding: 0;
+    border-radius: 15px;
+    overflow: hidden;
+}
+.shop-details-header {
+    height: 300px;
+    background-size: cover;
+    background-position: center;
+}
+.shop-details-content {
+    padding: 30px;
+}
+
+/* in styles.css */
+
+/* استایل‌های جدید برای هدر با جستجو */
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background-color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.main-header .btn-login {
+    white-space: nowrap; /* جلوی شکستن متن دکمه را می‌گیرد */
+}
+
+/* in styles.css */
+.forgot-password-link {
+    display: block;
+    text-align: left;
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: #555;
+    text-decoration: none;
+}
+.forgot-password-link:hover {
+    text-decoration: underline;
+}
+
+/* in styles.css */
+
+/* استایل لینک ثبت نام در صفحه ورود */
+.register-link {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 15px;
+    color: #555;
+}
+
+.register-link a {
+    color: #003366; /* رنگ آبی تم اصلی */
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.register-link a:hover {
+    text-decoration: underline;
+}
+
+/* in styles.css */
+/* ========== کد نهایی و کاملاً اصلاح شده برای منوی سبک باسلام ========== */
+
+/* نگهدارنده اصلی آیتم "دسته‌بندی‌ها" */
+.categories-menu {
+    position: relative; /* ✅ مهم: این خط مشکل موقعیت باز شدن منو را حل می‌کند */
+}
+
+/* پنل اصلی مگا منو */
+.mega-menu-container {
+    display: none; /* ✅ مهم: این خط مشکل همیشه باز بودن منو را حل می‌کند */
+    position: absolute;
+    top: 100%; /* ✅ مهم: این باعث می‌شود منو دقیقا زیر هدر باز شود */
+    right: 0;
+    width: 800px;
+    background-color: #fff;
+    border-radius: 0 0 15px 15px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    z-index: 1000;
+    border-top: 3px solid #D4AF37;
+    flex-direction: row;
+}
+
+/* نمایش منو فقط در زمان هاور (رفتن ماوس روی دکمه) */
+.categories-menu:hover .mega-menu-container {
+    display: flex; /* منو فقط در این حالت نمایش داده می‌شود */
+}
+
+/* پنل سمت راست: لیست فعالیت‌های اصلی */
+.main-categories-panel {
+    width: 220px;
+    border-left: 1px solid #f0f0f0;
+    padding: 5px 0;
+}
+
+.main-categories-panel ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.main-categories-panel li {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    white-space: nowrap; /* جلوگیری از شکستن متن به خط بعدی */
+}
+
+.main-categories-panel li i {
+    font-size: 16px;
+    margin-left: 10px;
+    width: 20px;
+    color: #555;
+}
+
+.main-categories-panel li span {
+    font-size: 14px;
+}
+
+/* استایل آیتم فعال (هاور شده) */
+.main-categories-panel li.active {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+.main-categories-panel li.active i, 
+.main-categories-panel li.active span {
+    color: #003366;
+}
+
+
+/* پنل سمت چپ: نمایش زیرمجموعه‌ها */
+.sub-categories-panel {
+    flex-grow: 1;
+    padding: 20px;
+}
+
+.sub-categories-panel h3 {
+    margin: 0 0 15px;
+    font-size: 16px;
+}
+
+.sub-categories-grid {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    max-height: 200px;
+    gap: 0 10px;
+}
+
+.sub-categories-grid a {
+    padding: 6px 10px;
+    color: #444;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.sub-categories-grid a:hover {
+    background-color: #f5f5f5;
+    color: #D4AF37;
+}
+
+.header-left-actions .btn-login {
+    background: linear-gradient(to right, #003366, #D4AF37);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+/* نگهدارنده آیتم "دسته‌بندی‌ها" */
+.categories-menu {
+    position: relative; /* برای موقعیت‌دهی صحیح پنل منو */
+}
+
+/* پنل اصلی مگا منو */
+.mega-menu-container {
+    display: none; /* در حالت عادی مخفی است */
+    position: absolute;
+    top: 100%; /* دقیقا زیر هدر باز می‌شود */
+    right: 0;
+    width: 800px;
+    background-color: #fff;
+    border-radius: 0 0 15px 15px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    z-index: 1000;
+    border-top: 3px solid #D4AF37;
+    flex-direction: row;
+}
+
+/* نمایش منو فقط در زمان هاور */
+.categories-menu:hover .mega-menu-container {
+    display: flex;
+}
+
+/* پنل سمت راست: لیست فعالیت‌ها */
+.main-categories-panel {
+    width: 220px;
+    border-left: 1px solid #f0f0f0;
+    padding: 5px 0;
+}
+
+.main-categories-panel ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.main-categories-panel li {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+}
+
+.main-categories-panel li i {
+    font-size: 16px;
+    margin-left: 10px;
+    width: 20px;
+    color: #555;
+}
+
+.main-categories-panel li span {
+    font-size: 14px;
+}
+
+.main-categories-panel li.active {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+.main-categories-panel li.active i, 
+.main-categories-panel li.active span {
+    color: #003366;
+}
+
+/* پنل سمت چپ: نمایش زیرمجموعه‌ها */
+.sub-categories-panel {
+    flex-grow: 1;
+    padding: 20px;
+}
+
+.sub-categories-panel h3 {
+    margin: 0 0 15px;
+    font-size: 16px;
+}
+
+.sub-categories-grid {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    max-height: 200px;
+    gap: 0 10px;
+}
+
+.sub-categories-grid a {
+    padding: 6px 10px;
+    color: #444;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.sub-categories-grid a:hover {
+    background-color: #f5f5f5;
+    color: #D4AF37;
+}
+
+/* in styles.css */
+/* ========== کد نهایی و کامل برای هدر دو ردیفه جدید ========== */
+
+/* ساختار کلی هدر */
+.main-header {
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    padding: 10px 40px; /* پدینگ کمتر برای ظاهر جمع و جورتر */
+    border-bottom: 1px solid #f0f0f0;
+}
+
+/* --- ردیف اول: بالا --- */
+.header-row-1 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px; /* فاصله از ردیف دوم */
+}
+
+.header-right, .header-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.main-header .logo {
+    width: 50px;
+    height: auto;
+}
+
+/* نوار جستجو */
+.header-search-container {
+    position: relative;
+    width: 450px;
+}
+
+.header-search-container .search-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #aaa;
+}
+
+#header-search-input {
+    width: 100%;
+    padding: 12px 40px 12px 15px;
+    border: 1px solid #e0e0e0;
+    background-color: #fff;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+}
+#header-search-input:focus {
+    border-color: #D4AF37;
+    outline: none;
+}
+
+/* دکمه ورود و ثبت نام */
+.btn-login {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #444;
+    font-weight: bold;
+    font-size: 14px;
+    white-space: nowrap;
+}
+.btn-login i {
+    font-size: 18px;
+}
+
+
+/* --- ردیف دوم: پایین / منو --- */
+.header-row-2 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-nav {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.header-nav a {
+    text-decoration: none;
+    color: #555;
+    font-size: 14px;
+    font-weight: normal;
+}
+.header-nav a:hover {
+    color: #003366;
+}
+
+/* جداکننده | */
+.nav-separator {
+    color: #e0e0e0;
+    font-size: 20px;
+}
+
+/* انتخاب شهر */
+.city-selector-container button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     background: none;
     border: none;
-    font-size: 18px;
     cursor: pointer;
-    padding: 0;
-    color: #555; /* رنگ آیکون کپی */
+    font-size: 14px;
+    color: #555;
+}
+
+/* منوی دسته‌بندی (کدهای قبلی بدون تغییر کار می‌کنند) */
+.categories-menu {
+    position: relative;
+}
+.categories-menu > a { /* استایل خود دکمه دسته‌بندی */
+    font-weight: bold !important;
+    color: #333 !important;
+}
+.categories-menu > a i {
+    margin-left: 5px;
+}
+
+.mega-menu-container {
+    display: none;
+    position: absolute;
+    top: 150%; /* کمی فاصله از منو برای زیبایی */
+    right: 0;
+    width: 900px;
+    background-color: #fff;
+    border-radius: 15px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    z-index: 1000;
+    border: 1px solid #f0f0f0;
+    flex-direction: row;
+}
+
+.categories-menu:hover .mega-menu-container {
+    display: flex;
+}
+
+.main-categories-panel {
+    width: 250px;
+    border-left: 1px solid #f0f0f0;
+    height: 450px;
+    overflow-y: auto;
+}
+.main-categories-panel::-webkit-scrollbar { width: 5px; }
+.main-categories-panel::-webkit-scrollbar-thumb { background: #ccc; border-radius: 5px; }
+.main-categories-panel ul { list-style: none; padding: 0; margin: 0; }
+.main-categories-panel li { display: flex; align-items: center; padding: 15px 20px; cursor: pointer; }
+.main-categories-panel li.active { background-color: #f8f9fa; font-weight: bold; }
+.sub-categories-panel { flex-grow: 1; padding: 25px; }
+
+.header-bottom-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+/* in styles.css */
+/* ========== استایل جدید برای کارت‌های افقی و حرفه‌ای فروشگاه ========== */
+
+/* چیدمان کلی کارت‌ها در صفحه */
+.shops-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* هر کارت تمام عرض را اشغال می‌کند */
+    gap: 20px;
+    padding: 0 30px;
+}
+
+/* استایل اصلی کارت افقی */
+.shop-card-horizontal {
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    padding: 20px;
+    transition: box-shadow 0.3s ease;
+    border: 1px solid #f0f0f0;
+}
+.shop-card-horizontal:hover {
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+/* بخش بالایی کارت (لوگو و اطلاعات) */
+.card-top-section {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+}
+
+.shop-logo {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%; /* گرد کردن لوگو */
+    object-fit: cover;
+    margin-left: 15px;
+    border: 2px solid #f0f0f0;
+}
+
+.shop-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.shop-name {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 0 0 5px;
+}
+
+.shop-meta {
+    font-size: 14px;
+    color: #777;
+}
+
+.shop-meta .separator {
+    margin: 0 8px;
+    color: #ccc;
+}
+
+/* بخش پایینی کارت (محصولات برتر) */
+.card-bottom-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.top-products-grid {
+    display: flex;
+    gap: 10px;
+}
+
+.product-preview {
+    width: 80px;
+    height: 80px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #eee;
+}
+
+.product-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.no-products-msg {
+    font-size: 13px;
+    color: #999;
 }
