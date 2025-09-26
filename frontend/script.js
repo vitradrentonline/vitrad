@@ -225,8 +225,7 @@ window.validateAndNextStep = async function (step) {
     }
 }
 
-// ✅ تابع جدید برای بارگذاری مغازه‌ها در index.html
-// in script.js
+// ✅ کد اصلاح شده
 async function loadPublicShops() {
     const shopsGrid = document.getElementById('shops-grid');
     if (!shopsGrid) return;
@@ -234,29 +233,28 @@ async function loadPublicShops() {
     try {
         const response = await fetch(`${baseUrl}/api/public-shops`);
         const shops = await response.json();
-        
+
         shopsGrid.innerHTML = '';
 
-        if (!Array.isArray(shops)) {
-            console.error("پاسخ دریافتی از سرور برای مغازه‌ها یک آرایه نیست!", shops);
-            shopsGrid.innerHTML = '<p>خطایی در دریافت اطلاعات از سرور رخ داده است.</p>';
-            return;
-        }
-        if (shops.length === 0) {
+        if (!Array.isArray(shops) || shops.length === 0) {
             shopsGrid.innerHTML = '<p>در حال حاضر هیچ مغازه‌ای برای نمایش وجود ندارد.</p>';
             return;
         }
 
         shops.forEach(shop => {
             const card = document.createElement('div');
-            // از یک کلاس جدید برای استایل‌دهی استفاده می‌کنیم
-            card.className = 'shop-card-horizontal'; 
-            
-            // --- بخش جدید: ساخت HTML برای محصولات برتر ---
+            card.className = 'shop-card-horizontal';
+
+            // --- خط جدید و کلیدی اینجاست ---
+            // با کلیک روی کارت، به صفحه جزئیات با آیدی همان مغازه برو
+            card.onclick = () => {
+                window.location.href = `shop-details.html?shop_id=${shop._id}`;
+            };
+            // --- پایان تغییر ---
+
             let topProductsHTML = '';
             if (shop.products && shop.products.length > 0) {
                 shop.products.forEach(product => {
-                    // هر محصول یک لینک به صفحه جزئیات خودش خواهد بود
                     topProductsHTML += `
                         <a href="product-details.html?product_id=${product._id}" class="product-preview">
                             <img src="${product.image}" alt="${product.name}">
@@ -267,7 +265,6 @@ async function loadPublicShops() {
                 topProductsHTML = '<p class="no-products-msg">محصولی برای نمایش وجود ندارد</p>';
             }
 
-            // --- ساختار HTML نهایی کارت ---
             card.innerHTML = `
                 <div class="card-top-section">
                     <img src="${shop.logo || 'images/default-logo.png'}" alt="لوگوی ${shop.shop_name}" class="shop-logo">
@@ -863,6 +860,59 @@ document.addEventListener('DOMContentLoaded', async () => {
             closeImageModal();
         }
     });
+    // این کد را در فایل script.js خود و در محدوده‌ای که پس از لاگین کاربر اجرا می‌شود، قرار دهید
+
+    // ابتدا عناصر را از صفحه انتخاب می‌کنیم
+    const profilePictureBtn = document.getElementById('profile-picture-btn');
+    const dropdownMenu = document.getElementById('profile-dropdown-menu');
+    const myShopsMenuItem = document.getElementById('my-shops-menu-item');
+    const logoutBtn = document.getElementById('logout-btn');
+
+    // بررسی می‌کنیم که آیا این عناصر در صفحه وجود دارند یا خیر
+    if (profilePictureBtn && dropdownMenu && myShopsMenuItem && logoutBtn) {
+
+        // --- ۱. به‌روزرسانی اطلاعات کاربر ---
+        // فرض می‌کنیم اطلاعات کاربر و فروشگاه‌های او در localStorage ذخیره شده است
+        const user = JSON.parse(localStorage.getItem('user'));
+        const shops = JSON.parse(localStorage.getItem('shops'));
+
+        // به‌روزرسانی عکس پروفایل
+        // نکته: سرور شما باید پس از لاگین، آدرس عکس پروفایل را در آبجکت user برگرداند
+        if (user && user.profile_picture_url) {
+            profilePictureBtn.src = user.profile_picture_url;
+        } else {
+            profilePictureBtn.src = 'images/default-avatar.png'; // تصویر پیش‌فرض
+        }
+
+        // نمایش شرطی آیتم "مغازه‌های من"
+        if (shops && shops.length > 0) {
+            myShopsMenuItem.style.display = 'block';
+        }
+
+        // --- ۲. مدیریت باز و بسته شدن منو ---
+        profilePictureBtn.addEventListener('click', (event) => {
+            // از بسته شدن آنی منو توسط رویداد window جلوگیری می‌کند
+            event.stopPropagation();
+            dropdownMenu.classList.toggle('show');
+        });
+
+        // بستن منو در صورتی که کاربر روی هر جای دیگری از صفحه کلیک کند
+        window.addEventListener('click', () => {
+            if (dropdownMenu.classList.contains('show')) {
+                dropdownMenu.classList.remove('show');
+            }
+        });
+
+        // --- ۳. پیاده‌سازی دکمه خروج ---
+        logoutBtn.addEventListener('click', () => {
+            // تمام اطلاعات ذخیره شده کاربر را پاک می‌کنیم
+            localStorage.removeItem('user');
+            localStorage.removeItem('shops');
+            
+            // کاربر را به صفحه اصلی هدایت می‌کنیم
+            window.location.href = 'index.html';
+        });
+    }
 });
 
 // بهبود لاگ‌اوت
@@ -1121,31 +1171,44 @@ function renderShops(shops) {
 }
 
 function displayShops(shops) {
-    const grid = document.getElementById('shops-grid');
-    grid.innerHTML = ''; // پاک کردن نتایج قبلی
+    const shopsGrid = document.getElementById('shops-grid');
+    if (!shopsGrid) return; // اگر المان گرید وجود نداشت، ادامه نده
+    
+    shopsGrid.innerHTML = ''; // پاک کردن محتوay قبلی
 
-    if (!shops || shops.length === 0) {
-        // تغییر اینجا: اضافه کردن یک div با کلاس برای استایل دهی
-        grid.innerHTML = `
-            <div class="no-results-message">
-                <p>هیچ مغازه‌ای با این مشخصات یافت نشد.</p>
-            </div>
-        `;
+    if (!Array.isArray(shops) || shops.length === 0) {
+        shopsGrid.innerHTML = '<p>هیچ کسب‌وکاری برای نمایش یافت نشد.</p>';
         return;
     }
 
     shops.forEach(shop => {
-        const card = document.createElement('div');
-        card.className = 'shop-card';
-        const bannerHTML = shop.banner ? `<img src="${shop.banner}" alt="بنر مغازه">` : '';
+        const shopCard = document.createElement('div');
+        shopCard.className = 'shop-card';
 
-        card.innerHTML = `
-            ${bannerHTML}
-            <h3>${shop.shop_name}</h3>
-            <p>${shop.shop_description || ''}</p>
+        // ✅ ساختار HTML کارت باید با این کد جایگزین شود
+        shopCard.innerHTML = `
+            <a href="shop-details.html?id=${shop._id}" style="text-decoration: none; color: inherit; display: flex; flex-direction: column; flex-grow: 1;">
+                <img src="${shop.banner || 'images/placeholder-banner.jpg'}" alt="${shop.shop_name} Banner" class="banner-img">
+                <div class="shop-card-body">
+                    <div class="card-top">
+                        <img src="${shop.logo || 'images/placeholder-logo.png'}" alt="${shop.shop_name} Logo" class="shop-logo">
+                        <div style="overflow: hidden;">
+                            <h3>${shop.shop_name}</h3>
+                            <p>${shop.city || 'شهر نامشخص'}</p>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            <div class="shop-card-footer">
+                <span>امتیاز</span>
+                <div class="rating">
+                    <span>${shop.rating_average ? shop.rating_average.toFixed(1) : 'جدید'}</span>
+                    <i class="fas fa-star" style="color: #f1c40f;"></i>
+                </div>
+            </div>
         `;
-        card.onclick = () => window.location.href = `shop-details.html?shop_id=${shop._id}`;
-        grid.appendChild(card);
+
+        shopsGrid.appendChild(shopCard);
     });
 }
 
@@ -2241,4 +2304,50 @@ function debounce(func, delay) {
         clearTimeout(timeout);
         timeout = setTimeout(() => func.apply(context, args), delay);
     };
+}
+
+/**
+ * هدر داینامیک پروفایل کاربر را راه‌اندازی می‌کند، شامل عکس پروفایل
+ * و منوی کشویی به همراه منطق آن.
+ * @param {object} user - آبجکت کاربر وارد شده از localStorage.
+ */
+function setupProfileHeader(user) {
+    const profilePicElement = document.getElementById('user-profile-picture');
+    const dropdownElement = document.getElementById('profile-dropdown');
+    const myShopsLink = document.getElementById('my-shops-link');
+
+    // اگر عناصر مورد نیاز در صفحه وجود نداشتند، کاری انجام نده.
+    if (!profilePicElement || !dropdownElement || !myShopsLink) {
+        console.error('عناصر هدر پروفایل در DOM پیدا نشدند.');
+        return;
+    }
+
+    // --- ۱. به‌روزرسانی عکس پروفایل ---
+    // نکته مهم: آبجکت user شما از سرور/localStorage باید فیلدی به نام 'profile_picture_url' داشته باشد.
+    // شما باید قابلیت آپلود و ذخیره این URL را در صفحه "ویرایش پروفایل" اضافه کنید.
+    if (user.profile_picture_url) {
+        profilePicElement.src = user.profile_picture_url;
+    } else {
+        profilePicElement.src = 'images/default-avatar.png'; // در غیر این صورت، از آواتار پیش‌فرض استفاده کن
+    }
+
+    // --- ۲. نمایش شرطی لینک "فروشگاه‌های من" ---
+    const shops = JSON.parse(localStorage.getItem('shops'));
+    if (shops && shops.length > 0) {
+        myShopsLink.style.display = 'block';
+    }
+
+    // --- ۳. افزودن شنونده کلیک برای نمایش/مخفی کردن منو ---
+    profilePicElement.addEventListener('click', (event) => {
+        // این خط از بسته شدن فوری منو توسط شنونده 'window' جلوگیری می‌کند
+        event.stopPropagation();
+        dropdownElement.classList.toggle('show');
+    });
+
+    // --- ۴. افزودن شنونده عمومی برای بستن منو با کلیک در خارج از آن ---
+    window.addEventListener('click', () => {
+        if (dropdownElement.classList.contains('show')) {
+            dropdownElement.classList.remove('show');
+        }
+    });
 }

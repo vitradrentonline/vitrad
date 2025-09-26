@@ -4,59 +4,84 @@
     <meta charset="UTF-8">
     <title>داشبورد کاربر</title>
     <link rel="stylesheet" href="styles.css">
-</head>
+    <link rel="stylesheet" href="css/all.min.css"> </head>
 <body>
+
     <header class="main-header">
-        <div class="header-right">
-            <img src="images/logo.png" alt="لوگو" class="logo"> </div>
-        <nav class="header-nav">
-            <a href="index.html">صفحه اصلی</a>
-            <a href="user-panel.html">فروشگاه‌ها</a>
-            <a href="#">درباره ما</a>
-            <a href="#">تماس با ما</a>
-        </nav>
-        <div class="header-left">
-            <a href="login.html" class="btn-login">ورود / ثبت نام</a>
+        <div class="header-row-1">
+            <div class="header-right">
+                <img src="images/logo.png" alt="لوگو" class="logo">
+                <div class="header-search-container">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="header-search-input" placeholder="جستجو...">
+                </div>
+            </div>
+            <div class="header-left">
+                <div class="nav-item categories-menu">
+                    <a href="#"><i class="fas fa-bars"></i> دسته‌بندی‌ها</a>
+                    <div class="mega-menu-container">
+                        <div class="main-categories-panel">
+                            <ul id="main-categories-list">
+                                </ul>
+                        </div>
+                        <div class="sub-categories-panel" id="sub-categories-display">
+                            </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="header-row-2">
+            <nav class="header-nav">
+                <a href="#">کالاهای با تخفیف</a>
+                <span class="nav-separator">|</span>
+                <a href="#">عمده‌فروش‌ها</a>
+                <a href="#">تک‌فروش‌ها</a>
+            </nav>
+            <div class="header-bottom-left">
+                <div class="city-selector-container">
+                    <button id="city-selector-btn">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span id="selected-city-name">انتخاب شهر</span>
+                    </button>
+                </div>
+                <div class="profile-container">
+                    <img src="images/default-avatar.png" alt="عکس پروفایل" id="profile-picture-btn">
+                    <div class="profile-dropdown-menu" id="profile-dropdown-menu">
+                        <ul>
+                            <li><a href="update-profile.html">ویرایش پروفایل</a></li>
+                            <li><a href="create-shop.html">ایجاد مغازه</a></li>
+                            <li id="my-shops-menu-item" style="display: none;"><a href="user-panel.html?my=true">مغازه‌های من</a></li>
+                            <li><a href="#">مغازه‌های نشان‌شده</a></li>
+                            <li class="dropdown-divider"></li>
+                            <li><button id="logout-btn">خروج</button></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
     </header>
-
-    <div id="sidebar" class="sidebar">
-        <button onclick="closeSidebar()">×</button>
-        <ul>
-            <li><button onclick="window.location.href='update-profile.html'">ویرایش پروفایل</button></li>
-            <li><button onclick="window.location.href='create-shop.html'">ایجاد مغازه</button></li>
-            <li id="shops-menu" style="display: none;"><button onclick="viewMyShops()">لیست مغازه‌های من</button></li>
-            <li><button onclick="logout()">خروج</button></li>
-        </ul>
-    </div>
-    <div id="overlay" class="overlay" onclick="closeSidebar()"></div> 
-
     <div class="main-content">
         <div id="filter-modal" class="modal" style="display: none;">
             <div class="modal-content">
                 <span class="close-modal-btn" onclick="closeFilterModal()">&times;</span>
                 <h3>فیلتر پیشرفته</h3>
-
                 <div class="form-group">
                     <label for="filter-activity">نوع فعالیت:</label>
                     <select id="filter-activity" onchange="updateSubActivitiesForFilter()"></select>
                 </div>
-
                 <div class="form-group" id="filter-sub-activity-section" style="display: none;">
                     <label for="filter-sub-activity">زیرمجموعه فعالیت:</label>
                     <select id="filter-sub-activity"></select>
                 </div>
-
                 <div class="form-group">
                     <label for="filter-province">استان:</label>
                     <select id="filter-province" onchange="updateCitiesForFilter()"></select>
                 </div>
-
                 <div class="form-group">
                     <label for="filter-city">شهر:</label>
                     <select id="filter-city"></select>
                 </div>
-
                 <div class="form-group">
                     <label for="sort-by">مرتب‌سازی بر اساس:</label>
                     <select id="sort-by">
@@ -65,7 +90,6 @@
                         <option value="date">جدیدترین</option>
                     </select>
                 </div>
-
                 <div class="filter-buttons">
                     <button class="btn-secondary" onclick="clearFilters()">حذف فیلتر</button>
                     <button class="btn-primary" onclick="applyFilters()">اعمال فیلتر</button>
@@ -74,7 +98,8 @@
         </div>
         
         <div id="shops-view-header" style="text-align: center; margin-bottom: 20px;"></div>
-        <div id="shops-grid" class="shops-grid"></div>
+        <div id="shops-grid" class="shops-grid">
+            </div>
     </div>
 
     <div class="loading-overlay" id="loading" style="display: none;">

@@ -64,7 +64,7 @@ async function generateUniqueUserId(length = 8) {
 }
 
 // MongoDB connection
-const mongoUri = 'mongodb://root:1gJu5w36FQqkhKXORWKyZ0l0@chogolisa.liara.cloud:33240/my-app?authSource=admin&replicaSet=rs0&directConnection=true';
+const mongoUri = 'mongodb+srv://vitrad:Vitrad1404@cluster0.jpo6lmk.mongodb.net/Vitrad?retryWrites=true&w=majority&appName=Cluster0';
 let db;
 let mongoClient;
 
@@ -262,15 +262,28 @@ async function calculateShopScore(shop, db) {
 // ✅ API جدید برای نمایش عمومی مغازه‌ها به کاربران مهمان
 app.get('/api/public-shops', async (req, res) => {
     try {
-        const shops = await Shop.find({ status: 'approved' })
-            .populate({
-                path: 'products',
-                select: 'name image', // فقط نام و عکس محصول را لازم داریم
-                options: {
-                    sort: { priority: 1 }, // ✅ محصولات را بر اساس اولویت مرتب می‌کند (از کم به زیاد)
-                    limit: 3               // ✅ حداکثر ۳ محصول را برمی‌گرداند
+        await connectMongoDB();
+        const shopsCollection = db.collection('shops');
+
+        const shops = await shopsCollection.aggregate([
+            // مرحله ۱: فقط مغازه‌های فعال را پیدا کن
+            { $match: { status: 'active' } }, // در کد شما وضعیت 'active' برای مغازه تایید شده است
+
+            // مرحله ۲: به کالکشن محصولات وصل شو (معادل populate)
+            {
+                $lookup: {
+                    from: 'products',          // نام کالکشن محصولات
+                    localField: '_id',         // فیلد اتصال از کالکشن shops
+                    foreignField: 'shop_id',   // فیلد اتصال از کالکشن products
+                    pipeline: [                // یک پایپ‌لاین داخلی برای مرتب‌سازی و محدود کردن محصولات
+                        { $sort: { priority: 1 } },
+                        { $limit: 3 },
+                        { $project: { name: 1, image: 1, _id: 0 } } // فقط نام و عکس را برگردان
+                    ],
+                    as: 'products'             // نتیجه را در فیلدی به نام products بریز
                 }
-            });
+            }
+        ]).toArray();
 
         res.json(shops);
 
@@ -279,7 +292,6 @@ app.get('/api/public-shops', async (req, res) => {
         res.status(500).json({ message: 'خطای سرور در دریافت اطلاعات فروشگاه‌ها' });
     }
 });
-
 // ✅ این API جدید را به server.js اضافه کنید
 app.post('/api/rate-shop', async (req, res) => {
     try {
@@ -1066,60 +1078,6 @@ app.get('/api/sorted-shops', async (req, res) => {
     } catch (error) {
         console.error('خطا در مرتب‌سازی و دریافت مغازه‌ها:', error);
         res.status(500).json({ message: 'خطای سرور' });
-    }
-});
-
-// API Endpoint for Live Search
-app.get('/api/search-shops', async (req, res) => {
-    try {
-        const { query } = req.query; // گرفتن عبارت جستجو از URL
-
-        if (!query) {
-            return res.json([]); // اگر عبارتی برای جستجو نبود، لیست خالی برگردان
-        }
-
-        // ایجاد یک عبارت منظم (Regex) برای جستجوی غیر حساس به حروف بزرگ و کوچک
-        const searchRegex = new RegExp(query, 'i');
-
-        // جستجو در دیتابیس برای فروشگاه‌هایی که تایید شده‌اند و
-        // نام یا توضیحات آن‌ها با عبارت جستجو مطابقت دارد
-        const shops = await Shop.find({
-            status: 'approved', // فقط در میان فروشگاه‌های تایید شده بگرد
-            $or: [
-                { shop_name: { $regex: searchRegex } },
-                { shop_description: { $regex: searchRegex } }
-            ]
-        });
-
-        res.json(shops);
-
-    } catch (error) {
-        console.error('Server Error in /api/search-shops:', error);
-        res.status(500).json({ message: 'خطای سرور در هنگام جستجو' });
-    }
-});
-
-// API Endpoint for Filtering Shops by City
-app.get('/api/shops-by-city', async (req, res) => {
-    try {
-        const { city } = req.query; // گرفتن مقدار شهر از URL
-
-        if (!city) {
-            return res.status(400).json({ message: 'نام شهر مشخص نشده است' });
-        }
-
-        // جستجو در دیتابیس برای فروشگاه‌هایی که تایید شده‌اند و
-        // در شهر مشخص شده قرار دارند
-        const shops = await Shop.find({
-            status: 'approved', // فقط در میان فروشگاه‌های تایید شده
-            city: city         // فیلتر بر اساس شهر
-        });
-
-        res.json(shops);
-
-    } catch (error) {
-        console.error('Server Error in /api/shops-by-city:', error);
-        res.status(500).json({ message: 'خطای سرور در هنگام فیلتر کردن بر اساس شهر' });
     }
 });
 

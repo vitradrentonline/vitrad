@@ -993,27 +993,18 @@ textarea {
     padding: 0 30px;
 }
 .shop-card {
-    background: #ffffff;
-    box-shadow: 0 8px 15px rgba(0,0,0,0.1);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    cursor: pointer;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
     display: flex;
     flex-direction: column;
-
-    /* حاشیه گرادیانت */
-    border: 3px solid transparent;
-    border-image: linear-gradient(45deg, #003366, #D4AF37) 1;
-    
-    /* گرد کردن گوشه‌ها */
-    border-radius: 15px; 
-    
-    /* ✅ این خط کد مشکل را حل می‌کند */
-    overflow: hidden; 
 }
 
 .shop-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 12px 20px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
 .shop-card-image img, .shop-card-image .shop-card-no-banner {
@@ -1332,6 +1323,7 @@ textarea {
     justify-content: space-between;
     align-items: center;
     padding-bottom: 10px; /* فاصله از ردیف دوم */
+    gap: 40px; /* این خط جدید رو اضافه کن */
 }
 
 .header-right, .header-left {
@@ -1421,7 +1413,6 @@ textarea {
     font-size: 20px;
 }
 
-/* انتخاب شهر */
 .city-selector-container button {
     display: flex;
     align-items: center;
@@ -1431,6 +1422,8 @@ textarea {
     cursor: pointer;
     font-size: 14px;
     color: #555;
+    min-width: 120px;
+    justify-content: center;
 }
 
 /* منوی دسته‌بندی (کدهای قبلی بدون تغییر کار می‌کنند) */
@@ -1448,15 +1441,16 @@ textarea {
 .mega-menu-container {
     display: none;
     position: absolute;
-    top: 150%; /* کمی فاصله از منو برای زیبایی */
+    top: 100%; /* <<<<<<< تغییر اصلی اینجاست */
     right: 0;
     width: 900px;
     background-color: #fff;
-    border-radius: 15px;
+    border-radius: 15px; /* <<<<<<< این رو از 0 0 15px 15px به 15px تغییر بده */
     box-shadow: 0 10px 20px rgba(0,0,0,0.1);
     z-index: 1000;
     border: 1px solid #f0f0f0;
     flex-direction: row;
+    padding-top: 15px; /* <<<<<<< این خط رو برای ایجاد فاصله مجازی اضافه کن */
 }
 
 .categories-menu:hover .mega-menu-container {
@@ -1488,9 +1482,10 @@ textarea {
 /* چیدمان کلی کارت‌ها در صفحه */
 .shops-grid {
     display: grid;
-    grid-template-columns: 1fr; /* هر کارت تمام عرض را اشغال می‌کند */
-    gap: 20px;
-    padding: 0 30px;
+    /* عرض کارت‌ها را بسیار کوچک‌تر کردیم تا شبیه سایت باسلام شود */
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
+    gap: 12px; /* فاصله بین کارت‌ها را هم کمتر کردیم */
+    padding: 20px;
 }
 
 /* استایل اصلی کارت افقی */
@@ -1575,4 +1570,273 @@ textarea {
 .no-products-msg {
     font-size: 13px;
     color: #999;
+}
+
+/* =================================== */
+/* کد جدید برای کارت‌های مغازه        */
+/* =================================== */
+
+/* شبکه اصلی نمایش کارت‌ها */
+.shops-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); /* هر کارت حداقل 210px */
+  gap: 14px; /* فاصله بین کارت‌ها */
+  padding: 18px;
+}
+
+/* استایل اصلی هر کارت */
+.shop-card {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+  border: 1px solid rgba(0,0,0,0.04);
+  display: flex;
+  flex-direction: column;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+
+/* هاور کارت */
+.shop-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.10);
+}
+
+/* بنر تصویری بالای کارت */
+.shop-card .banner-img { /* کلاس banner-img در پروژه شما استفاده شده */
+  width: 100%;
+  height: 110px; /* ارتفاع ثابت */
+  object-fit: cover;
+  display: block;
+  background-color: #f2f2f2; /* رنگ پس‌زمینه اگر عکس لود نشود */
+}
+
+/* محتوای متنی کارت */
+.shop-card .shop-card-body { /* کلاس shop-card-body در پروژه شما استفاده شده */
+  padding: 12px;
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  flex-grow: 1;
+}
+
+/* بخش بالایی محتوا (برای لوگو و عنوان) */
+.shop-card .card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px; /* کمی فاصله از پایین */
+}
+
+/* لوگوی مغازه */
+.shop-card .shop-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(0,0,0,0.06);
+  flex-shrink: 0; /* جلوگیری از کوچک شدن لوگو */
+}
+
+/* عنوان (نام مغازه) */
+.shop-card .shop-card-body h3 { /* تگ h3 در پروژه شما برای عنوان است */
+  font-size: 14px;
+  font-weight: 600;
+  color: #222;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0; /* حذف margin پیش‌فرض */
+}
+
+/* توضیحات یا اطلاعات متا */
+.shop-card .shop-card-body p { /* تگ p در پروژه شما برای توضیحات است */
+  font-size: 12px;
+  color: #777;
+  margin: 0; /* حذف margin پیش‌فرض */
+}
+
+/* فوتر کارت */
+.shop-card .shop-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 12px 12px;
+  font-size: 12px;
+  color: #666;
+}
+
+/* بخش امتیاز ستاره‌ای */
+.shop-card .rating {
+  display: flex;
+  align-items: center;
+  gap: 4px; /* فاصله آیکون از عدد */
+  color: #f1c40f;
+}
+
+/* استایل ریسپانسیو برای موبایل */
+@media (max-width: 600px) {
+  .shops-grid {
+    grid-template-columns: repeat(2, 1fr); /* دو ستون در موبایل */
+    gap: 10px;
+    padding: 12px;
+  }
+  .shop-logo { width: 44px; height: 44px; }
+  .shop-card .banner-img { height: 96px; }
+}
+
+#city-selector-btn span {
+    font-weight: normal;
+}
+
+/* =================================== */
+/* استایل‌های منوی پروفایل کاربر در هدر */
+/* =================================== */
+
+/* نگهدارنده منوی پروفایل */
+.profile-menu {
+    position: relative; /* این ویژگی برای موقعیت‌دهی منوی کشویی ضروری است */
+    display: inline-block;
+}
+
+/* عکس پروفایل در هدر */
+.profile-picture-header {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%; /* تصویر را دایره‌ای می‌کند */
+    cursor: pointer;
+    object-fit: cover; /* تضمین می‌کند که تصویر بدون تغییر شکل، کادر را بپوشاند */
+    border: 2px solid #ddd;
+    transition: border-color 0.3s ease;
+}
+
+.profile-picture-header:hover {
+    border-color: #D4AF37; /* رنگ طلایی هنگام هاور */
+}
+
+/* نگهدارنده منوی کشویی (به صورت پیش‌فرض مخفی) */
+.profile-dropdown-content {
+    display: none; /* به صورت پیش‌فرض مخفی است و با جاوا اسکریپت نمایش داده می‌شود */
+    position: absolute;
+    left: 0; /* با سمت چپ عکس پروفایل تراز می‌شود (برای زبان فارسی) */
+    top: 60px; /* آن را با کمی فاصله زیر عکس قرار می‌دهد */
+    background-color: #ffffff;
+    min-width: 200px;
+    box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+    border-radius: 8px;
+    z-index: 1001; /* تضمین می‌کند که بالاتر از سایر محتواها نمایش داده شود */
+    border: 1px solid #f0f0f0;
+    overflow: hidden; /* باعث می‌شود عناصر داخلی از گوشه‌های گرد بیرون نزنند */
+}
+
+/* این کلاس توسط جاوا اسکریپت برای نمایش منو اضافه می‌شود */
+.profile-dropdown-content.show {
+    display: block;
+}
+
+/* لینک‌های داخل منوی کشویی */
+.profile-dropdown-content a {
+    color: #333;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block; /* باعث می‌شود کل سطح هر آیتم قابل کلیک باشد */
+    text-align: right; /* متن را برای زبان فارسی راست‌چین می‌کند */
+    font-size: 15px;
+    transition: background-color 0.2s ease;
+}
+
+/* رنگ پس‌زمینه لینک‌ها هنگام هاور */
+.profile-dropdown-content a:hover {
+    background-color: #f5f5f5;
+}
+
+/* =================================== */
+/* استایل‌های بخش پروفایل کاربری در هدر */
+/* =================================== */
+
+/* نگهدارنده اصلی عکس و منو */
+.profile-container {
+    position: relative; /* برای موقعیت‌دهی صحیح منوی کشویی */
+    margin-left: 20px; /* ایجاد کمی فاصله از لبه صفحه */
+}
+
+/* استایل عکس پروفایل */
+#profile-picture-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 100%; /* گرد کردن کامل تصویر */
+    object-fit: cover; /* جلوگیری از تغییر شکل نامتناسب عکس */
+    cursor: pointer;
+    border: 2px solid #e0e0e0;
+    transition: border-color 0.3s ease;
+}
+
+#profile-picture-btn:hover {
+    border-color: #007bff; /* تغییر رنگ حاشیه هنگام هاور */
+}
+
+/* استایل منوی کشویی */
+.profile-dropdown-menu {
+    display: none; /* در حالت عادی مخفی باشد */
+    position: absolute;
+    left: 0; /* موقعیت از سمت چپ والد (برای زبان فارسی) */
+    top: 60px; /* فاصله از بالای عکس پروفایل */
+    width: 220px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    border: 1px solid #f0f0f0;
+    z-index: 1000;
+    overflow: hidden;
+    animation: fadeIn 0.2s ease-out;
+}
+
+/* انیمیشن ظاهر شدن نرم */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* کلاسی که با جاوا اسکریپت برای نمایش منو اضافه می‌شود */
+.profile-dropdown-menu.show {
+    display: block;
+}
+
+/* استایل لیست داخل منو */
+.profile-dropdown-menu ul {
+    list-style: none;
+    padding: 8px 0;
+    margin: 0;
+}
+
+.profile-dropdown-menu li a,
+.profile-dropdown-menu li button {
+    display: block;
+    width: 100%;
+    padding: 10px 20px;
+    font-size: 15px;
+    color: #333;
+    text-decoration: none;
+    text-align: right; /* راست‌چین کردن متن برای فارسی */
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.profile-dropdown-menu li a:hover,
+.profile-dropdown-menu li button:hover {
+    background-color: #f5f5f5;
+}
+
+/* استایل جداکننده */
+.dropdown-divider {
+    height: 1px;
+    margin: 8px 0;
+    background-color: #e9ecef;
+}
+
+/* استایل خاص دکمه خروج */
+#logout-btn {
+    color: #d9534f; /* رنگ قرمز برای تاکید */
 }
