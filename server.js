@@ -1,5 +1,6 @@
 const express = require('express');
 const multer = require('multer');
+const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const { MongoClient, ObjectId } = require('mongodb');
 const nodemailer = require('nodemailer');
@@ -339,6 +340,43 @@ app.post('/api/rate-shop', async (req, res) => {
     }
 });
 
+// API برای آپلود عکس پروفایل کاربر
+app.post('/api/user/profile-picture/:user_id', upload.single('profilePicture'), async (req, res) => {
+    const { user_id } = req.params;
+
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'فایل تصویری انتخاب نشده است.' });
+        }
+        await connectMongoDB();
+        const usersCollection = db.collection('users');
+
+        // ۱. پیدا کردن کاربر برای ساخت مسیر پوشه
+        const user = await usersCollection.findOne({ _id: new ObjectId(user_id) });
+        if (!user) {
+            return res.status(404).json({ message: 'کاربر یافت نشد.' });
+        }
+
+        // ۲. ساخت مسیر آپلود در فضای ذخیره‌سازی S3
+        // مثال: users/شناسه-کاربری-یکتا/profile.jpg
+        const folderPath = `users/${user.user_identifier}`;
+        const imageUrl = await uploadToS3(req.file, folderPath, 'profile'); // نام فایل را ثابت می‌گذاریم تا جایگزین شود
+
+        // ۳. ذخیره آدرس URL عکس در دیتابیس
+        await usersCollection.updateOne(
+            { _id: new ObjectId(user_id) },
+            { $set: { profile_picture_url: imageUrl } }
+        );
+
+        // ۴. ارسال پاسخ موفق به همراه آدرس جدید عکس
+        res.json({ success: true, message: 'عکس پروفایل با موفقیت آپلود شد', newImageUrl: imageUrl });
+
+    } catch (error) {
+        console.error('خطا در آپلود عکس پروفایل:', error);
+        res.status(500).json({ message: 'خطای سرور' });
+    }
+});
+
 // API جدید برای چک کردن مقادیر تکراری
 app.post('/api/check-duplicates', async (req, res) => {
     console.log('درخواست بررسی مقادیر تکراری دریافت شد:', req.body);
@@ -579,6 +617,44 @@ app.post('/api/initiate-shop-creation', upload.fields([
     }
 });
 
+// این کد را به انتهای فایل server.js اضافه کنید
+
+// API جدید فقط برای آپلود لوگوی فروشگاه
+app.post('/api/shop/:shop_id/logo', upload.single('shopLogo'), async (req, res) => {
+    const { shop_id } = req.params;
+
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'فایل لوگو انتخاب نشده است.' });
+        }
+        await connectMongoDB();
+        const shopsCollection = db.collection('shops');
+        const usersCollection = db.collection('users');
+
+        // ۱. پیدا کردن فروشگاه و مالک برای ساخت مسیر پوشه
+        const shop = await shopsCollection.findOne({ _id: new ObjectId(shop_id) });
+        if (!shop) return res.status(404).json({ message: 'فروشگاه یافت نشد.' });
+        
+        const owner = await usersCollection.findOne({ _id: shop.user_id });
+        if (!owner) return res.status(404).json({ message: 'مالک فروشگاه یافت نشد.' });
+
+        // ۲. ساخت مسیر آپلود در فضای ذخیره‌سازی
+        const folderPath = `${owner.national_id}/${shop.shop_code}`;
+        const imageUrl = await uploadToS3(req.file, folderPath, 'logo'); // نام فایل را "logo" می‌گذاریم تا جایگزین شود
+
+        // ۳. ذخیره آدرس URL لوگو در دیتابیس
+        await shopsCollection.updateOne(
+            { _id: new ObjectId(shop_id) },
+            { $set: { logo_url: imageUrl } }
+        );
+        
+        res.json({ success: true, message: 'لوگو با موفقیت آپلود شد', newImageUrl: imageUrl });
+
+    } catch (error) {
+        console.error('خطا در آپلود لوگو:', error);
+        res.status(500).json({ message: 'خطای سرور' });
+    }
+});
 
 // ✅ کد اصلاح‌شده برای API تایید نهایی مغازه (با بررسی null)
 app.post('/api/verify-shop-otp', async (req, res) => {
@@ -1226,6 +1302,336 @@ app.put('/api/products/reorder', async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: 'خطای سرور در ذخیره ترتیب' });
     }
+});
+
+const userSchema = new mongoose.Schema({
+    full_name: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    mobile: { type: String, required: true, unique: true },
+    national_id: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    province: String,
+    city: String,
+    tehran_area: String,
+    referral_code: { type: String, unique: true },
+    referred_by: String,
+    is_verified: { type: Boolean, default: false },
+    otp: String,
+    otp_expires: Date,
+    reset_token: String,
+    reset_token_expires: Date,
+    role: { type: String, enum: ['user', 'seller', 'both'], default: 'user' },
+    profile_picture_url: String,
+    following_shops: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Shop' }]
+});
+
+const shopSchema = new mongoose.Schema({
+    user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    shop_name: { type: String, required: true },
+    shop_description: String,
+    activity_type: String,
+    job_category: String,
+    shop_phone: String,
+    shop_email: String,
+    province: String,
+    city: String,
+    address: String,
+    tehran_area: String,
+    location: {
+        type: { type: String, enum: ['Point'], default: 'Point' },
+        coordinates: { type: [Number], index: '2dsphere' }
+    },
+    documents: {
+        nationalCardImage: String,
+        selfieImage: String,
+        businessLicenseImage: String,
+        healthLicenseImage: String
+    },
+    is_verified: { type: Boolean, default: false },
+    is_active: { type: Boolean, default: true },
+    status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+    shop_code: { type: String, unique: true },
+    otp: String,
+    otp_expires: Date,
+    banner: String,
+    logo: String,
+    score: { type: Number, default: 0 },
+    // فیلدهای جدید برای صفحه غرفه
+    followers_count: { type: Number, default: 0 },
+    last_activity: { type: Date, default: Date.now },
+    total_sales: { type: Number, default: 0 },
+    work_experience: String,
+    // راه‌های ارتباطی
+    whatsapp: String,
+    telegram: String,
+    instagram: String,
+    eitaa: String,
+    rubika: String,
+    bale: String,
+});
+
+const productSchema = new mongoose.Schema({
+    shop_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Shop', required: true },
+    name: { type: String, required: true },
+    description: String,
+    image: String,
+    instagram_link: String,
+    priority: { type: Number, default: 0 },
+    tags: [String], // for filters like 'free_shipping', 'in_stock', etc.
+    price: Number,
+    discount_price: Number,
+});
+
+// ========= مدل‌های جدید برای صفحه غرفه ==========
+const reviewSchema = new mongoose.Schema({
+    shop_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Shop', required: true },
+    user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    rating: { type: Number, min: 1, max: 5, required: true },
+    text: String,
+    createdAt: { type: Date, default: Date.now },
+    helpful_votes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+});
+
+const followSchema = new mongoose.Schema({
+    user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    shop_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Shop', required: true },
+}, { timestamps: true });
+followSchema.index({ user_id: 1, shop_id: 1 }, { unique: true }); // جلوگیری از دنبال کردن تکراری
+
+const reportSchema = new mongoose.Schema({
+    reporter_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    reported_item_id: { type: mongoose.Schema.Types.ObjectId, required: true },
+    report_type: { type: String, enum: ['shop', 'review', 'product'], required: true },
+    reason: { type: String, required: true },
+    description: String,
+    status: { type: String, enum: ['pending', 'reviewed', 'resolved'], default: 'pending' },
+}, { timestamps: true });
+
+
+// Models
+const User = mongoose.model('User', userSchema);
+const Shop = mongoose.model('Shop', shopSchema);
+const Product = mongoose.model('Product', productSchema);
+const Review = mongoose.model('Review', reviewSchema);
+const Follow = mongoose.model('Follow', followSchema);
+const Report = mongoose.model('Report', reportSchema);
+
+// ==========================================================
+// ========== API Endpoints for Shop Details Page ==========
+// ==========================================================
+
+// 1. دریافت تمام اطلاعات یک غرفه برای نمایش عمومی
+app.get('/api/shops/:shopId/details', async (req, res) => {
+    try {
+        const shopId = req.params.shopId;
+        if (!mongoose.Types.ObjectId.isValid(shopId)) {
+            return res.status(400).json({ success: false, message: "شناسه غرفه نامعتبر است." });
+        }
+
+        const shop = await Shop.findById(shopId).populate('user_id', 'full_name');
+        if (!shop || !shop.is_active || shop.status !== 'approved') {
+            return res.status(404).json({ success: false, message: 'غرفه یافت نشد یا هنوز تایید نشده است.' });
+        }
+        
+        // محاسبه میانگین امتیازات
+        const reviews = await Review.find({ shop_id: shopId });
+        const rating_average = reviews.length > 0
+            ? reviews.reduce((acc, item) => acc + item.rating, 0) / reviews.length
+            : 0;
+
+        const productCount = await Product.countDocuments({ shop_id: shopId });
+
+        // شبیه‌سازی آنلاین بودن (در یک پروژه واقعی این از Redis یا WebSocket خوانده می‌شود)
+        const isOnline = Math.random() > 0.3; 
+
+        const shopDetails = {
+            id: shop._id,
+            name: shop.shop_name,
+            logoUrl: shop.logo,
+            bannerUrl: shop.banner,
+            isOnline: isOnline,
+            city: shop.city, // باید در زمان ثبت نام، نام شهر ذخیره شود نه کلید
+            followers: shop.followers_count,
+            rating: rating_average.toFixed(1),
+            reviewCount: reviews.length,
+            productCount: productCount,
+            lastUpdate: shop.last_activity, // این فیلد باید با هر تغییر آپدیت شود
+            lastOnline: new Date(Date.now() - Math.random() * 1000 * 3600 * 5).toISOString(), // شبیه‌سازی
+            totalSales: shop.total_sales,
+            description: shop.shop_description,
+            phone: shop.shop_phone,
+            experience: shop.work_experience,
+        };
+
+        res.json({ success: true, data: shopDetails });
+
+    } catch (error) {
+        console.error("Error fetching shop details:", error);
+        res.status(500).json({ success: false, message: "خطای سرور" });
+    }
+});
+
+
+// 2. دریافت محصولات یک غرفه با قابلیت فیلتر، جستجو و مرتب‌سازی
+app.get('/api/shops/:shopId/products', async (req, res) => {
+    try {
+        const { shopId } = req.params;
+        const { search, sort, free_shipping, wholesale, in_stock, has_discount } = req.query;
+
+        let query = { shop_id: shopId };
+
+        // اعمال جستجو
+        if (search) {
+            query.name = { $regex: search, $options: 'i' }; // جستجوی بدون حساسیت به حروف
+        }
+
+        // اعمال فیلترها
+        let filters = [];
+        if (free_shipping === 'true') filters.push('free_shipping');
+        if (wholesale === 'true') filters.push('wholesale');
+        if (in_stock === 'true') filters.push('in_stock');
+        if (has_discount === 'true') query.discount_price = { $exists: true, $ne: null };
+        
+        if (filters.length > 0) {
+            query.tags = { $all: filters };
+        }
+
+        // اعمال مرتب‌سازی
+        let sortOption = { priority: -1 }; // پیش‌فرض: پیشنهاد غرفه‌دار
+        if (sort === 'newest') {
+            sortOption = { _id: -1 }; // بر اساس تاریخ ایجاد (آیدی‌های جدیدتر)
+        } else if (sort === 'discount') {
+            sortOption = { discount_price: -1 };
+        }
+
+        const products = await Product.find(query).sort(sortOption);
+        res.json({ success: true, data: products });
+
+    } catch (error) {
+        console.error("Error fetching products:", error);
+        res.status(500).json({ success: false, message: "خطای سرور" });
+    }
+});
+
+// 3. دریافت نظرات یک غرفه
+app.get('/api/shops/:shopId/reviews', async (req, res) => {
+    try {
+        const reviews = await Review.find({ shop_id: req.params.shopId })
+                                    .populate('user_id', 'full_name profile_picture_url')
+                                    .sort({ createdAt: -1 }); // جدیدترین اول
+        res.json({ success: true, data: reviews });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'خطای سرور' });
+    }
+});
+
+// 4. ثبت نظر جدید برای یک غرفه
+app.post('/api/shops/:shopId/reviews', async (req, res) => {
+    try {
+        const { userId, rating, text } = req.body;
+        const { shopId } = req.params;
+        
+        // جلوگیری از ثبت نظر تکراری توسط یک کاربر
+        const existingReview = await Review.findOne({ shop_id: shopId, user_id: userId });
+        if(existingReview) {
+            return res.status(400).json({ success: false, message: "شما قبلا برای این غرفه نظر ثبت کرده‌اید." });
+        }
+
+        const newReview = new Review({
+            shop_id: shopId,
+            user_id: userId,
+            rating,
+            text
+        });
+        await newReview.save();
+        res.status(201).json({ success: true, message: "نظر شما با موفقیت ثبت شد.", data: newReview });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'خطای سرور' });
+    }
+});
+
+
+// 5. دریافت خلاصه امتیازات (مثلا: چند نفر 5 ستاره دادن)
+app.get('/api/shops/:shopId/rating-summary', async (req, res) => {
+    try {
+        const summary = await Review.aggregate([
+            { $match: { shop_id: mongoose.Types.ObjectId(req.params.shopId) } },
+            { $group: { _id: "$rating", count: { $sum: 1 } } }
+        ]);
+        // تبدیل به فرمت خواناتر
+        const formattedSummary = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        summary.forEach(item => {
+            formattedSummary[item._id] = item.count;
+        });
+        res.json({ success: true, data: formattedSummary });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'خطای سرور' });
+    }
+});
+
+
+// 6. دنبال کردن / لغو دنبال کردن یک غرفه
+app.post('/api/shops/follow', async (req, res) => {
+    const { userId, shopId } = req.body;
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+        const existingFollow = await Follow.findOne({ user_id: userId, shop_id: shopId });
+
+        if (existingFollow) {
+            // Unfollow
+            await Follow.findByIdAndDelete(existingFollow._id, { session });
+            await Shop.findByIdAndUpdate(shopId, { $inc: { followers_count: -1 } }, { session });
+            await User.findByIdAndUpdate(userId, { $pull: { following_shops: shopId } }, { session });
+            await session.commitTransaction();
+            res.json({ success: true, message: "غرفه از لیست دنبال‌شده‌ها حذف شد.", status: 'unfollowed' });
+        } else {
+            // Follow
+            const newFollow = new Follow({ user_id: userId, shop_id: shopId });
+            await newFollow.save({ session });
+            await Shop.findByIdAndUpdate(shopId, { $inc: { followers_count: 1 } }, { session });
+            await User.findByIdAndUpdate(userId, { $push: { following_shops: shopId } }, { session });
+            await session.commitTransaction();
+            res.json({ success: true, message: "غرفه با موفقیت دنبال شد.", status: 'followed' });
+        }
+    } catch (error) {
+        await session.abortTransaction();
+        res.status(500).json({ success: false, message: 'خطای سرور' });
+    } finally {
+        session.endSession();
+    }
+});
+
+
+// 7. ثبت گزارش تخلف برای غرفه، محصول یا نظر
+app.post('/api/report', async (req, res) => {
+    try {
+        const { reporterId, reportedItemId, reportType, reason, description } = req.body;
+        const newReport = new Report({
+            reporter_id: reporterId,
+            reported_item_id: reportedItemId,
+            report_type: reportType,
+            reason: reason,
+            description: description
+        });
+        await newReport.save();
+        res.status(201).json({ success: true, message: "گزارش شما با موفقیت ثبت شد و در دست بررسی قرار گرفت." });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'خطای سرور' });
+    }
+});
+
+
+// 8. API های Placeholder برای تماس و چت
+app.post('/api/shops/:shopId/initiate-call', (req, res) => {
+    // در یک پروژه واقعی، اینجا منطق برقراری تماس WebRTC قرار می‌گیرد
+    // مثلا ایجاد یک اتاق تماس و برگرداندن توکن‌های لازم
+    res.json({ success: true, message: 'درخواست تماس با موفقیت ارسال شد.', callRoomId: `call_${shopId}_${Date.now()}` });
+});
+
+app.post('/api/shops/:shopId/initiate-chat', (req, res) => {
+    // در یک پروژه واقعی، اینجا منطق ایجاد یک چت روم در WebSocket server قرار می‌گیرد
+    res.json({ success: true, message: 'چت با موفقیت آغاز شد.', chatRoomId: `chat_${shopId}_${req.body.userId}` });
 });
 
 // راه‌اندازی سرور

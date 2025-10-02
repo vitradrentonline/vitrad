@@ -7,23 +7,24 @@
 </head>
 <body>
     <div class="form-card">
-        <h2>ویرایش پروفایل</h2>
+        <div class="profile-upload-section">
+            <h3>عکس پروفایل</h3>
+            <img src="images/default-avatar.png" alt="پیش‌نمایش پروفایل" id="profile-preview-image" class="profile-preview">
+            <input type="file" id="profile-picture-input" accept="image/*" style="display: none;">
+            <button onclick="document.getElementById('profile-picture-input').click()">انتخاب عکس</button>
+            <button id="save-profile-picture-btn">ذخیره عکس</button>
+        </div>
+        <hr> <h2>ویرایش اطلاعات</h2>
         <label for="email">ایمیل:</label>
         <input type="email" id="email">
         
         <label for="mobile">موبایل:</label>
         <input type="tel" id="mobile">
         
-        <label for="new-password">رمز عبور جدید:</label>
+        <label for="new-password">رمز عبور جدید (اختیاری):</label>
         <div class="password-wrapper">
             <input type="password" id="new-password">
             <span class="password-toggle" onclick="togglePassword('new-password')">👁️</span>
-        </div>
-        
-        <label for="confirm-new-password">تأیید رمز:</label>
-        <div class="password-wrapper">
-            <input type="password" id="confirm-new-password">
-            <span class="password-toggle" onclick="togglePassword('confirm-new-password')">👁️</span>
         </div>
         
         <button id="update-btn">ذخیره تغییرات</button>

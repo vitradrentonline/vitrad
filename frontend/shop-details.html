@@ -1,28 +1,137 @@
 <!DOCTYPE html>
-<html lang="fa">
+<html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>جزئیات مغازه</title>
-    <link rel="stylesheet" href="css/all.min.css">
+    <title>نام غرفه - ویتراد</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
-    </head>
+</head>
 <body>
-    <header>
-        <button onclick="history.back()">بازگشت</button>
+
+    <header class="main-header">
+        <div class="header-right">
+            <a href="index.html"><img src="images/logo.png" alt="لوگو ویتراد" class="logo"></a>
+        </div>
+        <div class="header-left">
+            <div class="profile-container">
+                <img src="images/default-avatar.png" alt="عکس پروفایل" id="profile-picture-btn">
+                <div class="profile-dropdown-menu" id="profile-dropdown-menu">
+                    <ul>
+                        <li><a href="update-profile.html">ویرایش پروفایل</a></li>
+                        <li><a href="create-shop.html">ایجاد مغازه</a></li>
+                        <li id="my-shops-menu-item" style="display: none;"><a href="user-panel.html?my=true">مغازه‌های من</a></li>
+                        <li><a href="#">مغازه‌های نشان‌شده</a></li>
+                        <li class="dropdown-divider"></li>
+                        <li><button id="logout-btn">خروج</button></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
     </header>
 
-    <div class="shop-info" id="shop-info">
-        </div>
+    <main class="container">
+        <!-- ✅ جایگزینِ نسخه‌ی استاتیک: فقط placeholder خالی -->
+        <nav class="breadcrumb" aria-label="مسیریاب"></nav>
 
-    <div class="loading-overlay" id="loading-overlay" style="display:none;">
-        <div class="loading-spinner"></div>
-        <p>در حال بارگذاری اطلاعات مغازه...</p>
+        <section class="shop-header" id="shop-header-section">
+            <!-- محتوای هدرِ مغازه داینامیک لود می‌شود -->
+        </section>
+
+        <section class="shop-tabs">
+            <nav class="shop-tabs-nav" role="tablist">
+                <button id="tab-btn-home" class="shop-tab-btn active" role="tab" aria-selected="true" aria-controls="tab-panel-home">خانه</button>
+                <button id="tab-btn-products" class="shop-tab-btn" role="tab" aria-selected="false" aria-controls="tab-panel-products">محصولات</button>
+                <button id="tab-btn-reviews" class="shop-tab-btn" role="tab" aria-selected="false" aria-controls="tab-panel-reviews">نظرات مشتریان</button>
+            </nav>
+            
+            <div id="tab-panel-home" class="shop-tab-content active" role="tabpanel" aria-labelledby="tab-btn-home">
+                <img src="images/default-banner.png" alt="بنر غرفه" class="shop-home-banner" id="shop-banner-img">
+                <div class="shop-home-info">
+                    <h3>درباره غرفه</h3>
+                    <p id="shop-description-text">توضیحات غرفه در اینجا بارگذاری می‌شود...</p>
+                    <p><strong>شماره تماس:</strong> <span id="shop-phone-number">...</span></p>
+                    <p><strong>سابقه کاری:</strong> <span id="shop-experience">...</span></p>
+                </div>
+                <h3>محصولات منتخب</h3>
+                <div class="featured-products-carousel">
+                    <button class="carousel-arrow prev" id="carousel-prev-btn" aria-label="محصولات قبلی"><i class="fa fa-chevron-right"></i></button>
+                    <div class="carousel-container" id="featured-products-container"></div>
+                    <button class="carousel-arrow next" id="carousel-next-btn" aria-label="محصولات بعدی"><i class="fa fa-chevron-left"></i></button>
+                </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn primary" id="show-all-products-btn">نمایش تمام محصولات</button>
+                </div>
+            </div>
+
+            <div id="tab-panel-products" class="shop-tab-content" role="tabpanel" aria-labelledby="tab-btn-products">
+                <div class="products-page-layout">
+                    <aside class="product-filters-sidebar">
+                        <h4>تماس با غرفه‌دار</h4>
+                        <div id="quick-contact-box"></div>
+                    </aside>
+                    <div class="product-list-area">
+                        <div class="pill-filters-container" id="pill-filters-section" style="display:none;">
+                            <button class="filter-arrow" id="filter-scroll-right"><i class="fa fa-chevron-right"></i></button>
+                            <div class="pill-filters">
+                                <button class="pill-filter-btn" data-filter="free_shipping">ارسال رایگان</button>
+                                <button class="pill-filter-btn" data-filter="wholesale">فروش عمده</button>
+                                <button class="pill-filter-btn" data-filter="in_stock">موجودی</button>
+                                <button class="pill-filter-btn" data-filter="has_discount">دارای تخفیف</button>
+                            </div>
+                            <button class="filter-arrow" id="filter-scroll-left"><i class="fa fa-chevron-left"></i></button>
+                        </div>
+                        <div class="product-controls">
+                            <div class="product-search">
+                                <input type="text" id="product-search-input" placeholder="جستجو در محصولات غرفه...">
+                            </div>
+                            <select id="product-sort-select">
+                                <option value="default">پیشنهاد غرفه‌دار</option>
+                                <option value="newest">جدیدترین</option>
+                                <option value="discount">دارای تخفیف</option>
+                            </select>
+                        </div>
+                        <div class="product-grid" id="product-grid-area"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-panel-reviews" class="shop-tab-content" role="tabpanel" aria-labelledby="tab-btn-reviews">
+                <div class="reviews-layout">
+                    <aside class="rating-summary">
+                        <h3>امتیاز کاربران</h3>
+                        <div id="rating-summary-box"></div>
+                        <hr>
+                        <h4>نظر خود را ثبت کنید</h4>
+                        <form id="review-form">
+                            <input type="text" name="name" placeholder="نام شما" required style="width:100%; padding:8px; margin-bottom:10px; border: 1px solid #ccc; border-radius: 4px;">
+                            <div class="star-rating-input" style="margin-bottom:10px;"></div>
+                            <textarea name="text" placeholder="نظر خود را بنویسید..." rows="4" required style="width:100%; padding:8px; border: 1px solid #ccc; border-radius: 4px;"></textarea>
+                            <button type="submit" class="btn primary" style="margin-top:10px;">ارسال نظر</button>
+                        </form>
+                    </aside>
+                    <div class="review-list" id="review-list-container"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <div class="modal-overlay" id="report-modal"></div>
+
+    <div class="modal-overlay" id="chat-modal">
+        <div class="modal-content">
+            <h3>چت با غرفه‌دار</h3>
+            <p>پنجره چت در اینجا باز می‌شود... (نیازمند پیاده‌سازی)</p>
+            <button class="btn" onclick="document.getElementById('chat-modal').classList.remove('show')">بستن</button>
+        </div>
     </div>
-    <div id="image-modal" class="image-modal">
-        <span class="close-modal-btn">&times;</span>
-        <img class="modal-content" id="modal-image">
-    </div>
+
     <script src="script.js"></script>
+    <!-- ✅ این اسکریپت فقط init را صدا می‌زند؛ منطق داخل script.js خواهد بود -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        if (window.initShopDetailsPage) window.initShopDetailsPage();
+      });
+    </script>
 </body>
 </html>

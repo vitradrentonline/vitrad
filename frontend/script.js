@@ -821,11 +821,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     
         loadShops(); // برای نمایش همه مغازه‌ها یا مغازه‌های کاربر
     }
-
-    // صفحه جزئیات مغازه
-    if (path.includes('shop-details.html')) {
-        loadShopDetails();
-    }
     
     // صفحه ویرایش مغازه
     if (path.includes('shop-edit.html')) {
@@ -1699,110 +1694,329 @@ async function loadPublicProducts(shop_id) {
     }
 }
 
-/**
- * جزئیات کامل یک مغازه را از سرور بارگذاری کرده و در صفحه نمایش می‌دهد.
- * همچنین بخش امتیازدهی را برای کاربران لاگین کرده فعال می‌کند.
- */
-/**
- * جزئیات کامل یک مغازه را از سرور بارگذاری کرده و در صفحه نمایش می‌دهد.
- * راه‌های ارتباطی و امکان امتیازدهی را فقط برای کاربران لاگین کرده نمایش می‌دهد.
- */
-async function loadShopDetails() {
-    const loadingOverlay = document.getElementById('loading-overlay');
-    if (loadingOverlay) loadingOverlay.style.display = 'flex';
 
-    const shopInfo = document.getElementById('shop-info');
-    const shop_id = new URLSearchParams(window.location.search).get('shop_id');
 
-    if (!shop_id || shop_id === 'null') {
-        alert('شناسه مغازه یافت نشد. لطفاً از لیست انتخاب کنید.');
-        history.back();
-        return;
-    }
+// تابع برای پر کردن هدر غرفه
+function populateShopHeader(data) {
+    document.title = `${data.name} - ویتراد`;
+    document.getElementById('breadcrumb-shop-name').textContent = data.name;
+    const headerSection = document.getElementById('shop-header-section');
+    headerSection.innerHTML = `
+        <img src="${data.logoUrl || 'images/default-logo.png'}" alt="لوگوی ${data.name}" class="shop-header-logo">
+        <div class="shop-header-info">
+            <div class="shop-header-title">
+                <h1>${data.name}</h1>
+                <div class="online-indicator ${data.isOnline ? '' : 'offline'}" title="${data.isOnline ? 'آنلاین' : 'آفلاین'}"></div>
+            </div>
+            <div class="shop-header-stats">
+                <span><i class="fa fa-map-marker-alt"></i> ${data.city}</span>
+                <span><i class="fa fa-users"></i> ${data.followers} دنبال‌کننده</span>
+                <span><i class="fa fa-star"></i> ${data.rating} (${data.reviewCount} نظر)</span>
+                <span><i class="fa fa-box"></i> ${data.productCount} محصول</span>
+                <span><i class="fa fa-sync-alt"></i> بروزرسانی: ${new Date(data.lastUpdate).toLocaleDateString('fa-IR')}</span>
+                <span><i class="fa fa-clock"></i> آخرین آنلاین: ${new Date(data.lastOnline).toLocaleDateString('fa-IR')}</span>
+                <span><i class="fa fa-check-circle"></i> +${data.totalSales} فروش موفق</span>
+            </div>
+        </div>
+        <div class="shop-header-actions">
+            <button class="btn" id="chat-btn"><i class="fa fa-comments"></i> چت با غرفه‌دار</button>
+            <button class="btn" id="call-btn"><i class="fa fa-phone"></i> تماس</button>
+            <button class="btn primary" id="follow-btn">دنبال کردن</button>
+            <button class="btn" id="share-btn" aria-label="اشتراک‌گذاری"><i class="fa fa-share-alt"></i></button>
+            <button class="btn" id="report-shop-btn" aria-label="گزارش"><i class="fa fa-flag"></i></button>
+        </div>
+    `;
+}
+
+// تابع برای پر کردن محتوای تب خانه
+function populateShopHomePage(shopData) {
+    document.getElementById('shop-banner-img').src = shopData.bannerUrl || 'images/default-banner.png';
+    document.getElementById('shop-description-text').textContent = shopData.description;
+    document.getElementById('shop-phone-number').textContent = shopData.phone;
+    document.getElementById('shop-experience').textContent = shopData.experience || 'ثبت نشده';
+}
+/**
+ * محصولات را از سرور دریافت و در صفحه نمایش می‌دهد
+ * @param {string} shopId - شناسه غرفه
+ * @param {object} options - شامل فیلترها، جستجو و مرتب‌سازی
+ */
+
+async function fetchAndRenderProducts(shopId, options = {}) {
+    const { search = '', sort = 'default', filters = {} } = options;
+    const productGrid = document.getElementById('product-grid-area');
+    const carouselContainer = document.getElementById('featured-products-container');
+    productGrid.innerHTML = '<p>در حال بارگذاری محصولات...</p>';
+    
+    // ساخت Query String برای ارسال به API
+    const params = new URLSearchParams({
+        search,
+        sort,
+        ...filters
+    });
 
     try {
-        const response = await fetch(`${baseUrl}/api/get-shop-details/${shop_id}`);
-        if (!response.ok) throw new Error('پاسخ سرور نامعتبر بود');
-        
-        const shop = await response.json();
-        if (!shop || !shop._id) {
-            shopInfo.innerHTML = '<p>متاسفانه مغازه‌ای با این شناسه یافت نشد.</p>';
+        const response = await fetch(`${baseUrl}/api/shops/${shopId}/products?${params.toString()}`);
+        const result = await response.json();
+        if (!result.success) throw new Error('خطا در دریافت محصولات');
+
+        const products = result.data;
+        productGrid.innerHTML = '';
+        carouselContainer.innerHTML = '';
+
+        if (products.length === 0) {
+            productGrid.innerHTML = '<p style="grid-column: 1 / -1;">محصولی برای نمایش یافت نشد.</p>';
             return;
         }
 
-        // بخش ۱: نمایش اطلاعات اصلی مغازه
-        const bannerHTML = shop.banner 
-            ? `<img src="${shop.banner}" alt="بنر مغازه" class="shop-banner-img">` 
-            : '';
+        products.forEach((p, index) => {
+            const productEl = document.createElement('div');
+            productEl.className = 'product-card';
+            productEl.innerHTML = `<img src="${p.image || 'images/default-product.png'}" alt="${p.name}"><div class="product-card-info"><h3>${p.name}</h3><p>${p.description || ''}</p></div>`;
+            
+            // اضافه کردن به گرید اصلی
+            productGrid.appendChild(productEl.cloneNode(true));
+            
+            // اضافه کردن ۵ محصول اول به کروسل تب خانه
+            if (index < 5) {
+                carouselContainer.appendChild(productEl);
+            }
+        });
+    } catch (error) {
+        productGrid.innerHTML = `<p style="grid-column: 1 / -1;">${error.message}</p>`;
+    }
+}
 
+/**
+ * نظرات کاربران را از سرور دریافت و نمایش می‌دهد
+ */
+async function fetchAndRenderReviews(shopId) {
+    const reviewListContainer = document.getElementById('review-list-container');
+    reviewListContainer.innerHTML = '<p>در حال بارگذاری نظرات...</p>';
+    try {
+        const response = await fetch(`${baseUrl}/api/shops/${shopId}/reviews`);
+        const result = await response.json();
+        if (!result.success) throw new Error('خطا در دریافت نظرات');
+        
+        const reviews = result.data;
+        reviewListContainer.innerHTML = '';
+        if (reviews.length === 0) {
+            reviewListContainer.innerHTML = '<p>هنوز نظری برای این غرفه ثبت نشده است.</p>';
+            return;
+        }
 
-        shopInfo.innerHTML = `
-            <div class="shop-details-header" style="background-image: url('${shop.banner || 'images/default-banner.png'}')">
-            </div>
-            <div class="shop-details-content">
-                <h2>${shop.shop_name}</h2>
-                <div id="average-rating-display" class="rating-display">
-                    </div>
-                <p class="shop-description">${shop.shop_description || 'توضیحات ثبت نشده'}</p>
-                
-                <div id="social-links-container" class="social-links">
-                    </div>
-                
-                <div class="stars-wrapper" id="stars-wrapper" style="display:none;">
-                    <p>امتیاز شما:</p>
-                    <div class="stars">
-                        <span onclick="submitRating(5)">★</span>
-                        <span onclick="submitRating(4)">★</span>
-                        <span onclick="submitRating(3)">★</span>
-                        <span onclick="submitRating(2)">★</span>
-                        <span onclick="submitRating(1)">★</span>
+        reviews.forEach(review => {
+            const reviewCard = document.createElement('div');
+            reviewCard.className = 'review-card';
+            reviewCard.innerHTML = `
+                <div class="review-header">
+                    <img src="${review.user_id.profile_picture_url || 'images/default-avatar.png'}" alt="profile">
+                    <div>
+                        <strong>${review.user_id.full_name}</strong>
+                        <span>${new Date(review.createdAt).toLocaleDateString('fa-IR')}</span>
                     </div>
                 </div>
-                
-                <hr>
-                <h3>محصولات این کسب‌وکار:</h3>
-                <div class="products-grid" id="public-products-grid"></div>
-            </div>
-        `;
-
-        // بررسی وضعیت ورود کاربر
-        const user = JSON.parse(localStorage.getItem('user'));
-
-        // بخش ۲: ساخت لینک‌های ارتباطی (فقط برای کاربران لاگین کرده)
-        const socialContainer = document.getElementById('social-links-container');
-        if (user && socialContainer) {
-            let hasSocialLinks = false;
-            let socialHTML = '';
-            if (shop.whatsapp) { socialHTML += `<a href="https://wa.me/${shop.whatsapp}" target="_blank" title="واتس‌اپ"><i class="fab fa-whatsapp"></i></a>`; hasSocialLinks = true; }
-            if (shop.telegram) { socialHTML += `<a href="https://t.me/${shop.telegram}" target="_blank" title="تلگرام"><i class="fab fa-telegram-plane"></i></a>`; hasSocialLinks = true; }
-            if (shop.instagram) { socialHTML += `<a href="https://instagram.com/${shop.instagram.replace(/^@/, '')}" target="_blank" title="اینستاگرام"><i class="fab fa-instagram"></i></a>`; hasSocialLinks = true; }
-            
-            if(hasSocialLinks) {
-                socialContainer.innerHTML = socialHTML;
-                socialContainer.style.display = 'block';
-            }
-        }
-
-        // بخش ۳: نمایش امتیاز و فعال‌سازی امکان رای دادن
-        const avgRatingDisplay = document.getElementById('average-rating-display');
-        if (avgRatingDisplay && shop.rating_average && shop.rating_count) {
-            avgRatingDisplay.textContent = `میانگین امتیاز: ${shop.rating_average} از 5 (${shop.rating_count} رأی)`;
-        }
-        
-        const starsWrapper = document.getElementById('stars-wrapper');
-        if (user && starsWrapper) { // اگر کاربر لاگین کرده بود
-            starsWrapper.style.display = 'block';
-        }
-        
-        // بخش ۴: بارگذاری محصولات عمومی
-        loadPublicProducts(shop_id);
-
+                <div class="review-rating">${'⭐'.repeat(review.rating)}</div>
+                <p class="review-text">${review.text}</p>
+                <div class="review-actions">
+                    <button class="helpful-btn">مفید بود (${review.helpful_votes.length})</button>
+                    <button class="report-review-btn">گزارش</button>
+                </div>
+            `;
+            reviewListContainer.appendChild(reviewCard);
+        });
     } catch (error) {
-        console.error('خطا در بارگذاری جزئیات مغازه:', error);
-        shopInfo.innerHTML = '<p>متاسفانه در دریافت اطلاعات مشکلی پیش آمد.</p>';
-    } finally {
-        if (loadingOverlay) loadingOverlay.style.display = 'none';
+        reviewListContainer.innerHTML = `<p>${error.message}</p>`;
     }
+}
+
+function initializeInteractiveButtons(shopId) {
+    // دنبال کردن
+    const followBtn = document.getElementById('follow-btn');
+    followBtn.addEventListener('click', async () => {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user) {
+            alert('برای دنبال کردن باید ابتدا وارد شوید.');
+            return;
+        }
+        try {
+            const response = await fetch(`${baseUrl}/api/shops/follow`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user._id, shopId: shopId })
+            });
+            const result = await response.json();
+            alert(result.message);
+            // اینجا می‌توانید ظاهر دکمه را هم تغییر دهید
+        } catch (error) {
+            alert('خطا در عملیات دنبال کردن.');
+        }
+    });
+
+    // گزارش غرفه
+    document.getElementById('report-shop-btn').addEventListener('click', () => showReportModal('shop', shopId));
+
+    // جستجو، فیلتر و مرتب‌سازی محصولات
+    const searchInput = document.getElementById('product-search-input');
+    const sortSelect = document.getElementById('product-sort-select');
+    const filterButtons = document.querySelectorAll('.pill-filter-btn');
+
+    const applyFiltersAndSort = () => {
+        const searchTerm = searchInput.value;
+        const sortValue = sortSelect.value;
+        const activeFilters = {};
+        filterButtons.forEach(btn => {
+            if (btn.classList.contains('active')) {
+                activeFilters[btn.dataset.filter] = 'true';
+            }
+        });
+        fetchAndRenderProducts(shopId, { search: searchTerm, sort: sortValue, filters: activeFilters });
+    };
+
+    searchInput.addEventListener('input', debounce(applyFiltersAndSort, 500));
+    sortSelect.addEventListener('change', applyFiltersAndSort);
+    filterButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            button.classList.toggle('active');
+            applyFiltersAndSort();
+        });
+    });
+}
+
+// تابع Debounce برای جلوگیری از درخواست‌های مکرر هنگام تایپ
+function debounce(func, delay) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), delay);
+    };
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const path = window.location.pathname;
+
+    // ... سایر شرط‌های شما برای صفحات دیگر...
+
+    if (path.includes('shop-details.html')) {
+        loadShopDetailsPage(); // <<--- این تابع اصلی و جدید را فراخوانی کن
+    }
+});
+
+// تابع برای راه‌اندازی تب‌ها
+function initializeTabs() {
+    const tabButtons = document.querySelectorAll('.shop-tab-btn');
+    const tabContents = document.querySelectorAll('.shop-tab-content');
+    const pillFiltersSection = document.getElementById('pill-filters-section');
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            
+            const tabId = button.getAttribute('aria-controls');
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+                if (content.id === tabId) {
+                    content.classList.add('active');
+                }
+            });
+
+            // شرط کلیدی: نمایش فیلترها فقط در تب محصولات
+            if (tabId === 'tab-panel-products') {
+                pillFiltersSection.style.display = 'flex';
+            } else {
+                pillFiltersSection.style.display = 'none';
+            }
+        });
+    });
+    
+    // انتقال کاربر از دکمه "نمایش همه" به تب محصولات
+    document.getElementById('show-all-products-btn').addEventListener('click', () => {
+        document.getElementById('tab-btn-products').click();
+    });
+}
+
+// تابع برای راه‌اندازی فیلترهای محصولات
+function initializeProductFilters(allProducts) {
+    const productGrid = document.getElementById('product-grid-area');
+    const pillFilters = document.querySelectorAll('.pill-filter-btn');
+    
+    function renderProducts(filters) {
+        productGrid.innerHTML = '';
+        let filteredProducts = allProducts;
+        if (filters.length > 0) {
+            filteredProducts = allProducts.filter(p => filters.every(f => p.tags.includes(f)));
+        }
+        if (filteredProducts.length === 0) {
+            productGrid.innerHTML = '<p style="grid-column: 1 / -1;">محصولی با این فیلترها یافت نشد.</p>';
+            return;
+        }
+        filteredProducts.forEach(p => {
+            const productEl = document.createElement('div');
+            productEl.className = 'product-card';
+            productEl.innerHTML = `<img src="${p.image}" alt="${p.name}"><div class="product-card-info"><h3>${p.name}</h3><p>${p.price}</p></div>`;
+            productGrid.appendChild(productEl);
+        });
+    }
+
+    pillFilters.forEach(button => {
+        button.addEventListener('click', () => {
+            button.classList.toggle('active');
+            const activeFilters = Array.from(document.querySelectorAll('.pill-filter-btn.active')).map(b => b.dataset.filter);
+            // API Call Placeholder: fetch(`/api/shops/.../products?filters=${activeFilters.join(',')}`)
+            renderProducts(activeFilters); // شبیه‌سازی در کلاینت
+        });
+    });
+    renderProducts([]); // رندر اولیه همه محصولات
+}
+
+// تابع برای راه‌اندازی کروسل‌ها و اسکرولرها
+function initializeCarousels() {
+    const carousel = document.getElementById('featured-products-container');
+    document.getElementById('carousel-next-btn').addEventListener('click', () => carousel.scrollBy({ left: -300, behavior: 'smooth' }));
+    document.getElementById('carousel-prev-btn').addEventListener('click', () => carousel.scrollBy({ left: 300, behavior: 'smooth' }));
+
+    const filtersContainer = document.querySelector('.pill-filters');
+    document.getElementById('filter-scroll-left').addEventListener('click', () => filtersContainer.scrollBy({ left: 200, behavior: 'smooth' }));
+    document.getElementById('filter-scroll-right').addEventListener('click', () => filtersContainer.scrollBy({ left: -200, behavior: 'smooth' }));
+}
+
+// تابع برای راه‌اندازی دکمه‌های تماس آنی
+function initializeRealtimeButtons() {
+    document.getElementById('chat-btn').addEventListener('click', () => {
+        // Placeholder for real implementation
+        document.getElementById('chat-modal').classList.add('show');
+        console.log("رویداد Socket.IO برای شروع چت باید ارسال شود: 'start-chat', { shopId: '...' }");
+    });
+    document.getElementById('call-btn').addEventListener('click', () => {
+        // Placeholder for real implementation
+        alert('در حال برقراری تماس WebRTC...');
+        console.log("فرآیند Signaling تماس WebRTC باید اینجا آغاز شود.");
+    });
+}
+
+// تابع برای مدیریت منطق هدر پروفایل
+function setupProfileHeaderLogic() {
+    const profilePicBtn = document.getElementById('profile-picture-btn');
+    const profileDropdown = document.getElementById('profile-dropdown-menu');
+    if (!profilePicBtn || !profileDropdown) return;
+    
+    // این داده‌ها باید از localStorage خوانده شوند
+    const loggedInUser = { hasShops: true }; 
+    document.getElementById('my-shops-menu-item').style.display = loggedInUser.hasShops ? 'block' : 'none';
+
+    profilePicBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        profileDropdown.classList.toggle('show');
+    });
+    window.addEventListener('click', () => {
+        if (profileDropdown.classList.contains('show')) {
+            profileDropdown.classList.remove('show');
+        }
+    });
+    document.getElementById('logout-btn').addEventListener('click', () => {
+        // localStorage.clear(); window.location.href = 'index.html';
+        alert('کاربر خارج شد.');
+    });
 }
 
 // تابع برای باز و بسته کردن آکاردیون
@@ -2351,3 +2565,257 @@ function setupProfileHeader(user) {
         }
     });
 }
+
+// این کد را به فایل script.js اضافه کنید
+
+// شنونده رویداد برای زمانی که صفحه ویرایش پروفایل بارگذاری می‌شود
+document.addEventListener('DOMContentLoaded', () => {
+    if (window.location.pathname.includes('update-profile.html')) {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user) {
+            window.location.href = 'login.html';
+            return;
+        }
+
+        // عناصر مربوط به آپلود عکس
+        const profilePreview = document.getElementById('profile-preview-image');
+        const fileInput = document.getElementById('profile-picture-input');
+        const saveBtn = document.getElementById('save-profile-picture-btn');
+
+        // نمایش عکس فعلی کاربر
+        if (user.profile_picture_url) {
+            profilePreview.src = user.profile_picture_url;
+        }
+
+        // نمایش پیش‌نمایش عکس انتخاب شده
+        fileInput.addEventListener('change', () => {
+            const file = fileInput.files[0];
+            if (file) {
+                profilePreview.src = URL.createObjectURL(file);
+            }
+        });
+
+        // آپلود عکس با کلیک روی دکمه ذخیره
+        saveBtn.addEventListener('click', async () => {
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('لطفاً ابتدا یک عکس انتخاب کنید.');
+                return;
+            }
+
+            showLoading();
+            const formData = new FormData();
+            formData.append('profilePicture', file);
+
+            try {
+                const response = await fetch(`${baseUrl}/api/user/profile-picture/${user._id}`, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert(result.message);
+                    
+                    // به‌روزرسانی عکس در هدر و localStorage
+                    user.profile_picture_url = result.newImageUrl;
+                    localStorage.setItem('user', JSON.stringify(user));
+                    
+                    // به‌روزرسانی فوری عکس در هدر (اگر کاربر در همان صفحه باشد)
+                    const headerProfilePic = document.getElementById('profile-picture-btn');
+                    if(headerProfilePic) {
+                        headerProfilePic.src = result.newImageUrl;
+                    }
+
+                } else {
+                    alert('خطا: ' + result.message);
+                }
+            } catch (error) {
+                console.error('خطا در آپلود:', error);
+                alert('یک خطای پیش‌بینی نشده رخ داد.');
+            } finally {
+                hideLoading();
+            }
+        });
+    }
+});
+
+// این کد را به فایل script.js اضافه کنید
+
+// شنونده رویداد برای زمانی که صفحه ویرایش فروشگاه بارگذاری می‌شود
+document.addEventListener('DOMContentLoaded', () => {
+    if (window.location.pathname.includes('shop-edit.html')) {
+        const shop_id = new URLSearchParams(window.location.search).get('shop_id');
+        if (!shop_id) return;
+
+        // راه‌اندازی آپلودر برای لوگو
+        setupShopLogoUploader(shop_id);
+        
+        // کد موجود شما برای بارگذاری اطلاعات فروشگاه و محصولات را اینجا نگه دارید
+        // loadShopProfileForEdit();
+        // loadProducts(shop_id);
+    }
+});
+
+function setupShopLogoUploader(shopId) {
+    const logoPreview = document.getElementById('logo-preview');
+    const logoInput = document.getElementById('logo-input');
+    const saveLogoBtn = document.getElementById('save-logo-btn');
+
+    if (!logoPreview || !logoInput || !saveLogoBtn) return;
+
+    // نمایش پیش‌نمایش لوگوی انتخاب شده
+    logoInput.addEventListener('change', () => {
+        const file = logoInput.files[0];
+        if (file) {
+            logoPreview.src = URL.createObjectURL(file);
+        }
+    });
+
+    // آپلود لوگو با کلیک روی دکمه ذخیره
+    saveLogoBtn.addEventListener('click', async () => {
+        const file = logoInput.files[0];
+        if (!file) {
+            alert('لطفاً ابتدا یک فایل برای لوگو انتخاب کنید.');
+            return;
+        }
+
+        showLoading();
+        const formData = new FormData();
+        formData.append('shopLogo', file); // نام فیلد باید با upload.single() در بک‌اند یکی باشد
+
+        try {
+            const response = await fetch(`${baseUrl}/api/shop/${shopId}/logo`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                alert(result.message);
+                // به‌روزرسانی پیش‌نمایش با آدرس دائمی عکس
+                logoPreview.src = result.newImageUrl;
+
+                // به‌روزرسانی اطلاعات فروشگاه‌ها در localStorage (اختیاری اما پیشنهادی)
+                let shops = JSON.parse(localStorage.getItem('shops')) || [];
+                const shopIndex = shops.findIndex(s => s._id === shopId);
+                if (shopIndex > -1) {
+                    shops[shopIndex].logo_url = result.newImageUrl;
+                    localStorage.setItem('shops', JSON.stringify(shops));
+                }
+
+            } else {
+                alert('خطا: ' + result.message);
+            }
+        } catch (error) {
+            console.error('خطا در آپلود لوگو:', error);
+            alert('یک خطای پیش‌بینی نشده در آپلود لوگو رخ داد.');
+        } finally {
+            hideLoading();
+        }
+    });
+}
+// ===================== BREADCRUMB HELPERS (Add at the END of script.js) =====================
+
+// اگر قبلاً getQueryParam تعریف نشده، تعریفش می‌کنیم
+if (!window.getQueryParam) {
+  window.getQueryParam = function (name) {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const val = params.get(name);
+      return val === null ? null : decodeURIComponent(val);
+    } catch (_) { return null; }
+  };
+}
+
+// اگر قبلاً renderBreadcrumb تعریف نشده، تعریفش می‌کنیم
+if (!window.renderBreadcrumb) {
+  // items: آرایه‌ای از { label: string, url?: string }
+  window.renderBreadcrumb = function (items, containerSelector = '.breadcrumb') {
+    const el = document.querySelector(containerSelector);
+    if (!el || !Array.isArray(items)) return;
+
+    el.innerHTML = items.map((it, idx) => {
+      const isLast = idx === items.length - 1;
+      if (!isLast && it.url) {
+        return `<a href="${it.url}">${it.label}</a>`;
+      }
+      return `<span>${it.label}</span>`;
+    }).join(' &gt; ');
+
+    el.setAttribute('aria-label', 'مسیریاب');
+  };
+}
+
+// (اختیاری برای SEO) JSON-LD
+if (!window.injectBreadcrumbJsonLd) {
+  window.injectBreadcrumbJsonLd = function (items) {
+    try {
+      const jsonLd = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": items.map((it, i) => ({
+          "@type": "ListItem",
+          "position": i + 1,
+          "name": it.label,
+          ...(it.url ? { "item": new URL(it.url, window.location.origin).href } : {})
+        }))
+      };
+      const s = document.createElement('script');
+      s.type = 'application/ld+json';
+      s.textContent = JSON.stringify(jsonLd);
+      document.head.appendChild(s);
+    } catch (_) {}
+  };
+}
+
+// Init مخصوص صفحه جزئیات مغازه
+window.initShopDetailsPage = async function () {
+  try {
+    // شناسه مغازه را از URL بگیر (از هر دو کلید 'id' و 'shopId' پشتیبانی می‌کنیم)
+    const shopId = getQueryParam('id') || getQueryParam('shopId');
+
+    // نام غرفه را از API بگیریم (اگر API اول کار نکرد، یک مسیر جایگزین را امتحان می‌کنیم)
+    let shopName = 'غرفه';
+    if (shopId) {
+      // مسیر 1
+      let res = await fetch(`${typeof baseUrl !== 'undefined' ? baseUrl : ''}/api/shops/${shopId}`);
+      if (!res.ok) {
+        // مسیر 2 (fallback)
+        res = await fetch(`${typeof baseUrl !== 'undefined' ? baseUrl : ''}/api/shop/${shopId}`);
+      }
+      if (res.ok) {
+        const data = await res.json();
+        // تلاش برای کشف نام از چند کلید رایج
+        shopName = data?.name || data?.title || data?.shop?.name || data?.shop_name || shopName;
+      }
+    }
+
+    // ساخت آیتم‌های breadcrumb (دو آیتم اول ثابت هستند، آخری داینامیک از داده)
+    const items = [
+      { label: 'خانه', url: 'index.html' },
+      { label: 'غرفه‌ها', url: 'user-panel.html' },
+      { label: shopName }
+    ];
+
+    renderBreadcrumb(items);
+    injectBreadcrumbJsonLd(items); // اختیاری
+
+    // اگر بخواهی، اینجا می‌تونی بقیه‌ی دیتای صفحه را هم با همین data ست کنی
+    // مثل: بنر، توضیحات، شماره تماس و ...
+    // مثال (در صورتی که data را بالا دریافت کرده‌ای):
+    // if (data?.banner_url) document.getElementById('shop-banner-img').src = data.banner_url;
+    // if (data?.description) document.getElementById('shop-description-text').textContent = data.description;
+
+  } catch (err) {
+    console.error('initShopDetailsPage error:', err);
+    // شکست در fetch یا پارس؛ breadcrumb حداقل با "غرفه" نمایش داده می‌شود.
+    const items = [
+      { label: 'خانه', url: 'index.html' },
+      { label: 'غرفه‌ها', url: 'user-panel.html' },
+      { label: 'غرفه' }
+    ];
+    renderBreadcrumb(items);
+  }
+};
+// ===================== END BREADCRUMB HELPERS =====================

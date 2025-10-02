@@ -25,6 +25,16 @@
         </div>
 
         <div class="edit-section">
+            <h3>آپلود یا تغییر لوگو</h3>
+            <div class="section-content" style="text-align: center;">
+                <img src="images/default-logo.png" alt="پیش‌نمایش لوگو" id="logo-preview" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 2px solid #ddd; margin-bottom: 15px;">
+                <input type="file" id="logo-input" accept="image/*" style="display: none;">
+                <button onclick="document.getElementById('logo-input').click()">انتخاب لوگو</button>
+                <button id="save-logo-btn">ذخیره لوگو</button>
+            </div>
+        </div>
+
+        <div class="edit-section">
             <h3>افزودن محصول جدید</h3>
             <div class="section-content">
                 <input type="text" id="product-name" placeholder="نام محصول">
