@@ -557,6 +557,23 @@ app.post('/api/initiate-shop-creation', upload.fields([
             otp_info: { otp, expiration: new Date(Date.now() + 10 * 60 * 1000) },
             created_at: new Date()
         };
+// ✅ نرمال‌سازی فیلدهای تکمیلی و لوکیشن (بعد از ساخت initialShopData)
+try {
+  if (typeof req.body.address !== 'undefined') initialShopData.address = req.body.address;
+  if (typeof req.body.work_experience !== 'undefined') initialShopData.work_experience = req.body.work_experience;
+
+  const latRaw = req.body.latitude ?? req.body.lat;
+  const lngRaw = req.body.longitude ?? req.body.lng;
+  const lat = (latRaw !== undefined && latRaw !== null && String(latRaw).trim() !== '') ? parseFloat(latRaw) : null;
+  const lng = (lngRaw !== undefined && lngRaw !== null && String(lngRaw).trim() !== '') ? parseFloat(lngRaw) : null;
+
+  if (!Number.isNaN(lat) && !Number.isNaN(lng) && lat !== null && lng !== null) {
+    initialShopData.location = { type: 'Point', coordinates: [lng, lat] };
+    initialShopData.lat = lat;
+    initialShopData.lng = lng;
+  }
+} catch (e) { console.warn('normalize initialShopData failed:', e); }
+
         // ...
         const shopInsertResult = await shopsCollection.insertOne(initialShopData);
         tempShopId = shopInsertResult.insertedId; // آیدی مغازه را گرفتیم!
@@ -626,6 +643,43 @@ app.post('/api/shop/:shop_id/logo', upload.single('shopLogo'), async (req, res) 
     try {
         if (!req.file) {
             return res.status(400).json({ message: 'فایل لوگو انتخاب نشده است.' });
+
+// ✅ Upload banner (mirrors logo upload)
+app.post('/api/shop/:shop_id/banner', upload.single('shopBanner'), async (req, res) => {
+  const { shop_id } = req.params;
+  try {
+    if (!req.file) return res.status(400).json({ message: 'فایل بنر انتخاب نشده است.' });
+
+    await connectMongoDB();
+    const shopsCollection = db.collection('shops');
+    const shop = await shopsCollection.findOne({ _id: new ObjectId(shop_id) });
+    if (!shop) return res.status(404).json({ message: 'فروشگاه یافت نشد.' });
+
+    // اگر تابع uploadToS3 موجود است از آن استفاده می‌کنیم؛
+    // وگرنه، مسیر ذخیره‌سازی فعلی پروژه را به‌کار می‌گیریم.
+    let imageUrl = null;
+    if (typeof uploadToS3 === 'function') {
+      const folderPath = `${shop.user_id || 'public'}/${shop.shop_code || 'shop'}`;
+      imageUrl = await uploadToS3(req.file, folderPath, 'banner');
+    } else if (typeof saveLocalUpload === 'function') {
+      imageUrl = await saveLocalUpload(req, req.file, 'banner');
+    } else {
+      // fallback: نگهداری روی دیسک فعلی
+      imageUrl = `/uploads/${req.file.filename}`;
+    }
+
+    await shopsCollection.updateOne(
+      { _id: new ObjectId(shop_id) },
+      { $set: { banner: imageUrl, banner_url: imageUrl, updated_at: new Date() } }
+    );
+
+    res.json({ success: true, message: 'بنر با موفقیت آپلود شد', newImageUrl: imageUrl });
+  } catch (error) {
+    console.error('خطا در آپلود بنر:', error);
+    res.status(500).json({ message: 'خطای سرور' });
+  }
+});
+
         }
         await connectMongoDB();
         const shopsCollection = db.collection('shops');
@@ -945,7 +999,7 @@ app.post('/api/add-product/:shop_id', upload.single('image'), async (req, res) =
 app.put('/api/update-shop/:shop_id', async (req, res) => {
     const { shop_id } = req.params;
     // دریافت فیلدهای جدید از body درخواست
-    const { description, phone, whatsapp, telegram, instagram, eitaa, rubika, bale } = req.body;
+    const { name, shop_name, title, description, shop_description, phone, shop_phone, whatsapp, telegram, instagram, eitaa, rubika, bale, work_experience, address, full_address, latitude, longitude, lat, lng, city, city_name } = req.body;
     try {
         await connectMongoDB();
         const shopsCollection = db.collection('shops');
@@ -995,7 +1049,6 @@ app.get('/api/get-user-profile/:user_id', async (req, res) => {
         res.status(500).json({ message: 'خطا در سرور' });
     }
 });
-
 
 
 // API برای گرفتن محصولات یک مغازه (نسخه نهایی با مرتب‌سازی بر اساس اولویت)
@@ -1208,30 +1261,32 @@ app.get('/api/filter-shops', async (req, res) => {
 });
 
 // API برای جزئیات مغازه (نسخه نهایی با ارسال امتیاز)
+// server.js - THE CORRECT CODE
 app.get('/api/get-shop-details/:shop_id', async (req, res) => {
-    const { shop_id } = req.params;
-    if (!shop_id || shop_id === 'null') {
-        return res.status(400).json({ message: 'شناسه مغازه نامعتبر' });
-    }
     try {
         await connectMongoDB();
+        const { shop_id } = req.params;
+
+        // اعتبارسنجی اولیه برای اینکه مطمئن شیم shop_id معتبره
+        if (!ObjectId.isValid(shop_id)) {
+            return res.status(400).json({ success: false, message: 'شناسه مغازه نامعتبر است.' });
+        }
+
         const shopsCollection = db.collection('shops');
-        const usersCollection = db.collection('users');
+        
+        // 1. ساخت صحیح ObjectId
         const shop = await shopsCollection.findOne({ _id: new ObjectId(shop_id) });
 
-        if (shop) {
-            const owner = await usersCollection.findOne({ _id: new ObjectId(shop.user_id) });
-            shop.owner_full_name = owner ? owner.full_name : 'نامشخص';
-            
-            // ✅ محاسبه و اضافه کردن امتیاز به آبجکت shop
-            shop.score = await calculateShopScore(shop, db); 
-
-            shop.user_id = shop.user_id.toString();
+        if (!shop) {
+            return res.status(404).json({ success: false, message: 'فروشگاه یافت نشد.' });
         }
-        res.json(shop || {});
+        
+        // 2. ارسال مستقیم آبجکت shop (چون تابع نرمال‌سازی در فرانت‌اند وجود داره)
+        res.json({ success: true, data: shop });
+
     } catch (error) {
-        console.error('خطا در جزئیات مغازه:', error);
-        res.status(500).json({ message: 'خطا' });
+        console.error('خطا در دریافت جزئیات مغازه:', error);
+        res.status(500).json({ success: false, message: 'خطای سرور' });
     }
 });
 

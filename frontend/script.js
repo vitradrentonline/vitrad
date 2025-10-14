@@ -436,6 +436,7 @@ window.submitCreateShop = async function () {
     formData.append('user_id', user._id);
     formData.append('shop_name', document.getElementById('shop_name').value);
     formData.append('shop_description', document.getElementById('shop_description').value);
+    const we = document.getElementById('work_experience'); if (we) formData.append('work_experience', we.value);
     formData.append('activity_type', document.getElementById('activity-type').value);
     formData.append('job_category', document.getElementById('job-category').value);
     formData.append('shop_phone', document.getElementById('shop_phone').value);
@@ -1631,14 +1632,18 @@ async function updateShopInfo() {
     
     // ======== بخش جدید: خواندن همه مقادیر از فرم ========
     const updatePayload = {
-        description: document.getElementById('edit-description').value,
-        phone: document.getElementById('edit-phone').value,
-        whatsapp: document.getElementById('edit-whatsapp').value,
-        telegram: document.getElementById('edit-telegram').value,
-        instagram: document.getElementById('edit-instagram').value,
-        eitaa: document.getElementById('edit-eitaa').value,
-        rubika: document.getElementById('edit-rubika').value,
-        bale: document.getElementById('edit-bale').value
+        description: document.getElementById('edit-description') ? document.getElementById('edit-description').value : '',
+        phone: document.getElementById('edit-phone') ? document.getElementById('edit-phone').value : '',
+        whatsapp: document.getElementById('edit-whatsapp') ? document.getElementById('edit-whatsapp').value : '',
+        telegram: document.getElementById('edit-telegram') ? document.getElementById('edit-telegram').value : '',
+        instagram: document.getElementById('edit-instagram') ? document.getElementById('edit-instagram').value : '',
+        eitaa: document.getElementById('edit-eitaa') ? document.getElementById('edit-eitaa').value : '',
+        rubika: document.getElementById('edit-rubika') ? document.getElementById('edit-rubika').value : '',
+        bale: document.getElementById('edit-bale') ? document.getElementById('edit-bale').value : '',
+        work_experience: document.getElementById('edit-experience') ? document.getElementById('edit-experience').value : undefined,
+        address: document.getElementById('edit-address') ? document.getElementById('edit-address').value : undefined,
+        latitude: document.getElementById('edit-lat') ? document.getElementById('edit-lat').value : undefined,
+        longitude: document.getElementById('edit-lng') ? document.getElementById('edit-lng').value : undefined
     };
     // ================================================
 
@@ -1890,16 +1895,6 @@ function debounce(func, delay) {
         timeout = setTimeout(() => func.apply(this, args), delay);
     };
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    const path = window.location.pathname;
-
-    // ... سایر شرط‌های شما برای صفحات دیگر...
-
-    if (path.includes('shop-details.html')) {
-        loadShopDetailsPage(); // <<--- این تابع اصلی و جدید را فراخوانی کن
-    }
-});
 
 // تابع برای راه‌اندازی تب‌ها
 function initializeTabs() {
@@ -2715,107 +2710,300 @@ function setupShopLogoUploader(shopId) {
         }
     });
 }
-// ===================== BREADCRUMB HELPERS (Add at the END of script.js) =====================
 
-// اگر قبلاً getQueryParam تعریف نشده، تعریفش می‌کنیم
-if (!window.getQueryParam) {
-  window.getQueryParam = function (name) {
+function normalizeShopPayload(raw) {
+  const data = (raw && raw.success) ? raw.data : raw;
+
+  const lat = data?.lat ?? data?.latitude ?? data?.location?.lat ?? data?.location_lat ?? null;
+  const lng = data?.lng ?? data?.longitude ?? data?.location?.lng ?? data?.location_lng ?? null;
+  const address = data?.address || data?.full_address || data?.location?.address || '';
+
+  return {
+    id:         data?._id || data?.id || null,
+    name:       data?.shop_name || data?.name || data?.title || (data?.shop && data.shop.name) || 'غرفه',
+    logo:       data?.logo || data?.logo_url || data?.logoUrl || null,
+    banner:     data?.banner || data?.banner_url || data?.bannerUrl || null,
+
+    description: data?.shop_description || data?.description || '',
+    phone:       data?.shop_phone || data?.phone || '',
+    city:        data?.city_name || data?.city || '',
+    experience:  data?.work_experience || data?.experience || '',
+    socials: {
+      whatsapp:  data?.whatsapp || '',
+      telegram:  data?.telegram || '',
+      instagram: data?.instagram || '',
+      eitaa:     data?.eitaa || '',
+      rubika:    data?.rubika || '',
+      bale:      data?.bale || ''
+    },
+
+    followers:   data?.followers || 0,
+    rating:      (data?.rating_average ?? data?.rating) || 0,
+    reviewCount: data?.rating_count || data?.reviewCount || 0,
+    productCount: Array.isArray(data?.products) ? data.products.length : (data?.productCount || 0),
+
+    lat, lng, address
+  };
+}
+
+function renderBreadcrumb(segments) {
+  const el = document.getElementById('breadcrumb');
+  if (!el) return;
+  const html = segments.map((s, i) => {
+    if (s.url && i < segments.length - 1) return `<a href="${s.url}">${s.label}</a>`;
+    return `<span>${s.label}</span>`;
+  }).join(' &gt; ');
+  el.innerHTML = html;
+}
+
+function renderShopHeader(info) {
+  const header = document.getElementById('shop-header-section');
+  if (!header) return;
+
+  const logo = info.logo || 'images/logo.png'; // اگر لوگوی غرفه نبود، لوگوی عمومی سایت
+  const online = true; // TODO: از API واقعی بخون
+  const dotColor = online ? 'green' : '#bbb';
+
+  header.innerHTML = `
+    <!-- کلاس‌ها به استایل‌های styles.css مَچ شدند -->
+    <img class="shop-header-logo" src="${logo}" alt="لوگوی ${info.name}">
+    <div class="shop-meta">
+      <h1>${info.name}</h1>
+      <div class="status">
+        <span class="dot" style="background:${dotColor}"></span>
+        <span id="cityName">${info.city || '—'}</span>
+        <span style="margin:0 8px">•</span>
+        <span>دنبال‌کننده: <strong id="followers">${info.followers ?? 0}</strong></span>
+        <span style="margin:0 8px">•</span>
+        <span>امتیاز: <strong id="rating">${info.rating ?? '—'}</strong>${info.reviewCount ? ` (${info.reviewCount} نظر)` : ''}</span>
+      </div>
+      <div style="margin-top:8px;color:#666;font-size:13px">
+        تعداد محصولات: <strong id="prodCount">${info.productCount ?? 0}</strong>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn" id="followBtn">دنبال کنید</button>
+      <button class="btn secondary" id="shareBtn">اشتراک‌گذاری</button>
+      <button class="btn secondary" id="reportBtn">گزارش مغازه</button>
+    </div>
+  `;
+
+  // اکشن‌ها
+  const reportBtn = document.getElementById('reportBtn');
+  if (reportBtn) reportBtn.addEventListener('click', () => {
+    alert('فرم گزارش اینجا باز می‌شود (TODO)');
+  });
+
+  const shareBtn = document.getElementById('shareBtn');
+  if (shareBtn) shareBtn.addEventListener('click', async () => {
     try {
-      const params = new URLSearchParams(window.location.search);
-      const val = params.get(name);
-      return val === null ? null : decodeURIComponent(val);
-    } catch (_) { return null; }
-  };
+      await navigator.share({
+        title: info.name,
+        text: 'مشاهده غرفه در ویتراد',
+        url: window.location.href
+      });
+    } catch {}
+  });
+
+  const followBtn = document.getElementById('followBtn');
+  if (followBtn) followBtn.addEventListener('click', () => {
+    if (followBtn.dataset.active === '1') {
+      followBtn.dataset.active = '0';
+      followBtn.textContent = 'دنبال کنید';
+      followBtn.classList.remove('secondary');
+    } else {
+      followBtn.dataset.active = '1';
+      followBtn.textContent = 'دنبال‌شده';
+      followBtn.classList.add('secondary');
+    }
+    // TODO: فراخوانی API دنبال/لغو دنبال
+  });
 }
 
-// اگر قبلاً renderBreadcrumb تعریف نشده، تعریفش می‌کنیم
-if (!window.renderBreadcrumb) {
-  // items: آرایه‌ای از { label: string, url?: string }
-  window.renderBreadcrumb = function (items, containerSelector = '.breadcrumb') {
-    const el = document.querySelector(containerSelector);
-    if (!el || !Array.isArray(items)) return;
 
-    el.innerHTML = items.map((it, idx) => {
-      const isLast = idx === items.length - 1;
-      if (!isLast && it.url) {
-        return `<a href="${it.url}">${it.label}</a>`;
-      }
-      return `<span>${it.label}</span>`;
-    }).join(' &gt; ');
+function renderShopHome(info) {
+  // بنر + متن‌ها
+  const bannerImg = document.getElementById('shop-banner-img');
+  if (bannerImg) bannerImg.src = info.banner || 'images/default-banner.png';
 
-    el.setAttribute('aria-label', 'مسیریاب');
-  };
+  const descEl = document.getElementById('shop-description-text');
+  if (descEl) descEl.textContent = info.description || '—';
+
+  const expEl = document.getElementById('shop-experience');
+  if (expEl) expEl.textContent = info.experience || '—';
+
+  const cityEl = document.getElementById('shop-city');
+  if (cityEl) cityEl.textContent = info.city || '—';
+
+  // راه‌های تماس در کارت درباره + سایدبار
+  const contactButtons = document.getElementById('contact-buttons');
+  const asideContacts = document.getElementById('aside-contacts');
+  const buttons = [];
+
+  if (info.phone) buttons.push(`<a class="btn secondary" href="tel:${info.phone}">تماس تلفنی: ${info.phone}</a>`);
+  if (info.socials.whatsapp) buttons.push(`<a class="btn" target="_blank" rel="noopener" href="https://wa.me/${info.socials.whatsapp}">واتساپ</a>`);
+  if (info.socials.telegram) buttons.push(`<a class="btn secondary" target="_blank" rel="noopener" href="https://t.me/${info.socials.telegram.replace('@','')}">تلگرام</a>`);
+  if (info.socials.instagram) buttons.push(`<a class="btn secondary" target="_blank" rel="noopener" href="https://instagram.com/${info.socials.instagram.replace('@','')}">اینستاگرام</a>`);
+  if (info.socials.eitaa) buttons.push(`<a class="btn secondary" target="_blank" rel="noopener" href="https://eitaa.com/${info.socials.eitaa.replace('@','')}">ایتا</a>`);
+  if (info.socials.rubika) buttons.push(`<a class="btn secondary" target="_blank" rel="noopener" href="https://rubika.ir/${info.socials.rubika.replace('@','')}">روبیکا</a>`);
+  if (info.socials.bale) buttons.push(`<a class="btn secondary" target="_blank" rel="noopener" href="https://ble.im/${info.socials.bale.replace('@','')}">بله</a>`);
+
+  if (contactButtons) contactButtons.innerHTML = buttons.join('');
+  if (asideContacts) asideContacts.innerHTML = buttons.join('');
+
+  // نقشه + آدرس + مسیر‌یابی
+  const locBox   = document.getElementById('shop-location-box');
+  const mapEl    = document.getElementById('shop-map');
+  const routeBtn = document.getElementById('route-btn');
+  const openInMaps = document.getElementById('open-in-maps');
+  const addrEl   = document.getElementById('shop-address-text');
+  if (addrEl) addrEl.textContent = info.address || '';
+
+  if (info.lat && info.lng && mapEl && window.L) {
+    const map = L.map(mapEl).setView([info.lat, info.lng], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19, attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+    L.marker([info.lat, info.lng]).addTo(map);
+    if (locBox) locBox.style.display = 'block';
+  } else if (locBox) {
+    locBox.style.display = 'none';
+  }
+
+  // مسیر‌یابی
+  if (openInMaps && info.lat && info.lng) {
+    openInMaps.href = `https://www.google.com/maps/search/?api=1&query=${info.lat},${info.lng}`;
+  }
+  if (routeBtn && info.lat && info.lng) {
+    routeBtn.addEventListener('click', () => {
+      const dest = `${info.lat},${info.lng}`;
+      const openDir = (origin) =>
+        window.open(`https://www.google.com/maps/dir/?api=1&${origin ? `origin=${origin}&` : ''}destination=${dest}&travelmode=driving`, '_blank', 'noopener');
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          pos => openDir(`${pos.coords.latitude},${pos.coords.longitude}`),
+          _   => openDir(null),
+          { enableHighAccuracy: true, timeout: 5000 }
+        );
+      } else openDir(null);
+    }, { once: true });
+  }
+
+  // محصولات منتخب (نمونه: از /api/get-products/:shop_id بخون)
+  const homeFeat = document.getElementById('home-featured-products');
+  if (homeFeat && info.id) {
+    fetch(`/api/get-products/${info.id}`)
+      .then(r => r.ok ? r.json() : [])
+      .then(items => {
+        homeFeat.innerHTML = (items || []).slice(0,10).map(p => `
+          <div class="product-card">
+            <img src="${p.image || p.image_url || 'images/p.jpg'}" style="width:100%;height:100px;object-fit:cover;border-radius:6px" alt="">
+            <h4 style="margin:8px 0 4px">${p.title || p.name || 'محصول'}</h4>
+            <div style="color:#666">${p.price_text || ''}</div>
+          </div>
+        `).join('');
+      }).catch(()=>{});
+  }
+
+  const toProducts = document.getElementById('to-products');
+  if (toProducts) toProducts.addEventListener('click', () => {
+    document.getElementById('tab-btn-products').click();
+  });
 }
 
-// (اختیاری برای SEO) JSON-LD
-if (!window.injectBreadcrumbJsonLd) {
-  window.injectBreadcrumbJsonLd = function (items) {
-    try {
-      const jsonLd = {
-        "@context": "https://schema.org",
-        "@type": "BreadcrumbList",
-        "itemListElement": items.map((it, i) => ({
-          "@type": "ListItem",
-          "position": i + 1,
-          "name": it.label,
-          ...(it.url ? { "item": new URL(it.url, window.location.origin).href } : {})
-        }))
-      };
-      const s = document.createElement('script');
-      s.type = 'application/ld+json';
-      s.textContent = JSON.stringify(jsonLd);
-      document.head.appendChild(s);
-    } catch (_) {}
-  };
+function initializeTabs() {
+  const btns = [
+    document.getElementById('tab-btn-home'),
+    document.getElementById('tab-btn-products'),
+    document.getElementById('tab-btn-reviews')
+  ].filter(Boolean);
+  const panels = [
+    document.getElementById('tab-panel-home'),
+    document.getElementById('tab-panel-products'),
+    document.getElementById('tab-panel-reviews')
+  ].filter(Boolean);
+
+  btns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      btns.forEach(b => b.classList.remove('active'));
+      panels.forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      const target = document.getElementById(btn.getAttribute('aria-controls'));
+      if (target) target.classList.add('active');
+    });
+  });
 }
 
-// Init مخصوص صفحه جزئیات مغازه
 window.initShopDetailsPage = async function () {
   try {
-    // شناسه مغازه را از URL بگیر (از هر دو کلید 'id' و 'shopId' پشتیبانی می‌کنیم)
-    const shopId = getQueryParam('id') || getQueryParam('shopId');
-
-    // نام غرفه را از API بگیریم (اگر API اول کار نکرد، یک مسیر جایگزین را امتحان می‌کنیم)
-    let shopName = 'غرفه';
-    if (shopId) {
-      // مسیر 1
-      let res = await fetch(`${typeof baseUrl !== 'undefined' ? baseUrl : ''}/api/shops/${shopId}`);
-      if (!res.ok) {
-        // مسیر 2 (fallback)
-        res = await fetch(`${typeof baseUrl !== 'undefined' ? baseUrl : ''}/api/shop/${shopId}`);
-      }
-      if (res.ok) {
-        const data = await res.json();
-        // تلاش برای کشف نام از چند کلید رایج
-        shopName = data?.name || data?.title || data?.shop?.name || data?.shop_name || shopName;
-      }
+    const params = new URLSearchParams(window.location.search);
+    const shopId = params.get('shop_id');
+    if (!shopId) {
+      console.error('shop_id not found in URL');
+      return;
     }
 
-    // ساخت آیتم‌های breadcrumb (دو آیتم اول ثابت هستند، آخری داینامیک از داده)
-    const items = [
+    // گرفتن داده‌ها از API
+    const res = await fetch(`/api/get-shop-details/${shopId}`);
+    if (!res.ok) throw new Error('failed to load shop details');
+    const payload = await res.json();
+    const info = normalizeShopPayload(payload);
+
+    // رندر هدر + خانه
+    renderShopHeader(info);
+    renderShopHome(info);
+    renderBreadcrumb([
       { label: 'خانه', url: 'index.html' },
       { label: 'غرفه‌ها', url: 'user-panel.html' },
-      { label: shopName }
-    ];
+      { label: info.name }
+    ]);
 
-    renderBreadcrumb(items);
-    injectBreadcrumbJsonLd(items); // اختیاری
+    // تب‌ها
+    initializeTabs();
 
-    // اگر بخواهی، اینجا می‌تونی بقیه‌ی دیتای صفحه را هم با همین data ست کنی
-    // مثل: بنر، توضیحات، شماره تماس و ...
-    // مثال (در صورتی که data را بالا دریافت کرده‌ای):
-    // if (data?.banner_url) document.getElementById('shop-banner-img').src = data.banner_url;
-    // if (data?.description) document.getElementById('shop-description-text').textContent = data.description;
+    // پر کردن گرید محصولات
+    const pg = document.getElementById('productsGrid');
+    if (pg && info.id) {
+      const items = await fetch(`/api/get-products/${info.id}`).then(r => r.ok ? r.json() : []);
+      pg.innerHTML = (items || []).map(p => `
+        <div class="product-card">
+          <img src="${p.image || p.image_url || 'images/p.jpg'}" style="width:100%;height:110px;object-fit:cover;border-radius:6px" alt="">
+          <h4 style="margin:8px 0 4px">${p.title || p.name || 'محصول'}</h4>
+          <div style="color:#666">${p.price_text || ''}</div>
+        </div>
+      `).join('');
+    }
 
-  } catch (err) {
-    console.error('initShopDetailsPage error:', err);
-    // شکست در fetch یا پارس؛ breadcrumb حداقل با "غرفه" نمایش داده می‌شود.
-    const items = [
-      { label: 'خانه', url: 'index.html' },
-      { label: 'غرفه‌ها', url: 'user-panel.html' },
-      { label: 'غرفه' }
-    ];
-    renderBreadcrumb(items);
+    // نظرات (اگر API داری وصل کن)
+    document.getElementById('rating-value').textContent = info.rating || '—';
+    document.getElementById('rating-dist').textContent = info.reviewCount ? `تعداد نظر: ${info.reviewCount}` : '—';
+    document.getElementById('submit-review').addEventListener('click', () => {
+      alert('ثبت نظر ارسال شد (نمونه)'); // اینجا API واقعی‌ت را صدا بزن
+    });
+
+  } catch (e) {
+    console.error('initShopDetailsPage error:', e);
   }
 };
-// ===================== END BREADCRUMB HELPERS =====================
+
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const path = window.location.pathname;
+  if (path.includes('shop-details.html')) {
+    if (typeof window.initShopDetailsPage === 'function') {
+      await window.initShopDetailsPage();
+    }
+  }
+  // ... بقیه init صفحات دیگر
+});
+
+// script.js — جایگذاری مستقیم
+function showLoading() {
+  const el = document.getElementById('loading-overlay') || document.getElementById('loading');
+  if (el) el.style.display = 'flex';
+}
+function hideLoading() {
+  const el = document.getElementById('loading-overlay') || document.getElementById('loading');
+  if (el) el.style.display = 'none';
+}

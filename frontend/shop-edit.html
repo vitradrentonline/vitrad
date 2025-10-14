@@ -24,7 +24,37 @@
             </div>
         </div>
 
+        
         <div class="edit-section">
+            <h3>ویرایش اطلاعات عمومی</h3>
+            <div class="section-content">
+                <label for="edit-description">توضیحات غرفه</label>
+                <textarea id="edit-description" placeholder="توضیحات..."></textarea>
+
+                <label for="edit-phone">شماره تماس</label>
+                <input type="tel" id="edit-phone" placeholder="مثلاً 09...">
+
+                <label for="edit-experience">سابقه کاری (سال/توضیح)</label>
+                <input type="text" id="edit-experience" placeholder="مثلاً ۵ سال">
+
+                <label for="edit-address">آدرس</label>
+                <input type="text" id="edit-address" placeholder="نشانی کامل">
+
+                <div class="grid-2">
+                    <div>
+                        <label for="edit-lat">Latitude</label>
+                        <input type="text" id="edit-lat" placeholder="مثلاً 35.6892">
+                    </div>
+                    <div>
+                        <label for="edit-lng">Longitude</label>
+                        <input type="text" id="edit-lng" placeholder="مثلاً 51.3890">
+                    </div>
+                </div>
+
+                <button class="btn primary" onclick="updateShopInfo()">ذخیره تغییرات</button>
+            </div>
+        </div>
+<div class="edit-section">
             <h3>آپلود یا تغییر لوگو</h3>
             <div class="section-content" style="text-align: center;">
                 <img src="images/default-logo.png" alt="پیش‌نمایش لوگو" id="logo-preview" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 2px solid #ddd; margin-bottom: 15px;">
