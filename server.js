@@ -1476,55 +1476,55 @@ const Report = mongoose.model('Report', reportSchema);
 // ==========================================================
 
 // 1. دریافت تمام اطلاعات یک غرفه برای نمایش عمومی
+// GET /api/shops/:shopId/details
 app.get('/api/shops/:shopId/details', async (req, res) => {
-    try {
-        const shopId = req.params.shopId;
-        if (!mongoose.Types.ObjectId.isValid(shopId)) {
-            return res.status(400).json({ success: false, message: "شناسه غرفه نامعتبر است." });
-        }
-
-        const shop = await Shop.findById(shopId).populate('user_id', 'full_name');
-        if (!shop || !shop.is_active || shop.status !== 'approved') {
-            return res.status(404).json({ success: false, message: 'غرفه یافت نشد یا هنوز تایید نشده است.' });
-        }
-        
-        // محاسبه میانگین امتیازات
-        const reviews = await Review.find({ shop_id: shopId });
-        const rating_average = reviews.length > 0
-            ? reviews.reduce((acc, item) => acc + item.rating, 0) / reviews.length
-            : 0;
-
-        const productCount = await Product.countDocuments({ shop_id: shopId });
-
-        // شبیه‌سازی آنلاین بودن (در یک پروژه واقعی این از Redis یا WebSocket خوانده می‌شود)
-        const isOnline = Math.random() > 0.3; 
-
-        const shopDetails = {
-            id: shop._id,
-            name: shop.shop_name,
-            logoUrl: shop.logo,
-            bannerUrl: shop.banner,
-            isOnline: isOnline,
-            city: shop.city, // باید در زمان ثبت نام، نام شهر ذخیره شود نه کلید
-            followers: shop.followers_count,
-            rating: rating_average.toFixed(1),
-            reviewCount: reviews.length,
-            productCount: productCount,
-            lastUpdate: shop.last_activity, // این فیلد باید با هر تغییر آپدیت شود
-            lastOnline: new Date(Date.now() - Math.random() * 1000 * 3600 * 5).toISOString(), // شبیه‌سازی
-            totalSales: shop.total_sales,
-            description: shop.shop_description,
-            phone: shop.shop_phone,
-            experience: shop.work_experience,
-        };
-
-        res.json({ success: true, data: shopDetails });
-
-    } catch (error) {
-        console.error("Error fetching shop details:", error);
-        res.status(500).json({ success: false, message: "خطای سرور" });
+  try {
+    const { shopId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(shopId)) {
+      return res.status(400).json({ success:false, message:'شناسه نامعتبر' });
     }
+
+    const shop = await Shop.findById(shopId).lean();
+    if (!shop) return res.status(404).json({ success:false, message:'یافت نشد' });
+
+    // شمارش محصولات، فالوورها و نظرات
+    const [productCount, followers, reviews] = await Promise.all([
+      Product.countDocuments({ shop_id: shopId }),
+      Follow.countDocuments({ shop_id: shopId }),
+      Review.find({ shop_id: shopId }, 'rating').lean()
+    ]);
+
+    const reviewCount = reviews.length;
+    const rating = reviewCount
+      ? Number((reviews.reduce((a, r) => a + (r.rating || 0), 0) / reviewCount).toFixed(1))
+      : 0;
+
+    res.json({
+      success: true,
+      data: {
+        _id: shop._id,
+        name: shop.name,
+        city: shop.city,
+        description: shop.description,
+        banner_url: shop.banner_url || null,
+        logo_url: shop.logo_url || null,
+        experience: shop.experience || '',
+        phone: shop.phone || '',
+        address: shop.address || '',
+        calls_enabled: !!shop.calls_enabled,
+        call_windows: shop.call_windows || [],
+        productCount,
+        followers,
+        rating,
+        reviewCount
+      }
+    });
+  } catch (e) {
+    console.error('details error:', e);
+    res.status(500).json({ success:false, message:'خطای سرور' });
+  }
 });
+
 
 
 // 2. دریافت محصولات یک غرفه با قابلیت فیلتر، جستجو و مرتب‌سازی
@@ -1688,6 +1688,82 @@ app.post('/api/shops/:shopId/initiate-chat', (req, res) => {
     // در یک پروژه واقعی، اینجا منطق ایجاد یک چت روم در WebSocket server قرار می‌گیرد
     res.json({ success: true, message: 'چت با موفقیت آغاز شد.', chatRoomId: `chat_${shopId}_${req.body.userId}` });
 });
+
+// --- آغاز: ستاپ سرور HTTP + Socket.IO ---
+const http = require('http');
+const server = http.createServer(app);
+
+const { Server } = require('socket.io');
+const io = new Server(server, {
+  cors: { origin: '*', methods: ['GET','POST'] }
+});
+
+// فضای سیگنالینگ برای تماس‌ها
+io.on('connection', (socket) => {
+  // کلاینت‌ها با roomId = shopId جوین می‌شن (تماس یک‌به‌یک)
+  socket.on('join', ({ roomId, role }) => {
+    socket.join(roomId);
+    socket.to(roomId).emit('peer-joined', { role });
+  });
+
+  socket.on('offer', ({ roomId, sdp }) => {
+    socket.to(roomId).emit('offer', { sdp });
+  });
+  socket.on('answer', ({ roomId, sdp }) => {
+    socket.to(roomId).emit('answer', { sdp });
+  });
+  socket.on('ice-candidate', ({ roomId, candidate }) => {
+    socket.to(roomId).emit('ice-candidate', { candidate });
+  });
+
+  socket.on('leave', ({ roomId }) => {
+    socket.leave(roomId);
+    socket.to(roomId).emit('peer-left');
+  });
+});
+// --- پایان: ستاپ Socket.IO ---
+
+// اگر قبلاً app.listen داشتید، حذفش کن و اینو بگذار:
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log('Server listening on', PORT));
+
+// GET /api/shops/:shopId/call-availability
+app.get('/api/shops/:shopId/call-availability', async (req, res) => {
+  try {
+    const { shopId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(shopId)) {
+      return res.status(400).json({ success:false, message:'شناسه نامعتبر' });
+    }
+    const shop = await Shop.findById(shopId, 'calls_enabled call_windows').lean();
+    if (!shop) return res.status(404).json({ success:false, message:'یافت نشد' });
+
+    const enabled = !!shop.calls_enabled;
+    const windows = shop.call_windows || [];
+
+    // بررسی سریع بازه زمانی فعلی (به زمان سرور)
+    const now = new Date();
+    // day map: 0(sun)..6(sat) — اگر تقویمت فرق دارد، مپ کن
+    const dayIdx = now.getDay(); // 0=Sunday
+    const map = ['sun','mon','tue','wed','thu','fri','sat'];
+    const todayKey = map[dayIdx];
+
+    const pad2 = (n) => (n<10? '0'+n: ''+n);
+    const hm = `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+
+    let within = false;
+    for (const w of windows) {
+      if (w.day === todayKey && w.start && w.end) {
+        if (w.start <= hm && hm <= w.end) { within = true; break; }
+      }
+    }
+
+    res.json({ success:true, data:{ enabled, within, windows }});
+  } catch (e) {
+    console.error('availability error:', e);
+    res.status(500).json({ success:false, message:'خطای سرور' });
+  }
+});
+
 
 // راه‌اندازی سرور
 app.listen(port, async () => {

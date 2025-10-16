@@ -66,7 +66,25 @@
     <nav id="breadcrumb" class="breadcrumb"></nav>
 
     <!-- هدر اطلاعات غرفه -->
-    <section id="shop-header-section" class="shop-header"></section>
+    <section id="shop-header-section" class="shop-header">
+      <!-- رندر با JS: لوگو، نام، شهر -->
+      <img id="shop-logo" class="shop-header-logo" src="images/default-logo.png" alt="لوگو">
+      <div class="shop-header-info">
+        <div class="shop-header-title">
+          <h1 id="shop-name">نام غرفه</h1>
+          <span id="online-indicator" class="online-indicator offline" title="وضعیت"></span>
+        </div>
+        <div class="shop-header-stats">
+          <span><i class="fas fa-star"></i> امتیاز: <b id="stat-rating">0.0</b> (<span id="stat-reviewCount">0</span> نظر)</span>
+          <span><i class="fas fa-users"></i> دنبال‌کننده: <b id="stat-followers">0</b></span>
+          <span><i class="fas fa-box"></i> محصولات: <b id="stat-products">0</b></span>
+          <span><i class="fas fa-map-marker-alt"></i> <span id="shop-city">-</span></span>
+        </div>
+      </div>
+      <div class="shop-header-actions">
+        <button id="btn-follow" class="btn"><i class="fas fa-user-plus"></i> دنبال کردن</button>
+      </div>
+    </section>
 
     <div class="shop-tabs">
       <nav class="shop-tabs-nav">
@@ -89,8 +107,14 @@
           <h3><i class="fas fa-info-circle"></i> درباره غرفه</h3>
           <p id="shop-description-text"></p>
           <p><strong>سابقه کاری:</strong> <span id="shop-experience"></span></p>
-          <p><strong>شهر:</strong> <span id="shop-city"></span></p>
-          <div id="contact-buttons"></div>
+          <p><strong>شهر:</strong> <span id="shop-city-2"></span></p>
+
+          <!-- دکمه‌های تماس (فقط وقتی calls_enabled=true) -->
+          <div id="call-buttons" style="display:none; margin-top:12px;">
+            <button id="btn-voice-call" class="btn secondary"><i class="fas fa-phone"></i> تماس صوتی</button>
+            <button id="btn-video-call" class="btn primary"><i class="fas fa-video"></i> تماس تصویری</button>
+            <small id="call-hint" style="display:block; color:#666; margin-top:6px;"></small>
+          </div>
         </div>
 
         <div id="shop-location-box" class="card" style="display:none;">
@@ -104,7 +128,10 @@
         </div>
 
         <div class="card">
-          <h3><i class="fas fa-certificate"></i> محصولات منتخب</h3>
+          <h3>
+            <i class="fas fa-certificate"></i> محصولات منتخب
+            <small style="color:#777">(<span id="featured-count">0</span> محصول)</small>
+          </h3>
           <div id="home-featured-products" class="h-products"></div>
           <div style="text-align:center;margin-top:20px;">
             <button id="to-products" class="btn primary">نمایش همه محصولات</button>
@@ -121,6 +148,9 @@
             <option value="newest">جدیدترین</option>
             <option value="discount">دارای تخفیف</option>
           </select>
+          <div style="margin-inline-start:auto;">
+            <b>تعداد:</b> <span id="products-total">0</span>
+          </div>
         </div>
         <div id="productsGrid" class="products-grid"></div>
       </div>
@@ -129,7 +159,7 @@
       <div id="tab-panel-reviews" class="shop-tab-content">
         <div class="reviews-layout">
           <div class="rating-summary card">
-            <h3>امتیاز کلی: <strong id="rating-value"></strong></h3>
+            <h3>امتیاز کلی: <strong id="rating-value">0.0</strong></h3>
             <div id="rating-dist"></div>
             <hr>
             <h4>نظر خود را ثبت کنید</h4>
@@ -157,6 +187,8 @@
     }
   </script>
 
+  <!-- Socket.IO برای WebRTC سیگنالینگ -->
+  <script src="/socket.io/socket.io.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

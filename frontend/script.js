@@ -2935,58 +2935,88 @@ function initializeTabs() {
   });
 }
 
-window.initShopDetailsPage = async function () {
-  try {
-    const params = new URLSearchParams(window.location.search);
-    const shopId = params.get('shop_id');
-    if (!shopId) {
-      console.error('shop_id not found in URL');
-      return;
-    }
+// ========== Config helpers ==========
+function qs(id){ return document.getElementById(id); }
 
-    // گرفتن داده‌ها از API
-    const res = await fetch(`/api/get-shop-details/${shopId}`);
-    if (!res.ok) throw new Error('failed to load shop details');
-    const payload = await res.json();
-    const info = normalizeShopPayload(payload);
+// ========== Shop Details Boot ==========
+async function initShopDetailsPage(){
+  const isShopDetails = location.pathname.endsWith('shop-details.html');
+  if(!isShopDetails) return;
 
-    // رندر هدر + خانه
-    renderShopHeader(info);
-    renderShopHome(info);
-    renderBreadcrumb([
-      { label: 'خانه', url: 'index.html' },
-      { label: 'غرفه‌ها', url: 'user-panel.html' },
-      { label: info.name }
-    ]);
+  const params = new URLSearchParams(location.search);
+  const shopId = params.get('shop_id');
+  if(!shopId) return;
 
-    // تب‌ها
-    initializeTabs();
+  // 1) جزئیات مغازه
+  const det = await fetch(`${baseUrl}/api/shops/${shopId}/details`).then(r=>r.json()).catch(()=>({}));
+  const data = det?.data || {};
 
-    // پر کردن گرید محصولات
-    const pg = document.getElementById('productsGrid');
-    if (pg && info.id) {
-      const items = await fetch(`/api/get-products/${info.id}`).then(r => r.ok ? r.json() : []);
-      pg.innerHTML = (items || []).map(p => `
-        <div class="product-card">
-          <img src="${p.image || p.image_url || 'images/p.jpg'}" style="width:100%;height:110px;object-fit:cover;border-radius:6px" alt="">
-          <h4 style="margin:8px 0 4px">${p.title || p.name || 'محصول'}</h4>
-          <div style="color:#666">${p.price_text || ''}</div>
-        </div>
-      `).join('');
-    }
+  // هدر
+  if(qs('shop-name')) qs('shop-name').textContent = data.name || 'نام غرفه';
+  if(qs('shop-city')) qs('shop-city').textContent = data.city || '-';
+  if(qs('shop-city-2')) qs('shop-city-2').textContent = data.city || '-';
+  if(qs('shop-description-text')) qs('shop-description-text').textContent = data.description || '';
+  if(qs('shop-experience')) qs('shop-experience').textContent = data.experience || '';
+  if(qs('shop-address-text')) qs('shop-address-text').textContent = data.address || '';
+  if(qs('shop-logo') && data.logo_url) qs('shop-logo').src = data.logo_url;
+  if(qs('shop-banner-img') && data.banner_url) qs('shop-banner-img').src = data.banner_url;
 
-    // نظرات (اگر API داری وصل کن)
-    document.getElementById('rating-value').textContent = info.rating || '—';
-    document.getElementById('rating-dist').textContent = info.reviewCount ? `تعداد نظر: ${info.reviewCount}` : '—';
-    document.getElementById('submit-review').addEventListener('click', () => {
-      alert('ثبت نظر ارسال شد (نمونه)'); // اینجا API واقعی‌ت را صدا بزن
-    });
+  // آمار از دیتابیس (دیگه صفر پیش‌فرض نباشه)
+  if(qs('stat-rating')) qs('stat-rating').textContent = typeof data.rating === 'number' ? data.rating.toFixed(1) : (data.rating || '0.0');
+  if(qs('stat-reviewCount')) qs('stat-reviewCount').textContent = data.reviewCount || 0;
+  if(qs('stat-followers')) qs('stat-followers').textContent = data.followers || 0;
+  if(qs('stat-products')) qs('stat-products').textContent = data.productCount || 0;
+  if(qs('products-total')) qs('products-total').textContent = data.productCount || 0;
+  if(qs('featured-count')) qs('featured-count').textContent = data.productCount || 0;
 
-  } catch (e) {
-    console.error('initShopDetailsPage error:', e);
+  // دکمه‌های تماس
+  if(data.calls_enabled && qs('call-buttons')){
+    qs('call-buttons').style.display = 'block';
+    qs('call-hint').textContent = 'تماس فقط در بازه‌های فعال غرفه‌دار امکان‌پذیر است.';
+    qs('btn-voice-call')?.addEventListener('click', () => prepareAndStartCall(shopId, 'audio'));
+    qs('btn-video-call')?.addEventListener('click', () => prepareAndStartCall(shopId, 'video'));
   }
-};
 
+  // مسیر «نمایش همه محصولات»
+  qs('to-products')?.addEventListener('click', ()=>{
+    qs('tab-btn-products')?.click();
+    window.scrollTo({ top: qs('tab-panel-products').offsetTop, behavior: 'smooth' });
+  });
+
+  // تب‌ها
+  wireTabs();
+
+  // فالو (نمونه ساده؛ سمت سرور احراز هویت کن)
+  qs('btn-follow')?.addEventListener('click', async ()=>{
+    const user_id = localStorage.getItem('user_id');
+    const res = await fetch(`${baseUrl}/api/shops/${shopId}/follow`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ user_id })
+    }).then(r=>r.json());
+    if(res?.success && res?.data?.followers != null){
+      qs('stat-followers').textContent = res.data.followers;
+      alert('با موفقیت دنبال شد');
+    } else {
+      alert(res?.message || 'خطا در دنبال کردن');
+    }
+  });
+}
+
+function wireTabs(){
+  const btns = [ 'home', 'products', 'reviews' ];
+  btns.forEach(key=>{
+    const b = qs(`tab-btn-${key}`), p = qs(`tab-panel-${key}`);
+    if(b && p){
+      b.addEventListener('click', ()=>{
+        document.querySelectorAll('.shop-tab-btn').forEach(x=>x.classList.remove('active'));
+        document.querySelectorAll('.shop-tab-content').forEach(x=>x.classList.remove('active'));
+        b.classList.add('active'); p.classList.add('active');
+      });
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', initShopDetailsPage);
 
 document.addEventListener('DOMContentLoaded', async () => {
   const path = window.location.pathname;
@@ -3006,4 +3036,126 @@ function showLoading() {
 function hideLoading() {
   const el = document.getElementById('loading-overlay') || document.getElementById('loading');
   if (el) el.style.display = 'none';
+}
+
+// ========== WebRTC: Call ==========
+let ioSocket = null;
+let pc = null;
+let localStream = null;
+
+async function prepareAndStartCall(shopId, mode /* 'audio' | 'video' */){
+  // قبل از شروع، دسترس‌پذیری را چک کن
+  const avail = await fetch(`/api/shops/${shopId}/call-availability`).then(r=>r.json()).catch(()=>({}));
+  const { enabled, within } = avail?.data || {};
+  if(!enabled){
+    alert('تماس برای این غرفه فعال نیست.');
+    return;
+  }
+  if(!within){
+    alert('در حال حاضر خارج از بازهٔ تماس تعیین‌شده است.');
+    return;
+  }
+  // شروع تماس
+  startCall(shopId, mode);
+}
+
+async function startCall(shopId, mode){
+  // گرفتن میکروفون/دوربین دقیقاً همین‌جا (حداقل‌گرایی دسترسی)
+  const constraints = { audio: true, video: (mode === 'video') };
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia(constraints);
+  } catch (e) {
+    console.error('media error', e);
+    alert('اجازهٔ دسترسی به میکروفون/دوربین داده نشد.');
+    return;
+  }
+
+  // اتصال Socket.IO
+  if(!ioSocket){
+    ioSocket = io(); // /socket.io/socket.io.js در HTML بارگذاری شده
+  }
+  const roomId = shopId; // برای سادگی: اتاق = شناسهٔ مغازه
+  ioSocket.emit('join', { roomId, role: 'customer' });
+
+  // ساخت PeerConnection
+  pc = new RTCPeerConnection({
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' }
+    ]
+  });
+
+  // استریم محلی به PeerConnection
+  localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+
+  // رندر محلی (اختیاری: اگر بخوای پیش‌نمایش نشان بدهی)
+  ensureCallUI(); // المان‌های ویدئو/دکمه قطع را می‌سازد
+  const localEl = document.getElementById('localVideo');
+  if(localEl && mode === 'video'){ localEl.srcObject = localStream; localEl.muted = true; localEl.play().catch(()=>{}); }
+
+  // رویداد دریافت استریم طرف مقابل
+  pc.ontrack = (ev) => {
+    const [stream] = ev.streams;
+    const remoteEl = document.getElementById('remoteVideo');
+    if(remoteEl){
+      remoteEl.srcObject = stream;
+      remoteEl.play().catch(()=>{});
+    }
+  };
+
+  // ICE
+  pc.onicecandidate = (ev)=>{
+    if(ev.candidate){
+      ioSocket.emit('ice-candidate', { roomId, candidate: ev.candidate });
+    }
+  };
+
+  // ساخت Offer و ارسال
+  const offer = await pc.createOffer({ offerToReceiveAudio:true, offerToReceiveVideo:(mode==='video') });
+  await pc.setLocalDescription(offer);
+  ioSocket.emit('offer', { roomId, sdp: offer.sdp });
+
+  // لیسنرها
+  ioSocket.off('answer'); // جلوگیری از چندبار رجیستر
+  ioSocket.on('answer', async ({ sdp })=>{
+    await pc.setRemoteDescription({ type:'answer', sdp });
+  });
+
+  ioSocket.off('ice-candidate');
+  ioSocket.on('ice-candidate', async ({ candidate })=>{
+    try{ await pc.addIceCandidate(candidate); } catch(e){ console.warn(e); }
+  });
+
+  ioSocket.off('peer-left');
+  ioSocket.on('peer-left', endCall);
+}
+
+function endCall(){
+  try{
+    if(pc){ pc.ontrack=null; pc.onicecandidate=null; pc.close(); }
+    if(localStream){ localStream.getTracks().forEach(t=>t.stop()); }
+  } finally {
+    pc = null; localStream = null;
+    const wrap = document.getElementById('callWrap');
+    if(wrap) wrap.remove();
+  }
+  if(ioSocket){
+    // خروج از اتاق به دلخواه (اینجا فقط UI را می‌بندیم)
+  }
+}
+
+// ساخت حداقلی UI تماس (ویدئوها + دکمه قطع)
+function ensureCallUI(){
+  if(document.getElementById('callWrap')) return;
+  const wrap = document.createElement('div');
+  wrap.id = 'callWrap';
+  wrap.style.cssText = 'position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.8);display:flex;gap:12px;align-items:center;justify-content:center;flex-direction:column;padding:20px;';
+  const box = document.createElement('div');
+  box.style.cssText = 'display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center;';
+  const remote = document.createElement('video'); remote.id='remoteVideo'; remote.autoplay=true; remote.playsInline=true; remote.style.cssText='width:70vw;max-width:900px;border-radius:12px;background:#000;';
+  const local = document.createElement('video'); local.id='localVideo'; local.autoplay=true; local.muted=true; local.playsInline=true; local.style.cssText='width:20vw;max-width:260px;border-radius:12px;background:#000;';
+  const endBtn = document.createElement('button'); endBtn.className='btn'; endBtn.innerHTML = '<i class="fas fa-phone-slash"></i> پایان تماس';
+  endBtn.onclick = endCall;
+  box.appendChild(remote); box.appendChild(local);
+  wrap.appendChild(box); wrap.appendChild(endBtn);
+  document.body.appendChild(wrap);
 }
