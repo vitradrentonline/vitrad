@@ -1,9 +1,9 @@
 const { MongoClient } = require('mongodb');
 
 // رشته اتصال به دیتابیس شما
-const mongoUri = 'mongodb://root:1gJu5w36FQqkhKXORWKyZ0l0@chogolisa.liara.cloud:33240/my-app?authSource=admin&replicaSet=rs0&directConnection=true';
+const mongoUri = 'mongodb+srv://vitrad:Vitrad1404@cluster0.jpo6lmk.mongodb.net/Vitrad?retryWrites=true&w=majority&appName=Cluster0';
 
-const collectionsToReset = ['users', 'shops', 'products', 'otps', 'ratings'];
+const collectionsToReset = ['users', 'shops', 'products', 'otps', 'ratings', 'follows', 'rentonline', 'rentonline', 'reviews', 'reports'];
 
 async function resetDatabase() {
     let client;

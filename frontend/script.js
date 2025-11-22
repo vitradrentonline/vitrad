@@ -1627,23 +1627,31 @@ async function saveOrder(shop_id, orderedIds) {
 }
 
 // ✅ نسخه نهایی و یکپارچه برای بروزرسانی اطلاعات مغازه
+// ✅ نسخه نهایی و یکپارچه برای بروزرسانی اطلاعات مغازه
 async function updateShopInfo() {
     const shop_id = new URLSearchParams(window.location.search).get('shop_id');
     
-    // ======== بخش جدید: خواندن همه مقادیر از فرم ========
+    // ======== خواندن همه مقادیر از فرم ادغام‌شده ========
     const updatePayload = {
-        description: document.getElementById('edit-description') ? document.getElementById('edit-description').value : '',
-        phone: document.getElementById('edit-phone') ? document.getElementById('edit-phone').value : '',
-        whatsapp: document.getElementById('edit-whatsapp') ? document.getElementById('edit-whatsapp').value : '',
-        telegram: document.getElementById('edit-telegram') ? document.getElementById('edit-telegram').value : '',
-        instagram: document.getElementById('edit-instagram') ? document.getElementById('edit-instagram').value : '',
-        eitaa: document.getElementById('edit-eitaa') ? document.getElementById('edit-eitaa').value : '',
-        rubika: document.getElementById('edit-rubika') ? document.getElementById('edit-rubika').value : '',
-        bale: document.getElementById('edit-bale') ? document.getElementById('edit-bale').value : '',
+        // بخش اطلاعات عمومی
+        description: document.getElementById('edit-description') ? document.getElementById('edit-description').value : undefined,
+        phone: document.getElementById('edit-phone') ? document.getElementById('edit-phone').value : undefined,
         work_experience: document.getElementById('edit-experience') ? document.getElementById('edit-experience').value : undefined,
         address: document.getElementById('edit-address') ? document.getElementById('edit-address').value : undefined,
         latitude: document.getElementById('edit-lat') ? document.getElementById('edit-lat').value : undefined,
-        longitude: document.getElementById('edit-lng') ? document.getElementById('edit-lng').value : undefined
+        longitude: document.getElementById('edit-lng') ? document.getElementById('edit-lng').value : undefined,
+
+        // بخش راه‌های ارتباطی
+        whatsapp: document.getElementById('edit-whatsapp') ? document.getElementById('edit-whatsapp').value : undefined,
+        telegram: document.getElementById('edit-telegram') ? document.getElementById('edit-telegram').value : undefined,
+        instagram: document.getElementById('edit-instagram') ? document.getElementById('edit-instagram').value : undefined,
+        eitaa: document.getElementById('edit-eitaa') ? document.getElementById('edit-eitaa').value : undefined,
+        rubika: document.getElementById('edit-rubika') ? document.getElementById('edit-rubika').value : undefined,
+        bale: document.getElementById('edit-bale') ? document.getElementById('edit-bale').value : undefined,
+
+        // ✅ بخش تنظیمات تماس
+        calls_enabled: document.getElementById('edit-calls-enabled') ? document.getElementById('edit-calls-enabled').checked : undefined,
+        call_windows_json: document.getElementById('edit-call-windows') ? document.getElementById('edit-call-windows').value : undefined
     };
     // ================================================
 
@@ -2025,10 +2033,6 @@ function toggleAccordion(headerElement) {
     }
 }
 
-/**
- * اطلاعات پروفایل یک مغازه را برای نمایش در فرم‌های صفحه ویرایش بارگذاری می‌کند.
- * همچنین امتیاز محاسبه شده مغازه را نمایش می‌دهد.
- */
 async function loadShopProfileForEdit() {
     const shop_id = new URLSearchParams(window.location.search).get('shop_id');
     if (!shop_id) {
@@ -2039,24 +2043,40 @@ async function loadShopProfileForEdit() {
 
     try {
         const response = await fetch(`${baseUrl}/api/get-shop-details/${shop_id}`);
-        const shop = await response.json();
+        // ✅ نکته: اینجا ما از API عمومی استفاده می‌کنیم که shop.data برمی‌گرداند
+        const result = await response.json(); 
+        if (!result.success) {
+            throw new Error(result.message);
+        }
+        const shop = result.data; // ✅ اطلاعات غرفه داخل .data است
 
-        // پر کردن فیلدهای اطلاعات اصلی
-        document.getElementById('edit-description').value = shop.shop_description || '';
-        document.getElementById('edit-phone').value = shop.shop_phone || '';
+        // پر کردن فیلدهای اطلاعات عمومی و تکمیلی
+        document.getElementById('edit-description').value = shop.description || '';
+        document.getElementById('edit-phone').value = shop.phone || '';
+        document.getElementById('edit-experience').value = shop.experience || '';
+        document.getElementById('edit-address').value = shop.address || '';
+        document.getElementById('edit-lat').value = shop.lat || '';
+        document.getElementById('edit-lng').value = shop.lng || '';
         
         // پر کردن فیلدهای راه‌های ارتباطی
-        document.getElementById('edit-whatsapp').value = shop.whatsapp || '';
-        document.getElementById('edit-telegram').value = shop.telegram || '';
-        document.getElementById('edit-instagram').value = shop.instagram || '';
-        document.getElementById('edit-eitaa').value = shop.eitaa || '';
-        document.getElementById('edit-rubika').value = shop.rubika || '';
-        document.getElementById('edit-bale').value = shop.bale || '';
+        document.getElementById('edit-whatsapp').value = shop.socials?.whatsapp || '';
+        document.getElementById('edit-telegram').value = shop.socials?.telegram || '';
+        document.getElementById('edit-instagram').value = shop.socials?.instagram || '';
+        document.getElementById('edit-eitaa').value = shop.socials?.eitaa || '';
+        document.getElementById('edit-rubika').value = shop.socials?.rubika || '';
+        document.getElementById('edit-bale').value = shop.socials?.bale || '';
         
         // نمایش امتیاز مغازه در هدر صفحه
         const scoreDisplay = document.getElementById('shop-score-display');
         if (scoreDisplay && typeof shop.score !== 'undefined') {
             scoreDisplay.textContent = `⭐ ${shop.score}`;
+        }
+        
+        // ✅ بارگذاری تنظیمات تماس
+        if(document.getElementById('edit-calls-enabled')) {
+            document.getElementById('edit-calls-enabled').checked = !!shop.calls_enabled;
+            // ✅ تبدیل آبجکت به رشته JSON برای نمایش در textarea
+            document.getElementById('edit-call-windows').value = JSON.stringify(shop.call_windows || [], null, 2);
         }
 
     } catch (error) {
@@ -2939,67 +2959,364 @@ function initializeTabs() {
 function qs(id){ return document.getElementById(id); }
 
 // ========== Shop Details Boot ==========
+const qs = (id)=>document.getElementById(id);
+
 async function initShopDetailsPage(){
-  const isShopDetails = location.pathname.endsWith('shop-details.html');
-  if(!isShopDetails) return;
+  if (!location.pathname.endsWith('shop-details.html')) return;
 
-  const params = new URLSearchParams(location.search);
-  const shopId = params.get('shop_id');
-  if(!shopId) return;
-
-  // 1) جزئیات مغازه
-  const det = await fetch(`${baseUrl}/api/shops/${shopId}/details`).then(r=>r.json()).catch(()=>({}));
-  const data = det?.data || {};
-
-  // هدر
-  if(qs('shop-name')) qs('shop-name').textContent = data.name || 'نام غرفه';
-  if(qs('shop-city')) qs('shop-city').textContent = data.city || '-';
-  if(qs('shop-city-2')) qs('shop-city-2').textContent = data.city || '-';
-  if(qs('shop-description-text')) qs('shop-description-text').textContent = data.description || '';
-  if(qs('shop-experience')) qs('shop-experience').textContent = data.experience || '';
-  if(qs('shop-address-text')) qs('shop-address-text').textContent = data.address || '';
-  if(qs('shop-logo') && data.logo_url) qs('shop-logo').src = data.logo_url;
-  if(qs('shop-banner-img') && data.banner_url) qs('shop-banner-img').src = data.banner_url;
-
-  // آمار از دیتابیس (دیگه صفر پیش‌فرض نباشه)
-  if(qs('stat-rating')) qs('stat-rating').textContent = typeof data.rating === 'number' ? data.rating.toFixed(1) : (data.rating || '0.0');
-  if(qs('stat-reviewCount')) qs('stat-reviewCount').textContent = data.reviewCount || 0;
-  if(qs('stat-followers')) qs('stat-followers').textContent = data.followers || 0;
-  if(qs('stat-products')) qs('stat-products').textContent = data.productCount || 0;
-  if(qs('products-total')) qs('products-total').textContent = data.productCount || 0;
-  if(qs('featured-count')) qs('featured-count').textContent = data.productCount || 0;
-
-  // دکمه‌های تماس
-  if(data.calls_enabled && qs('call-buttons')){
-    qs('call-buttons').style.display = 'block';
-    qs('call-hint').textContent = 'تماس فقط در بازه‌های فعال غرفه‌دار امکان‌پذیر است.';
-    qs('btn-voice-call')?.addEventListener('click', () => prepareAndStartCall(shopId, 'audio'));
-    qs('btn-video-call')?.addEventListener('click', () => prepareAndStartCall(shopId, 'video'));
+  const shopId = new URLSearchParams(location.search).get('shop_id');
+  if(!shopId) {
+    alert('خطا: شناسه غرفه یافت نشد.');
+    window.location.href = 'index.html';
+    return;
   }
 
-  // مسیر «نمایش همه محصولات»
-  qs('to-products')?.addEventListener('click', ()=>{
-    qs('tab-btn-products')?.click();
-    window.scrollTo({ top: qs('tab-panel-products').offsetTop, behavior: 'smooth' });
-  });
+  // --- 1. بررسی وضعیت لاگین کاربر و آپدیت هدر ---
+  const user = JSON.parse(localStorage.getItem('user'));
+  if (user) {
+    // مخفی کردن دکمه ورود/ثبت‌نام
+    const loginBtn = qs('login-register-btn');
+    if (loginBtn) loginBtn.style.display = 'none';
+    
+    // نمایش منوی پروفایل
+    const profileMenu = qs('profile-menu-container');
+    if (profileMenu) profileMenu.style.display = 'flex';
+    
+    // تنظیم عکس پروفایل
+    const profilePic = qs('user-profile-picture');
+    if (profilePic) profilePic.src = user.profile_picture_url || 'images/default-avatar.png';
+    
+    // نمایش لینک "فروشگاه‌های من" اگر فروشنده بود
+    const shops = JSON.parse(localStorage.getItem('shops'));
+    const myShopsLink = qs('my-shops-link');
+    if (myShopsLink && shops && shops.length > 0) {
+      myShopsLink.style.display = 'block';
+    }
 
-  // تب‌ها
+    // فعال‌سازی منوی کشویی و دکمه خروج
+    profilePic.addEventListener('click', (e) => {
+        e.stopPropagation();
+        qs('profile-dropdown').classList.toggle('show');
+    });
+    window.addEventListener('click', () => {
+        const dropdown = qs('profile-dropdown');
+        if (dropdown && dropdown.classList.contains('show')) {
+            dropdown.classList.remove('show');
+        }
+    });
+    const logoutBtn = qs('logout-btn-header');
+    if(logoutBtn) logoutBtn.addEventListener('click', () => {
+        localStorage.clear();
+        window.location.href = 'index.html';
+    });
+  }
+
+  // --- 2. دریافت و رندر اطلاعات اصلی غرفه ---
+  let shopData = {};
+  try {
+    showLoading();
+    const response = await fetch(`${baseUrl}/api/shops/${shopId}/details`);
+    const result = await response.json();
+    if (!result.success) throw new Error(result.message);
+    
+    shopData = result.data || {};
+    
+    // رندر بردکرامب (Breadcrumb)
+    renderBreadcrumb([
+      { label: 'خانه', url: 'index.html' },
+      { label: 'غرفه‌ها', url: 'index.html' },
+      { label: shopData.name || 'جزئیات غرفه' }
+    ]);
+
+    //
+    // ▼▼▼ بخش اصلی تغییرات اینجاست ▼▼▼
+    //
+    // رندر هدر و اطلاعات آماری
+    setTxt('shop-name', shopData.name || '');
+    document.title = `${shopData.name || 'جزئیات غرفه'} | Vitrad`;
+    setTxt('shop-city', shopData.city || '-');
+    setTxt('shop-city-2', shopData.city || '-');
+    setTxt('stat-followers', shopData.followers ?? 0); // ✅ رفع مشکل ۱: نمایش فالوور
+    setTxt('stat-rating', typeof shopData.rating === 'number' ? shopData.rating.toFixed(1) : (shopData.rating || '0.0'));
+    setTxt('stat-reviewCount', shopData.reviewCount ?? 0);
+    setTxt('stat-products', shopData.productCount ?? 0); // ✅ رفع مشکل ۲: نمایش محصولات هدر
+    setTxt('products-total', shopData.productCount ?? 0); // ✅ رفع مشکل ۲: نمایش محصولات تب
+    setTxt('featured-count', shopData.productCount ?? 0);
+
+    if(qs('shop-logo') && shopData.logo_url) qs('shop-logo').src = shopData.logo_url;
+
+    // رندر تب "خانه"
+    if(qs('shop-banner-img') && shopData.banner_url) qs('shop-banner-img').src = shopData.banner_url;
+    setTxt('shop-description-text', shopData.description || 'توضیحات ثبت نشده است.');
+    setTxt('shop-experience', shopData.experience || 'ثبت نشده');
+    setTxt('shop-address-text', shopData.address || 'ثبت نشده');
+    
+    setTxt('shop-phone-number', shopData.phone || 'ثبت نشده'); // ✅ رفع مشکل ۳: نمایش تلفن
+
+    // ✅ رفع مشکل ۵: نمایش دکمه‌های تماس
+    if(shopData.calls_enabled && qs('call-buttons')){
+      qs('call-buttons').style.display = 'block';
+      qs('btn-voice-call')?.addEventListener('click', () => prepareAndStartCall(shopId, 'audio'));
+      qs('btn-video-call')?.addEventListener('click', () => prepareAndStartCall(shopId, 'video'));
+    }
+
+    // راه‌اندازی نقشه
+    if (shopData.lat && shopData.lng && qs('shop-map') && window.L) {
+      qs('shop-location-box').style.display = 'block';
+      const map = L.map('shop-map').setView([shopData.lat, shopData.lng], 14);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19, attribution: '© OpenStreetMap'
+      }).addTo(map);
+      L.marker([shopData.lat, shopData.lng]).addTo(map);
+      
+      qs('open-in-maps').href = `https://maps.google.com/?q=${shopData.lat},${shopData.lng}`;
+      qs('route-btn').addEventListener('click', () => {
+          window.open(`https://www.google.com/maps/dir/?api=1&destination=${shopData.lat},${shopData.lng}`, '_blank');
+      });
+    }
+    // ▲▲▲ پایان بخش تغییرات ▲▲▲
+
+    loadFeaturedProducts(shopId);
+
+  } catch(e){ 
+    console.error('خطا در لود اطلاعات غرفه:', e); 
+    alert('خطا در بارگذاری اطلاعات غرفه: ' + e.message);
+  } finally {
+    hideLoading();
+  }
+  
+  const followBtn = qs('btn-follow');
+  if (followBtn) {
+    followBtn.addEventListener('click', async () => {
+        if (!user) {
+            alert('برای دنبال کردن باید ابتدا وارد حساب کاربری خود شوید.');
+            window.location.href = 'login.html';
+            return;
+        }
+        try {
+            showLoading();
+            const response = await fetch(`${baseUrl}/api/shops/follow`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user._id, shopId: shopId })
+            });
+            const result = await response.json();
+            alert(result.message);
+            
+            //
+            // ▼▼▼ بخش اصلی تغییرات اینجاست ▼▼▼
+            //
+            const followersElement = qs('stat-followers');
+            let currentFollowers = parseInt(followersElement.textContent);
+
+            if (result.status === 'followed') {
+                followBtn.innerHTML = '<i class="fas fa-check"></i> دنبال شده';
+                followBtn.classList.add('secondary');
+                setTxt('stat-followers', currentFollowers + 1); // ✅ آپدیت لحظه‌ای
+            } else {
+                followBtn.innerHTML = '<i class="fas fa-user-plus"></i> دنبال کردن';
+                followBtn.classList.remove('secondary');
+                setTxt('stat-followers', currentFollowers - 1); // ✅ آپدیت لحظه‌ای
+            }
+            // ▲▲▲ پایان بخش تغییرات ▲▲▲
+            //
+        } catch (error) {
+            alert('خطا در عملیات دنبال کردن.');
+        } finally {
+            hideLoading();
+        }
+    });
+    // (اینجا باید یک چک اولیه هم انجام بشه که آیا کاربر *قبلا* فالو کرده یا نه تا دکمه درست نمایش داده بشه)
+  }
+
+  // فعال‌سازی تب‌ها
   wireTabs();
 
-  // فالو (نمونه ساده؛ سمت سرور احراز هویت کن)
-  qs('btn-follow')?.addEventListener('click', async ()=>{
-    const user_id = localStorage.getItem('user_id');
-    const res = await fetch(`${baseUrl}/api/shops/${shopId}/follow`, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ user_id })
-    }).then(r=>r.json());
-    if(res?.success && res?.data?.followers != null){
-      qs('stat-followers').textContent = res.data.followers;
-      alert('با موفقیت دنبال شد');
-    } else {
-      alert(res?.message || 'خطا در دنبال کردن');
+  // ✅ مشکل تب محصولات: لود محصولات هنگام کلیک
+  let productsLoaded = false;
+  qs('tab-btn-products').addEventListener('click', () => {
+    if (!productsLoaded) {
+      loadAllProductsForTab(shopId);
+      productsLoaded = true;
     }
   });
+
+  // ✅ مشکل تب نظرات: لود نظرات و فعال‌سازی فرم
+  let reviewsLoaded = false;
+  qs('tab-btn-reviews').addEventListener('click', () => {
+    if (!reviewsLoaded) {
+      loadReviewsForTab(shopId);
+      reviewsLoaded = true;
+    }
+  });
+
+  qs('submit-review').addEventListener('click', () => submitNewReview(shopId, user));
+  
+  // دکمه "نمایش همه محصولات" در تب خانه
+  qs('to-products').addEventListener('click', () => {
+    qs('tab-btn-products').click();
+  });
+}
+
+function setTxt(id, val) {
+  const el = qs(id);
+  if (el) el.textContent = (val ?? '');
+}
+
+document.addEventListener('DOMContentLoaded', initShopDetailsPage);
+
+// تابع کمکی برای لود محصولات منتخب (تب خانه)
+async function loadFeaturedProducts(shopId) {
+  const container = qs('home-featured-products');
+  if (!container) return;
+  container.innerHTML = '<p>در حال بارگذاری...</p>';
+  try {
+    const response = await fetch(`${baseUrl}/api/get-products/${shopId}`); // (این API در server.js محصولات مرتب شده بر اساس اولویت را برمی‌گرداند)
+    const products = await response.json();
+    container.innerHTML = '';
+    
+    if (!products || products.length === 0) {
+      container.innerHTML = '<p>محصولی یافت نشد.</p>';
+      return;
+    }
+
+    // نمایش حداکثر ۱۰ محصول در تب خانه
+    const featuredProducts = products.slice(0, 10);
+    featuredProducts.forEach(p => {
+      container.innerHTML += `
+        <div class="product-card-simple"> 
+          <img src="${p.image || 'images/default-product.png'}" alt="${p.name}">
+          <h4>${p.name}</h4>
+          <p>${p.description.substring(0, 50)}...</p>
+        </div>
+      `;
+    });
+  } catch (e) {
+    container.innerHTML = '<p>خطا در بارگذاری محصولات.</p>';
+  }
+}
+
+// تابع کمکی برای لود *همه* محصولات (تب محصولات)
+async function loadAllProductsForTab(shopId) {
+  const grid = qs('productsGrid');
+  if (!grid) return;
+  grid.innerHTML = '<p>در حال بارگذاری همه محصولات...</p>';
+  
+  try {
+    // استفاده از API که قبلا برای محصولات منتخب نوشتیم
+    const response = await fetch(`${baseUrl}/api/get-products/${shopId}`);
+    const products = await response.json();
+    grid.innerHTML = '';
+
+    if (!products || products.length === 0) {
+      grid.innerHTML = '<p>محصولی برای نمایش یافت نشد.</p>';
+      return;
+    }
+    
+    products.forEach(p => {
+      const instagramHTML = p.instagram_link
+        ? `<a href="${p.instagram_link.startsWith('http') ? p.instagram_link : 'https://' + p.instagram_link}" target="_blank" class="insta-link"><i class="fab fa-instagram"></i></a>`
+        : '';
+
+      grid.innerHTML += `
+        <div class="product-card">
+          <img src="${p.image || 'images/default-product.png'}" alt="${p.name}">
+          <div class="product-card-info">
+            <h4>${p.name}</h4>
+            <p>${p.description || ''}</p>
+            ${instagramHTML}
+          </div>
+        </div>
+      `;
+    });
+  } catch (e) {
+    grid.innerHTML = '<p>خطا در بارگذاری محصولات.</p>';
+  }
+}
+
+// تابع کمکی برای لود نظرات (تب نظرات)
+async function loadReviewsForTab(shopId) {
+  const list = qs('reviewsList');
+  if (!list) return;
+  list.innerHTML = '<p>در حال بارگذاری نظرات...</p>';
+  
+  try {
+    // این API از بخش Mongoose در server.js می‌آید
+    const response = await fetch(`${baseUrl}/api/shops/${shopId}/reviews`);
+    const result = await response.json();
+    if (!result.success) throw new Error(result.message);
+
+    list.innerHTML = '';
+    const reviews = result.data;
+
+    if (!reviews || reviews.length === 0) {
+      list.innerHTML = '<p>هنوز نظری برای این غرفه ثبت نشده است.</p>';
+      return;
+    }
+
+    reviews.forEach(review => {
+      list.innerHTML += `
+        <div class="review-card">
+          <div class="review-header">
+            <strong>${review.user_id ? review.user_id.full_name : 'کاربر'}</strong>
+            <span class="review-rating">${'⭐'.repeat(review.rating)}</span>
+          </div>
+          <p class="review-text">${review.text || ''}</p>
+          <span class="review-date">${new Date(review.createdAt).toLocaleDateString('fa-IR')}</span>
+        </div>
+      `;
+    });
+  } catch (e) {
+    list.innerHTML = '<p>خطا در بارگذاری نظرات.</p>';
+  }
+}
+
+// تابع کمکی برای ثبت نظر جدید
+async function submitNewReview(shopId, user) {
+  if (!user) {
+    alert('برای ثبت نظر باید ابتدا وارد حساب کاربری خود شوید.');
+    window.location.href = 'login.html';
+    return;
+  }
+
+  const name = qs('reviewerName').value; // (این فیلد در فرم HTML هست ولی در API استفاده نمی‌شود، اما می‌ماند)
+  const rating = qs('reviewRate').value;
+  const text = qs('reviewText').value;
+
+  if (!text.trim()) {
+    alert('لطفاً متن نظر خود را وارد کنید.');
+    return;
+  }
+
+  try {
+    showLoading();
+    // این API از بخش Mongoose در server.js می‌آید
+    const response = await fetch(`${baseUrl}/api/shops/${shopId}/reviews`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: user._id, // API این فیلد را user_id می‌خواست
+        rating: parseInt(rating),
+        text: text
+      })
+    });
+
+    const result = await response.json();
+    if (result.success) {
+      alert('نظر شما با موفقیت ثبت شد.');
+      // پاک کردن فرم و بارگذاری مجدد نظرات
+      qs('reviewText').value = '';
+      qs('reviewerName').value = '';
+      qs('reviewRate').value = '5';
+      loadReviewsForTab(shopId); // بارگذاری مجدد
+    } else {
+      alert('خطا: ' + result.message);
+    }
+  } catch (error) {
+    alert('خطای پیش‌بینی نشده در ثبت نظر.');
+  } finally {
+    hideLoading();
+  }
 }
 
 function wireTabs(){
@@ -3043,24 +3360,18 @@ let ioSocket = null;
 let pc = null;
 let localStream = null;
 
-async function prepareAndStartCall(shopId, mode /* 'audio' | 'video' */){
-  // قبل از شروع، دسترس‌پذیری را چک کن
+async function prepareAndStartCall(shopId, mode /* 'audio'|'video' */){
+  // چک بازه مجاز
   const avail = await fetch(`/api/shops/${shopId}/call-availability`).then(r=>r.json()).catch(()=>({}));
   const { enabled, within } = avail?.data || {};
-  if(!enabled){
-    alert('تماس برای این غرفه فعال نیست.');
-    return;
-  }
-  if(!within){
-    alert('در حال حاضر خارج از بازهٔ تماس تعیین‌شده است.');
-    return;
-  }
-  // شروع تماس
+  if(!enabled){ alert('تماس برای این غرفه فعال نیست.'); return; }
+  if(!within){ alert('در حال حاضر خارج از بازهٔ تماس تعیین‌شده است.'); return; }
   startCall(shopId, mode);
 }
 
+
 async function startCall(shopId, mode){
-  // گرفتن میکروفون/دوربین دقیقاً همین‌جا (حداقل‌گرایی دسترسی)
+  // دسترسی mic/cam فقط همین‌جا گرفته شود
   const constraints = { audio: true, video: (mode === 'video') };
   try {
     localStream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -3070,52 +3381,34 @@ async function startCall(shopId, mode){
     return;
   }
 
-  // اتصال Socket.IO
-  if(!ioSocket){
-    ioSocket = io(); // /socket.io/socket.io.js در HTML بارگذاری شده
-  }
-  const roomId = shopId; // برای سادگی: اتاق = شناسهٔ مغازه
+  // Socket.IO
+  if(!ioSocket){ ioSocket = io(); }
+  const roomId = shopId; // ساده: اتاق = شناسهٔ غرفه
   ioSocket.emit('join', { roomId, role: 'customer' });
 
-  // ساخت PeerConnection
-  pc = new RTCPeerConnection({
-    iceServers: [
-      { urls: 'stun:stun.l.google.com:19302' }
-    ]
-  });
-
-  // استریم محلی به PeerConnection
+  // PeerConnection
+  pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
   localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
 
-  // رندر محلی (اختیاری: اگر بخوای پیش‌نمایش نشان بدهی)
-  ensureCallUI(); // المان‌های ویدئو/دکمه قطع را می‌سازد
+  ensureCallUI();
   const localEl = document.getElementById('localVideo');
   if(localEl && mode === 'video'){ localEl.srcObject = localStream; localEl.muted = true; localEl.play().catch(()=>{}); }
 
-  // رویداد دریافت استریم طرف مقابل
   pc.ontrack = (ev) => {
     const [stream] = ev.streams;
     const remoteEl = document.getElementById('remoteVideo');
-    if(remoteEl){
-      remoteEl.srcObject = stream;
-      remoteEl.play().catch(()=>{});
-    }
+    if(remoteEl){ remoteEl.srcObject = stream; remoteEl.play().catch(()=>{}); }
   };
 
-  // ICE
   pc.onicecandidate = (ev)=>{
-    if(ev.candidate){
-      ioSocket.emit('ice-candidate', { roomId, candidate: ev.candidate });
-    }
+    if(ev.candidate){ ioSocket.emit('ice-candidate', { roomId, candidate: ev.candidate }); }
   };
 
-  // ساخت Offer و ارسال
   const offer = await pc.createOffer({ offerToReceiveAudio:true, offerToReceiveVideo:(mode==='video') });
   await pc.setLocalDescription(offer);
   ioSocket.emit('offer', { roomId, sdp: offer.sdp });
 
-  // لیسنرها
-  ioSocket.off('answer'); // جلوگیری از چندبار رجیستر
+  ioSocket.off('answer');
   ioSocket.on('answer', async ({ sdp })=>{
     await pc.setRemoteDescription({ type:'answer', sdp });
   });
@@ -3137,9 +3430,6 @@ function endCall(){
     pc = null; localStream = null;
     const wrap = document.getElementById('callWrap');
     if(wrap) wrap.remove();
-  }
-  if(ioSocket){
-    // خروج از اتاق به دلخواه (اینجا فقط UI را می‌بندیم)
   }
 }
 

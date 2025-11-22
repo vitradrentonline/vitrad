@@ -2,22 +2,19 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="utf-8">
+  <title>جزئیات غرفه | Vitrad</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#FF6B00">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
 
-  <title>جزئیات غرفه</title>
-  <link rel="manifest" href="/manifest.json">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="css/all.min.css">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 
-  <!-- هدر همانند index -->
   <header class="main-header">
     <div class="header-row-1">
       <div class="header-right">
@@ -54,10 +51,23 @@
             <span id="selected-city-name">انتخاب شهر</span>
           </button>
         </div>
-        <a href="login.html" class="btn-login">
+        
+        <a href="login.html" class="btn-login" id="login-register-btn">
           <i class="fas fa-user-circle"></i>
           <span>ورود | ثبت‌نام</span>
         </a>
+
+        <div class="profile-header-menu" id="profile-menu-container" style="display: none;">
+          <img src="images/default-avatar.png" alt="پروفایل" id="user-profile-picture" class="profile-picture-btn">
+          <div class="profile-dropdown" id="profile-dropdown">
+            <a href="user-panel.html">پنل کاربری</a>
+            <a href="update-profile.html">ویرایش پروفایل</a>
+            <a href="user-panel.html?my=true" id="my-shops-link" style="display: none;">فروشگاه‌های من</a>
+            <hr>
+            <a href="#" id="logout-btn-header">خروج از حساب</a>
+          </div>
+        </div>
+
       </div>
     </div>
   </header>
@@ -65,10 +75,8 @@
   <div class="container" id="shop-details-page-container">
     <nav id="breadcrumb" class="breadcrumb"></nav>
 
-    <!-- هدر اطلاعات غرفه -->
     <section id="shop-header-section" class="shop-header">
-      <!-- رندر با JS: لوگو، نام، شهر -->
-      <img id="shop-logo" class="shop-header-logo" src="images/default-logo.png" alt="لوگو">
+      <img id="shop-logo" class="shop-header-logo" src="images/logo.png" alt="لوگو غرفه">
       <div class="shop-header-info">
         <div class="shop-header-title">
           <h1 id="shop-name">نام غرفه</h1>
@@ -99,7 +107,6 @@
         </button>
       </nav>
 
-      <!-- تب خانه -->
       <div id="tab-panel-home" class="shop-tab-content active">
         <img id="shop-banner-img" class="shop-home-banner" alt="بنر غرفه">
 
@@ -108,12 +115,14 @@
           <p id="shop-description-text"></p>
           <p><strong>سابقه کاری:</strong> <span id="shop-experience"></span></p>
           <p><strong>شهر:</strong> <span id="shop-city-2"></span></p>
+          <p><strong>تلفن:</strong> <span id="shop-phone-number">-</span></p>
 
-          <!-- دکمه‌های تماس (فقط وقتی calls_enabled=true) -->
           <div id="call-buttons" style="display:none; margin-top:12px;">
             <button id="btn-voice-call" class="btn secondary"><i class="fas fa-phone"></i> تماس صوتی</button>
             <button id="btn-video-call" class="btn primary"><i class="fas fa-video"></i> تماس تصویری</button>
-            <small id="call-hint" style="display:block; color:#666; margin-top:6px;"></small>
+            <small id="call-hint" style="display:block; color:#666; margin-top:6px;">
+              تماس فقط در بازه‌های فعال غرفه‌دار امکان‌پذیر است.
+            </small>
           </div>
         </div>
 
@@ -139,7 +148,6 @@
         </div>
       </div>
 
-      <!-- تب محصولات -->
       <div id="tab-panel-products" class="shop-tab-content">
         <div class="product-controls card">
           <input id="productSearch" placeholder="جستجوی محصولات..." />
@@ -155,7 +163,6 @@
         <div id="productsGrid" class="products-grid"></div>
       </div>
 
-      <!-- تب نظرات -->
       <div id="tab-panel-reviews" class="shop-tab-content">
         <div class="reviews-layout">
           <div class="rating-summary card">
@@ -180,14 +187,12 @@
     </div>
   </div>
 
-  <!-- ثبت سرویس‌ورکر -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(console.error);
     }
   </script>
 
-  <!-- Socket.IO برای WebRTC سیگنالینگ -->
   <script src="/socket.io/socket.io.js"></script>
   <script src="script.js"></script>
 </body>

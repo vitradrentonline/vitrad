@@ -1,13 +1,14 @@
 const express = require('express');
 const multer = require('multer');
-const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const { MongoClient, ObjectId } = require('mongodb');
+const mongoose = require('mongoose');
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const { S3Client, PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const { Upload } = require("@aws-sdk/lib-storage");
+require('dotenv').config();
 
 /**
  * فایلی را در فضای ذخیره‌سازی S3 لیارا آپلود می‌کند.
@@ -19,6 +20,16 @@ const { Upload } = require("@aws-sdk/lib-storage");
 
 const app = express();
 const port = process.env.PORT || 3000;
+const MONGO_URI =
+  process.env.MONGODB_URI ||
+  'mongodb+srv://vitrad:Vitrad1404@cluster0.jpo6lmk.mongodb.net/Vitrad?retryWrites=true&w=majority&appName=Cluster0';
+mongoose.set('strictQuery', false);
+mongoose
+  .connect(MONGO_URI, { serverSelectionTimeoutMS: 8000 })
+  .then(() => console.log('✅ Mongoose connected'))
+  .catch((err) => console.error('❌ Mongoose connect error:', err?.message));
+
+
 
 // ✅ تنظیمات S3 با سینتکس v3
 const s3Client = new S3Client({
@@ -65,7 +76,7 @@ async function generateUniqueUserId(length = 8) {
 }
 
 // MongoDB connection
-const mongoUri = 'mongodb+srv://vitrad:Vitrad1404@cluster0.jpo6lmk.mongodb.net/Vitrad?retryWrites=true&w=majority&appName=Cluster0';
+const mongoUri = MONGO_URI;   // یکسان با بالایی
 let db;
 let mongoClient;
 
@@ -994,31 +1005,72 @@ app.post('/api/add-product/:shop_id', upload.single('image'), async (req, res) =
     }
 });
 
-// ✅ API بروزرسانی اطلاعات مغازه (نسخه نهایی)
-// متد را از POST به PUT تغییر می‌دهیم
+// فایل: server.js (جایگزینی API آپدیت مغازه)
+
 app.put('/api/update-shop/:shop_id', async (req, res) => {
     const { shop_id } = req.params;
-    // دریافت فیلدهای جدید از body درخواست
-    const { name, shop_name, title, description, shop_description, phone, shop_phone, whatsapp, telegram, instagram, eitaa, rubika, bale, work_experience, address, full_address, latitude, longitude, lat, lng, city, city_name } = req.body;
+    
+    // ▼▼▼ متغیر call_windows_json را به اینجا اضافه کنید ▼▼▼
+    const { 
+        description, shop_description, phone, shop_phone, 
+        whatsapp, telegram, instagram, eitaa, rubika, bale, 
+        work_experience, address, full_address, 
+        latitude, longitude, lat, lng,
+        calls_enabled, call_windows_json // <-- فیلدهای جدید
+    } = req.body;
+
     try {
         await connectMongoDB();
         const shopsCollection = db.collection('shops');
         
-        // فقط فیلدهایی که مقدار دارند را برای آپدیت آماده می‌کنیم
         const updateData = {};
-        if (description) updateData.shop_description = description; // نام فیلد در دیتابیس
-        if (phone) updateData.shop_phone = phone; // نام فیلد در دیتابیس
         
-        // ======== بخش جدید ========
-        // فیلدهای جدید را به آبجکت آپدیت اضافه می‌کنیم
-        // اگر کاربر فیلدی را خالی بفرستد، در دیتابیس هم خالی ذخیره می‌شود تا بعدا نمایش داده نشود
+        // نرمال‌سازی فیلدهای اطلاعاتی
+        if (description !== undefined) updateData.shop_description = description;
+        if (shop_description !== undefined) updateData.shop_description = shop_description;
+        if (phone !== undefined) updateData.shop_phone = phone;
+        if (shop_phone !== undefined) updateData.shop_phone = shop_phone;
+
+        // فیلدهای شبکه‌های اجتماعی
         if (whatsapp !== undefined) updateData.whatsapp = whatsapp;
         if (telegram !== undefined) updateData.telegram = telegram;
         if (instagram !== undefined) updateData.instagram = instagram;
         if (eitaa !== undefined) updateData.eitaa = eitaa;
         if (rubika !== undefined) updateData.rubika = rubika;
         if (bale !== undefined) updateData.bale = bale;
-        // ========================
+        
+        // فیلدهای تکمیلی
+        if (work_experience !== undefined) updateData.work_experience = work_experience;
+        if (address !== undefined) updateData.address = address;
+        if (full_address !== undefined) updateData.address = full_address;
+
+        // نرمال‌سازی موقعیت مکانی
+        const latRaw = latitude ?? lat;
+        const lngRaw = longitude ?? lng;
+        if (latRaw !== undefined && lngRaw !== undefined) {
+            updateData.lat = parseFloat(latRaw);
+            updateData.lng = parseFloat(lngRaw);
+            updateData.location = { type: 'Point', coordinates: [parseFloat(lngRaw), parseFloat(latRaw)] };
+        }
+
+        //
+        // ▼▼▼ بخش جدید برای ذخیره تنظیمات تماس ▼▼▼
+        //
+        if (calls_enabled !== undefined) {
+            updateData.calls_enabled = (calls_enabled === true || calls_enabled === 'true');
+        }
+        
+        if (call_windows_json !== undefined) {
+            try {
+                // تلاش برای پارس کردن رشته JSON ارسالی از کلاینت
+                updateData.call_windows = JSON.parse(call_windows_json);
+            } catch (e) {
+                console.warn('خطا در پارس کردن JSON پنجره‌های زمانی تماس:', e.message);
+                // اگر فرمت اشتباه بود، ذخیره نکن یا خطا برگردان
+                // اینجا ما خطا برنمی‌گردانیم تا بقیه اطلاعات ذخیره شوند
+            }
+        }
+        // ▲▲▲ پایان بخش جدید ▲▲▲
 
         updateData.updated_at = new Date();
 
@@ -1423,6 +1475,8 @@ const shopSchema = new mongoose.Schema({
     eitaa: String,
     rubika: String,
     bale: String,
+    calls_enabled: { type: Boolean, default: false },
+    call_windows: { type: Array, default: [] },
 });
 
 const productSchema = new mongoose.Schema({
@@ -1477,53 +1531,70 @@ const Report = mongoose.model('Report', reportSchema);
 
 // 1. دریافت تمام اطلاعات یک غرفه برای نمایش عمومی
 // GET /api/shops/:shopId/details
+// ====== Shop public details ======
+// ====== Shop public details ======
 app.get('/api/shops/:shopId/details', async (req, res) => {
   try {
     const { shopId } = req.params;
     if (!mongoose.Types.ObjectId.isValid(shopId)) {
-      return res.status(400).json({ success:false, message:'شناسه نامعتبر' });
+      return res.status(400).json({ success: false, message: 'شناسه غرفه نامعتبر است.' });
     }
 
     const shop = await Shop.findById(shopId).lean();
-    if (!shop) return res.status(404).json({ success:false, message:'یافت نشد' });
+    if (!shop /* یا هر شرط تایید/فعال‌بودن */) {
+      return res.status(4404).json({ success: false, message: 'غرفه یافت نشد.' });
+    }
 
-    // شمارش محصولات، فالوورها و نظرات
+    // ✅ این محاسبات درست بودند و باقی می‌مانند
     const [productCount, followers, reviews] = await Promise.all([
       Product.countDocuments({ shop_id: shopId }),
       Follow.countDocuments({ shop_id: shopId }),
       Review.find({ shop_id: shopId }, 'rating').lean()
     ]);
-
     const reviewCount = reviews.length;
     const rating = reviewCount
       ? Number((reviews.reduce((a, r) => a + (r.rating || 0), 0) / reviewCount).toFixed(1))
       : 0;
 
+    //
+    // ▼▼▼ بخش اصلی تغییرات اینجاست ▼▼▼
+    //
     res.json({
       success: true,
       data: {
-        _id: shop._id,
-        name: shop.name,
-        city: shop.city,
-        description: shop.description,
-        banner_url: shop.banner_url || null,
-        logo_url: shop.logo_url || null,
-        experience: shop.experience || '',
-        phone: shop.phone || '',
+        id: shop._id,
+        name: shop.shop_name || shop.name || '',
+        city: shop.city || '',
+        description: shop.shop_description || shop.description || '',
+        logo_url: shop.logo || null,
+        banner_url: shop.banner || null,
+        phone: shop.shop_phone || '', // ✅ این فیلد اضافه شد (برای نمایش تلفن)
+        experience: shop.work_experience || '',
         address: shop.address || '',
+        
+        // ✅ فیلدهای موقعیت مکانی برای نقشه
+        lat: shop.lat,
+        lng: shop.lng,
+
+        // ✅ فیلدهای مربوط به تماس صوتی/تصویری
         calls_enabled: !!shop.calls_enabled,
         call_windows: shop.call_windows || [],
-        productCount,
-        followers,
-        rating,
-        reviewCount
+
+        // ✅ فیلدهای محاسباتی (اینها از قبل درست بودند)
+        followers: followers,
+        rating: rating,
+        reviewCount: reviewCount,
+        productCount: productCount
       }
     });
-  } catch (e) {
-    console.error('details error:', e);
-    res.status(500).json({ success:false, message:'خطای سرور' });
+    // ▲▲▲ پایان بخش تغییرات ▲▲▲
+    //
+  } catch (error) {
+    console.error('Error fetching shop details:', error);
+    res.status(500).json({ success: false, message: 'خطای سرور' });
   }
 });
+
 
 
 
@@ -1568,24 +1639,18 @@ app.get('/api/shops/:shopId/products', async (req, res) => {
     }
 });
 
-// 3. دریافت نظرات یک غرفه
-app.get('/api/shops/:shopId/reviews', async (req, res) => {
-    try {
-        const reviews = await Review.find({ shop_id: req.params.shopId })
-                                    .populate('user_id', 'full_name profile_picture_url')
-                                    .sort({ createdAt: -1 }); // جدیدترین اول
-        res.json({ success: true, data: reviews });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'خطای سرور' });
-    }
-});
-
 // 4. ثبت نظر جدید برای یک غرفه
 app.post('/api/shops/:shopId/reviews', async (req, res) => {
     try {
         const { userId, rating, text } = req.body;
         const { shopId } = req.params;
         
+        // ▼▼▼ بخش اصلی تغییرات اینجاست ▼▼▼
+        if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({ success: false, message: "اطلاعات کاربر نامعتبر است. لطفاً دوباره وارد شوید." });
+        }
+        // ▲▲▲ پایان بخش تغییرات ▲▲▲
+
         // جلوگیری از ثبت نظر تکراری توسط یک کاربر
         const existingReview = await Review.findOne({ shop_id: shopId, user_id: userId });
         if(existingReview) {
@@ -1594,7 +1659,7 @@ app.post('/api/shops/:shopId/reviews', async (req, res) => {
 
         const newReview = new Review({
             shop_id: shopId,
-            user_id: userId,
+            user_id: new mongoose.Types.ObjectId(userId), // ✅ تبدیل به ObjectId
             rating,
             text
         });
@@ -1626,35 +1691,45 @@ app.get('/api/shops/:shopId/rating-summary', async (req, res) => {
 
 
 // 6. دنبال کردن / لغو دنبال کردن یک غرفه
+// 6. دنبال کردن / لغو دنبال کردن یک غرفه
 app.post('/api/shops/follow', async (req, res) => {
     const { userId, shopId } = req.body;
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    
+    // ▼▼▼ تغییرات از اینجا شروع می‌شود ▼▼▼
+    // const session = await mongoose.startSession(); // این خط حذف شد
+    // session.startTransaction(); // این خط حذف شد
+    
     try {
         const existingFollow = await Follow.findOne({ user_id: userId, shop_id: shopId });
 
         if (existingFollow) {
             // Unfollow
-            await Follow.findByIdAndDelete(existingFollow._id, { session });
-            await Shop.findByIdAndUpdate(shopId, { $inc: { followers_count: -1 } }, { session });
-            await User.findByIdAndUpdate(userId, { $pull: { following_shops: shopId } }, { session });
-            await session.commitTransaction();
+            await Follow.findByIdAndDelete(existingFollow._id); // { session } حذف شد
+            await Shop.findByIdAndUpdate(shopId, { $inc: { followers_count: -1 } }); // { session } حذف شد
+            await User.findByIdAndUpdate(userId, { $pull: { following_shops: shopId } }); // { session } حذف شد
+            
+            // await session.commitTransaction(); // این خط حذف شد
+            
             res.json({ success: true, message: "غرفه از لیست دنبال‌شده‌ها حذف شد.", status: 'unfollowed' });
         } else {
             // Follow
             const newFollow = new Follow({ user_id: userId, shop_id: shopId });
-            await newFollow.save({ session });
-            await Shop.findByIdAndUpdate(shopId, { $inc: { followers_count: 1 } }, { session });
-            await User.findByIdAndUpdate(userId, { $push: { following_shops: shopId } }, { session });
-            await session.commitTransaction();
+            await newFollow.save(); // { session } حذف شد
+            await Shop.findByIdAndUpdate(shopId, { $inc: { followers_count: 1 } }); // { session } حذف شد
+            await User.findByIdAndUpdate(userId, { $push: { following_shops: shopId } }); // { session } حذف شد
+            
+            // await session.commitTransaction(); // این خط حذف شد
+            
             res.json({ success: true, message: "غرفه با موفقیت دنبال شد.", status: 'followed' });
         }
     } catch (error) {
-        await session.abortTransaction();
+        // await session.abortTransaction(); // این خط حذف شد
         res.status(500).json({ success: false, message: 'خطای سرور' });
-    } finally {
-        session.endSession();
-    }
+    } 
+    // finally {
+    //     session.endSession(); // این خط حذف شد
+    // }
+    // ▲▲▲ پایان تغییرات ▲▲▲
 });
 
 
@@ -1679,17 +1754,17 @@ app.post('/api/report', async (req, res) => {
 
 // 8. API های Placeholder برای تماس و چت
 app.post('/api/shops/:shopId/initiate-call', (req, res) => {
-    // در یک پروژه واقعی، اینجا منطق برقراری تماس WebRTC قرار می‌گیرد
-    // مثلا ایجاد یک اتاق تماس و برگرداندن توکن‌های لازم
-    res.json({ success: true, message: 'درخواست تماس با موفقیت ارسال شد.', callRoomId: `call_${shopId}_${Date.now()}` });
+  const { shopId } = req.params;
+  res.json({ success: true, message: 'درخواست تماس با موفقیت ارسال شد.', callRoomId: `call_${shopId}_${Date.now()}` });
 });
+
 
 app.post('/api/shops/:shopId/initiate-chat', (req, res) => {
     // در یک پروژه واقعی، اینجا منطق ایجاد یک چت روم در WebSocket server قرار می‌گیرد
     res.json({ success: true, message: 'چت با موفقیت آغاز شد.', chatRoomId: `chat_${shopId}_${req.body.userId}` });
 });
 
-// --- آغاز: ستاپ سرور HTTP + Socket.IO ---
+// ====== HTTP + Socket.IO bootstrap ======
 const http = require('http');
 const server = http.createServer(app);
 
@@ -1698,14 +1773,12 @@ const io = new Server(server, {
   cors: { origin: '*', methods: ['GET','POST'] }
 });
 
-// فضای سیگنالینگ برای تماس‌ها
+// سیگنالینگ WebRTC (حداقل لازم)
 io.on('connection', (socket) => {
-  // کلاینت‌ها با roomId = shopId جوین می‌شن (تماس یک‌به‌یک)
   socket.on('join', ({ roomId, role }) => {
     socket.join(roomId);
     socket.to(roomId).emit('peer-joined', { role });
   });
-
   socket.on('offer', ({ roomId, sdp }) => {
     socket.to(roomId).emit('offer', { sdp });
   });
@@ -1715,7 +1788,6 @@ io.on('connection', (socket) => {
   socket.on('ice-candidate', ({ roomId, candidate }) => {
     socket.to(roomId).emit('ice-candidate', { candidate });
   });
-
   socket.on('leave', ({ roomId }) => {
     socket.leave(roomId);
     socket.to(roomId).emit('peer-left');
@@ -1723,41 +1795,35 @@ io.on('connection', (socket) => {
 });
 // --- پایان: ستاپ Socket.IO ---
 
-// اگر قبلاً app.listen داشتید، حذفش کن و اینو بگذار:
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log('Server listening on', PORT));
-
-// GET /api/shops/:shopId/call-availability
+// ====== Call Availability ======
 app.get('/api/shops/:shopId/call-availability', async (req, res) => {
   try {
     const { shopId } = req.params;
     if (!mongoose.Types.ObjectId.isValid(shopId)) {
-      return res.status(400).json({ success:false, message:'شناسه نامعتبر' });
+      return res.status(400).json({ success: false, message: 'شناسه نامعتبر' });
     }
+
     const shop = await Shop.findById(shopId, 'calls_enabled call_windows').lean();
-    if (!shop) return res.status(404).json({ success:false, message:'یافت نشد' });
+    if (!shop) return res.status(404).json({ success: false, message: 'غرفه یافت نشد' });
 
     const enabled = !!shop.calls_enabled;
-    const windows = shop.call_windows || [];
+    const windows = Array.isArray(shop.call_windows) ? shop.call_windows : [];
 
-    // بررسی سریع بازه زمانی فعلی (به زمان سرور)
-    const now = new Date();
-    // day map: 0(sun)..6(sat) — اگر تقویمت فرق دارد، مپ کن
-    const dayIdx = now.getDay(); // 0=Sunday
+    const now = new Date();                // زمان سرور
+    const dayIdx = now.getDay();           // 0..6
     const map = ['sun','mon','tue','wed','thu','fri','sat'];
     const todayKey = map[dayIdx];
-
-    const pad2 = (n) => (n<10? '0'+n: ''+n);
+    const pad2 = (n) => (n<10? '0'+n : ''+n);
     const hm = `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
 
     let within = false;
     for (const w of windows) {
-      if (w.day === todayKey && w.start && w.end) {
+      if (w?.day === todayKey && w?.start && w?.end) {
         if (w.start <= hm && hm <= w.end) { within = true; break; }
       }
     }
 
-    res.json({ success:true, data:{ enabled, within, windows }});
+    res.json({ success:true, data:{ enabled, within, windows } });
   } catch (e) {
     console.error('availability error:', e);
     res.status(500).json({ success:false, message:'خطای سرور' });
@@ -1766,7 +1832,5 @@ app.get('/api/shops/:shopId/call-availability', async (req, res) => {
 
 
 // راه‌اندازی سرور
-app.listen(port, async () => {
-    await connectMongoDB();
-    console.log(`Server running on port ${port}`);
-});
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log('🚀 Server listening on', PORT));

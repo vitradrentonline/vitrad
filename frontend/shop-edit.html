@@ -7,6 +7,14 @@
     <link rel="stylesheet" href="css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <style>
+        /* استایل گرید ساده برای فیلدهای موقعیت مکانی */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -24,9 +32,18 @@
             </div>
         </div>
 
-        
         <div class="edit-section">
-            <h3>ویرایش اطلاعات عمومی</h3>
+            <h3>آپلود یا تغییر لوگو</h3>
+            <div class="section-content" style="text-align: center;">
+                <img src="images/default-logo.png" alt="پیش‌نمایش لوگو" id="logo-preview" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 2px solid #ddd; margin-bottom: 15px;">
+                <input type="file" id="logo-input" accept="image/*" style="display: none;">
+                <button onclick="document.getElementById('logo-input').click()">انتخاب لوگو</button>
+                <button id="save-logo-btn">ذخیره لوگو</button>
+            </div>
+        </div>
+
+        <div class="edit-section">
+            <h3>ویرایش اطلاعات و راه‌های ارتباطی</h3>
             <div class="section-content">
                 <label for="edit-description">توضیحات غرفه</label>
                 <textarea id="edit-description" placeholder="توضیحات..."></textarea>
@@ -51,18 +68,35 @@
                     </div>
                 </div>
 
-                <button class="btn primary" onclick="updateShopInfo()">ذخیره تغییرات</button>
+                <hr style="margin: 15px 0; border: 1px solid #f0f0f0;">
+                <label>راه‌های ارتباطی (شبکه‌های اجتماعی):</label>
+                <input type="tel" id="edit-whatsapp" placeholder="شماره واتس‌اپ (مثال: 989123456789)">
+                <input type="text" id="edit-telegram" placeholder="آیدی تلگرام (بدون @)">
+                <input type="text" id="edit-instagram" placeholder="آیدی اینستاگرام (بدون @)">
+                <input type="text" id="edit-eitaa" placeholder="آیدی ایتا">
+                <input type="text" id="edit-rubika" placeholder="آیدی روبیکا">
+                <input type="text" id="edit-bale" placeholder="آیدی بله">
+
+                <button class="btn primary" onclick="updateShopInfo()">ذخیره اطلاعات</button>
             </div>
         </div>
-<div class="edit-section">
-            <h3>آپلود یا تغییر لوگو</h3>
-            <div class="section-content" style="text-align: center;">
-                <img src="images/default-logo.png" alt="پیش‌نمایش لوگو" id="logo-preview" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 2px solid #ddd; margin-bottom: 15px;">
-                <input type="file" id="logo-input" accept="image/*" style="display: none;">
-                <button onclick="document.getElementById('logo-input').click()">انتخاب لوگو</button>
-                <button id="save-logo-btn">ذخیره لوگو</button>
+
+        <div class="edit-section">
+            <h3>تنظیمات تماس صوتی/تصویری</h3>
+            <div class="section-content">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                    <input type="checkbox" id="edit-calls-enabled" style="width: auto;">
+                    <label for="edit-calls-enabled" style="margin-bottom: 0;">فعال‌سازی تماس صوتی و تصویری</label>
+                </div>
+                
+                <label for="edit-call-windows">پنجره‌های زمانی مجاز (فرمت JSON):</label>
+                <textarea id="edit-call-windows" rows="5" placeholder='[{"day":"sat", "start":"09:00", "end":"17:00"}]' style="direction: ltr; text-align: left;"></textarea>
+                <small>مثال: روزهای شنبه از ۹ صبح تا ۵ عصر. روزها: sat, sun, mon, tue, wed, thu, fri</small>
+
+                <button class="btn primary" onclick="updateShopInfo()">ذخیره تنظیمات تماس</button>
             </div>
         </div>
+
 
         <div class="edit-section">
             <h3>افزودن محصول جدید</h3>
@@ -82,24 +116,11 @@
             </div>
             <div class="accordion-content" style="display: none;">
                 <p>برای تغییر ترتیب، محصولات را بکشید و رها کنید. تغییرات به صورت خودکار ذخیره می‌شود.</p>
-                <div class="products-grid" id="products-grid"></div>
+                <div class="products-grid" id="products-grid">
+                    </div>
             </div>
         </div>
 
-        <div class="edit-section">
-            <h3>ویرایش اطلاعات و راه‌های ارتباطی</h3>
-            <div class="section-content">
-                <input type="text" id="edit-description" placeholder="توضیحات جدید مغازه">
-                <input type="tel" id="edit-phone" placeholder="شماره تماس جدید">
-                <input type="tel" id="edit-whatsapp" placeholder="شماره واتس‌اپ (مثال: 989123456789)">
-                <input type="text" id="edit-telegram" placeholder="آیدی تلگرام (بدون @)">
-                <input type="text" id="edit-instagram" placeholder="آیدی اینستاگرام (بدون @)">
-                <input type="text" id="edit-eitaa" placeholder="آیدی ایتا">
-                <input type="text" id="edit-rubika" placeholder="آیدی روبیکا">
-                <input type="text" id="edit-bale" placeholder="آیدی بله">
-                <button class="btn" onclick="updateShopInfo()">ذخیره تغییرات</button>
-            </div>
-        </div>
     </div>
 
     <div class="loading-overlay" id="loading-overlay" style="display:none;">
