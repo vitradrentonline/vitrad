@@ -10,11 +10,6 @@ const bucketName = process.env.LIARA_BUCKET_NAME || 'rent-online'; // اسم Buc
 ixlv wcje zolx fdir
 
 
-Add فایل‌ها:
-textgit add .
-
-Commit:
-textgit commit -m "Update for Liara deploy"
-
-Push:
-textgit push -u origin main
+git add .
+git commit -m "Secure server setup"
+git push origin main
