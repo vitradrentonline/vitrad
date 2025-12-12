@@ -1,9 +1,15 @@
+require('dotenv').config(); // خواندن فایل .env
 const { MongoClient } = require('mongodb');
 
-// رشته اتصال به دیتابیس شما
-const mongoUri = 'mongodb+srv://vitrad:Vitrad1404@cluster0.jpo6lmk.mongodb.net/Vitrad?retryWrites=true&w=majority&appName=Cluster0';
+// خواندن آدرس دیتابیس از فایل امن .env
+const mongoUri = process.env.MONGODB_URI;
 
-const collectionsToReset = ['users', 'shops', 'products', 'otps', 'ratings', 'follows', 'rentonline', 'rentonline', 'reviews', 'reports'];
+if (!mongoUri) {
+    console.error('❌ MONGODB_URI is not defined in .env file');
+    process.exit(1);
+}
+
+const collectionsToReset = ['users', 'shops', 'products', 'otps', 'ratings', 'follows', 'rentonline', 'reviews', 'reports'];
 
 async function resetDatabase() {
     let client;
@@ -14,8 +20,7 @@ async function resetDatabase() {
         });
         console.log('✅ Connected to MongoDB for reset operation.');
         
-        // ✅ تغییر اصلی اینجاست. از دیتابیس پیش‌فرض در رشته اتصال استفاده می‌کنیم.
-        const db = client.db();
+        const db = client.db(); // استفاده از دیتابیس پیش‌فرض موجود در کانکشن استرینگ
 
         console.log(`Starting to drop collections in "${db.databaseName}" database...`);
 
@@ -27,7 +32,7 @@ async function resetDatabase() {
                 if (error.codeName === 'NamespaceNotFound') {
                     console.log(`  - Collection '${collectionName}' did not exist, skipping.`);
                 } else {
-                    throw error;
+                    console.warn(`  ⚠️ Error dropping '${collectionName}':`, error.message);
                 }
             }
         }
@@ -44,5 +49,4 @@ async function resetDatabase() {
     }
 }
 
-// اجرای اسکریپت
 resetDatabase();
