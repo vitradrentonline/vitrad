@@ -2815,3 +2815,191 @@ footer{
 button, .btn, input, select, textarea { font-size: 16px; }
 :focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; border-radius: 8px; }
 html, body { overscroll-behavior-y: contain; }
+
+/* ========================================= */
+/* استایل‌های اختصاصی صفحه جزئیات محصول (Product Details) */
+/* ========================================= */
+
+.pd-layout {
+    display: grid;
+    grid-template-columns: 350px 1fr 300px; /* سه ستونه: عکس، توضیحات، فروشنده */
+    gap: 20px;
+    margin-top: 20px;
+    align-items: start;
+}
+
+/* بخش گالری عکس */
+.pd-gallery-section {
+    padding: 10px;
+    overflow: hidden;
+}
+
+.pd-main-image-wrapper {
+    width: 100%;
+    height: 350px;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: var(--muted-surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pd-main-image-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* تغییر به contain برای نمایش کامل عکس محصول */
+    cursor: zoom-in;
+}
+
+/* بخش اطلاعات وسط */
+.pd-info-section {
+    padding: 25px;
+}
+
+.pd-title {
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--text);
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.pd-meta-row {
+    margin-bottom: 20px;
+}
+
+.pd-category-badge {
+    background-color: var(--muted-surface);
+    color: var(--text-muted);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+}
+
+.pd-description h3 {
+    font-size: 18px;
+    color: var(--primary);
+    margin-bottom: 10px;
+}
+
+.pd-description p {
+    font-size: 15px;
+    color: #555;
+    line-height: 1.8;
+    white-space: pre-line; /* حفظ خط‌شکنی‌های متن */
+}
+
+/* بخش سایدبار (فروشنده) */
+.pd-sidebar-section {
+    position: sticky;
+    top: 20px;
+}
+
+.vendor-box {
+    padding: 20px;
+    border-top: 4px solid var(--primary); /* نوار رنگی بالای باکس */
+}
+
+.vendor-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 15px;
+    border-bottom: 1px dashed var(--border);
+    margin-bottom: 15px;
+}
+
+.vendor-header img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--border);
+}
+
+.vendor-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.vendor-name {
+    font-weight: bold;
+    color: var(--text);
+    font-size: 16px;
+}
+
+.vendor-location {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.pd-price-area {
+    margin: 20px 0;
+    text-align: left; /* قیمت سمت چپ باشد */
+}
+
+.price-old {
+    text-decoration: line-through;
+    color: #999;
+    font-size: 14px;
+}
+
+.price-current {
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--text);
+}
+
+.currency {
+    font-size: 12px;
+    color: #777;
+    margin-right: 5px;
+}
+
+/* دکمه‌ها */
+.pd-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.instagram-btn {
+    background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%) !important;
+    color: white !important;
+    border: none !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.full-width {
+    width: 100%;
+}
+
+.info-note {
+    background-color: #e3f2fd;
+    color: #0d47a1;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+/* ریسپانسیو برای موبایل */
+@media (max-width: 900px) {
+    .pd-layout {
+        grid-template-columns: 1fr; /* تک ستونه شدن */
+    }
+    
+    .pd-main-image-wrapper {
+        height: 300px;
+    }
+    
+    .pd-sidebar-section {
+        position: static; /* حذف حالت چسبان در موبایل */
+        order: 3; /* انتقال به پایین */
+    }
+}

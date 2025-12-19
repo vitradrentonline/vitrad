@@ -686,6 +686,50 @@ app.get('/api/shops/:shopId/call-availability', async (req, res) => {
 });
 
 // ==========================================
+// API جدید: دریافت جزئیات محصول + اطلاعات فروشگاه
+// ==========================================
+app.get('/api/product-details/:productId', async (req, res) => {
+    try {
+        // استفاده از ObjectId برای کوئری دقیق
+        const { ObjectId } = require('mongoose').Types; 
+        const { productId } = req.params;
+        
+        if (!ObjectId.isValid(productId)) {
+            return res.status(400).json({ success: false, message: 'شناسه محصول نامعتبر است.' });
+        }
+
+        // ۱. پیدا کردن محصول
+        const product = await Product.findById(productId).lean();
+        if (!product) {
+            return res.status(404).json({ success: false, message: 'محصول یافت نشد.' });
+        }
+
+        // ۲. پیدا کردن فروشگاه مرتبط
+        const shop = await Shop.findById(product.shop_id).lean();
+        
+        // ۳. ترکیب داده‌ها
+        const result = {
+            ...product,
+            shop_info: shop ? {
+                id: shop._id,
+                name: shop.shop_name,
+                city: shop.city,
+                province: shop.province,
+                logo: shop.logo_url || shop.logo,
+                score: shop.rating_average || 0,
+                username: shop.user_identifier
+            } : null
+        };
+
+        res.json({ success: true, data: result });
+
+    } catch (error) {
+        console.error('Error fetching product details:', error);
+        res.status(500).json({ success: false, message: 'خطای سرور' });
+    }
+});
+
+// ==========================================
 // 6. Socket.IO & Start (سرور در انتها روشن می‌شود)
 // ==========================================
 io.on('connection', (socket) => {

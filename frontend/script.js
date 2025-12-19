@@ -3449,3 +3449,133 @@ function ensureCallUI(){
   wrap.appendChild(box); wrap.appendChild(endBtn);
   document.body.appendChild(wrap);
 }
+
+// ===============================================
+// بخش جدید: منطق صفحه جزئیات محصول (Product Details)
+// ===============================================
+
+// این تابع مسئول پر کردن صفحه محصول است
+async function initProductDetailsPage() {
+    // ۱. گرفتن شناسه محصول از URL (مثلا product-details.html?product_id=123)
+    const params = new URLSearchParams(window.location.search);
+    const productId = params.get('product_id');
+
+    if (!productId) {
+        alert('شناسه محصول یافت نشد.');
+        window.location.href = 'index.html';
+        return;
+    }
+
+    showLoading();
+
+    try {
+        // ۲. درخواست به API که در سرور ساختیم
+        const response = await fetch(`${baseUrl}/api/product-details/${productId}`);
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.message || 'خطا در دریافت اطلاعات');
+        }
+
+        const data = result.data;
+        const shop = data.shop_info;
+
+        // ۳. پر کردن اطلاعات در HTML
+        
+        // عنوان و تصویر
+        const titleEl = document.getElementById('pd-title');
+        if (titleEl) titleEl.textContent = data.name;
+
+        const imgEl = document.getElementById('pd-image');
+        if (imgEl && data.image) {
+            imgEl.src = data.image;
+            // قابلیت باز کردن مودال تصویر (از فانکشن قبلی شما استفاده میکنیم)
+            imgEl.onclick = function() {
+                if (typeof openImageModal === 'function') openImageModal(this);
+            };
+        }
+        
+        // توضیحات
+        const descEl = document.getElementById('pd-desc');
+        if (descEl) descEl.textContent = data.description || 'توضیحات ثبت نشده است.';
+
+        // ۴. پر کردن اطلاعات فروشگاه (سایدبار)
+        if (shop) {
+            const shopLink = document.getElementById('shop-link');
+            if (shopLink) {
+                shopLink.textContent = shop.name;
+                shopLink.href = `shop-details.html?shop_id=${shop.id}`;
+            }
+            
+            const locEl = document.getElementById('shop-location');
+            if (locEl) locEl.innerHTML = `<i class="fas fa-map-marker-alt"></i> ${shop.city || 'ایران'}`;
+            
+            const logoEl = document.getElementById('shop-logo');
+            if (logoEl && shop.logo) {
+                logoEl.src = shop.logo;
+            }
+        }
+
+        // ۵. مدیریت قیمت (نمایش هوشمند)
+        const priceContainer = document.getElementById('price-container');
+        if (priceContainer) {
+            priceContainer.innerHTML = ''; // پاک کردن
+            if (data.price) {
+                let html = '';
+                if (data.discount_price && data.discount_price < data.price) {
+                    // حالت تخفیف دار
+                    html += `<div class="price-old">${parseInt(data.price).toLocaleString('fa-IR')}</div>`;
+                    html += `<div class="price-current">${parseInt(data.discount_price).toLocaleString('fa-IR')} <span class="currency">تومان</span></div>`;
+                } else {
+                    // حالت عادی
+                    html += `<div class="price-current">${parseInt(data.price).toLocaleString('fa-IR')} <span class="currency">تومان</span></div>`;
+                }
+                priceContainer.innerHTML = html;
+            } else {
+                priceContainer.innerHTML = '<div class="price-current" style="font-size: 18px; color: var(--text-muted);">قیمت: توافقی / تماس بگیرید</div>';
+            }
+        }
+
+        // ۶. دکمه‌ها
+        
+        // اینستاگرام
+        const instagramBtn = document.getElementById('btn-instagram');
+        if (instagramBtn) {
+            if (data.instagram_link) {
+                let link = data.instagram_link;
+                if (!link.startsWith('http')) link = `https://instagram.com/${link.replace('@', '')}`;
+                instagramBtn.href = link;
+                instagramBtn.style.display = 'flex';
+            }
+        }
+
+        // دکمه چت و تماس
+        const chatBtn = document.getElementById('btn-chat-vendor');
+        if (chatBtn) {
+            chatBtn.onclick = function() {
+                // اگر سیستم چت دارید اینجا وصل کنید، فعلا آلرت
+                alert('برای چت با غرفه‌دار لطفاً ابتدا وارد حساب کاربری شوید (قابلیت چت در دست ساخت).');
+            };
+        }
+        
+        const callBtn = document.getElementById('btn-call-vendor');
+        if (callBtn) {
+            // شماره تماس مغازه یا محصول را اینجا قرار دهید (اگر در دیتابیس هست)
+            // فعلا فرض میکنیم شماره در shop_info نیست ولی میتوانید اضافه کنید
+            callBtn.style.display = 'none'; // فعلا مخفی
+        }
+
+    } catch (error) {
+        console.error('Error loading product:', error);
+        // alert('مشکلی در بارگذاری محصول پیش آمد.');
+    } finally {
+        hideLoading();
+    }
+}
+
+// اجرای تابع اگر در صفحه درست باشیم
+document.addEventListener('DOMContentLoaded', () => {
+    if (window.location.pathname.includes('product-details.html')) {
+        initProductDetailsPage();
+    }
+});

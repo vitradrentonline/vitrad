@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <title>جزئیات محصول | Vitrad</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="css/all.min.css">
+</head>
+<body>
+
+  <header class="main-header">
+    <div class="header-row-1">
+      <div class="header-right">
+        <img src="images/logo.png" alt="لوگو" class="logo" onclick="window.location.href='index.html'" style="cursor:pointer;">
+        <button onclick="history.back()" class="btn secondary" style="margin-right: 15px;">
+            <i class="fas fa-arrow-right"></i> بازگشت
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container" id="product-page-container">
+    
+    <div id="loading-overlay" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="pd-layout">
+        
+        <div class="pd-gallery-section card">
+            <div class="pd-main-image-wrapper">
+                <img id="pd-image" src="images/default-product.png" alt="تصویر محصول">
+            </div>
+        </div>
+
+        <div class="pd-info-section card">
+            <h1 id="pd-title" class="pd-title">...</h1>
+            <div class="pd-meta-row">
+                <span id="pd-category" class="pd-category-badge">دسته‌بندی عمومی</span>
+            </div>
+            
+            <hr class="divider">
+            
+            <div class="pd-description">
+                <h3>درباره محصول</h3>
+                <p id="pd-desc">...</p>
+            </div>
+        </div>
+
+        <div class="pd-sidebar-section">
+            <div class="vendor-box card">
+                <div class="vendor-header">
+                    <img id="shop-logo" src="images/default-logo.png" alt="لوگو غرفه">
+                    <div class="vendor-details">
+                        <a href="#" id="shop-link" class="vendor-name">نام غرفه</a>
+                        <span id="shop-location" class="vendor-location">تهران</span>
+                    </div>
+                </div>
+                
+                <div class="pd-price-area" id="price-container">
+                    </div>
+
+                <div class="pd-actions">
+                    <div class="info-note">
+                        <i class="fas fa-store"></i> این محصول صرفاً جهت نمایش است.
+                    </div>
+                    
+                    <a id="btn-instagram" href="#" target="_blank" class="btn instagram-btn" style="display: none;">
+                        <i class="fab fa-instagram"></i> مشاهده در اینستاگرام
+                    </a>
+
+                    <button id="btn-chat-vendor" class="btn primary full-width">
+                        <i class="fas fa-comment-alt"></i> گفتگو با غرفه‌دار
+                    </button>
+                    
+                    <button id="btn-call-vendor" class="btn secondary full-width">
+                        <i class="fas fa-phone"></i> تماس با غرفه‌دار
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
