@@ -52,6 +52,7 @@ const transporter = nodemailer.createTransport({
 const storage = multer.memoryStorage();
 const upload = multer({ storage, limits: { fileSize: 4 * 1024 * 1024 } });
 
+
 // ==========================================
 // 2. اتصال به دیتابیس
 // ==========================================
@@ -282,6 +283,54 @@ async function calculateShopScore(shop, dbInstance) {
     if (shop.rating_average && shop.rating_count) score += (shop.rating_average - 3) * shop.rating_count;
     return score;
 }
+
+// ==========================================
+// LOGGER MIDDLEWARE (افزودن لاگ‌گیری پیشرفته)
+// ==========================================
+app.use((req, res, next) => {
+    const start = Date.now();
+    const { method, url } = req;
+
+    // کپی امن از Body برای لاگ کردن (حذف رمز عبور و فایل‌های طولانی)
+    const safeBody = { ...req.body };
+    
+    // 1. مخفی کردن رمز عبور
+    if (safeBody.password) safeBody.password = '********';
+    if (safeBody.confirm_password) safeBody.confirm_password = '********';
+    if (safeBody.new_password) safeBody.new_password = '********';
+
+    // 2. مدیریت فایل‌های سنگین (اگر بیس ۶۴ یا بافر باشد لاگ را شلوغ نکند)
+    // نکته: چون از multer استفاده می‌کنید، فایل‌ها معمولا در req.body نیستند ولی برای اطمینان:
+    for (const key in safeBody) {
+        if (typeof safeBody[key] === 'string' && safeBody[key].length > 500) {
+            safeBody[key] = `[Long String - ${safeBody[key].length} chars]`;
+        }
+    }
+
+    // چاپ اطلاعات درخواست ورودی
+    console.log(`\n📥 [REQUEST] ${method} ${url}`);
+    console.log(`   📅 Time: ${new Date().toLocaleTimeString()}`);
+    
+    // اگر کوئری استرینگ دارد چاپ کن (مثلا ?id=123)
+    if (Object.keys(req.query).length > 0) {
+        console.log('   🔍 Query:', req.query);
+    }
+    
+    // اگر بادی دارد (اطلاعات فرم) چاپ کن
+    if (Object.keys(safeBody).length > 0) {
+        console.log('   📦 Body:', safeBody);
+    }
+
+    // لاگ کردن پایان درخواست (وقتی جواب به کاربر ارسال شد)
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        let statusColor = res.statusCode >= 400 ? '❌' : '✅';
+        console.log(`📤 [RESPONSE] ${method} ${url} -> ${statusColor} ${res.statusCode} (${duration}ms)`);
+        console.log('------------------------------------------------------------');
+    });
+
+    next(); // ادامه پردازش درخواست
+});
 
 // ==========================================
 // 5. مسیرها (Routes)

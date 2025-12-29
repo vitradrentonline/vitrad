@@ -11,5 +11,5 @@ ixlv wcje zolx fdir
 
 
 git add .
-git commit -m "Secure server setup"
+git commit -m "Update Files"
 git push origin main
