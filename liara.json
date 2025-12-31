@@ -1,0 +1,8 @@
+{
+  "platform": "node",
+  "app": "vitrad",
+  "port": 3000,
+  "build": {
+    "command": "npm run build"
+  }
+}
