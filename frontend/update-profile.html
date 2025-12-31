@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <title>ویرایش پروفایل</title>
-    <link rel="stylesheet" href="styles.css?v=1.2">
+    <link rel="stylesheet" href="/src/styles.css">
 </head>
 <body>
     <div class="form-card">
         <div class="profile-upload-section">
             <h3>عکس پروفایل</h3>
-            <img src="images/default-avatar.png" alt="پیش‌نمایش پروفایل" id="profile-preview-image" class="profile-preview">
+            <img src="/images/default-avatar.png" alt="پیش‌نمایش پروفایل" id="profile-preview-image" class="profile-preview">
             <input type="file" id="profile-picture-input" accept="image/*" style="display: none;">
             <button onclick="document.getElementById('profile-picture-input').click()">انتخاب عکس</button>
             <button id="save-profile-picture-btn">ذخیره عکس</button>
@@ -36,6 +36,6 @@
         <p>در حال پردازش...</p>
     </div>
 
-    <script src="script.js?v=1.2"></script>
+    <script type="module" src="/src/script.js"></script>
 </body>
 </html>

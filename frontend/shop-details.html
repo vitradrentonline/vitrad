@@ -6,19 +6,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#FF6B00">
   <meta name="mobile-web-app-capable" content="yes">
-
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
-
-  <link rel="stylesheet" href="styles.css?v=1.2">
-  <link rel="stylesheet" href="css/all.min.css">
+  <link rel="stylesheet" href="/src/styles.css">
+  <link rel="stylesheet" href="/css/all.min.css">
 </head>
 <body>
-
   <header class="main-header">
     <div class="header-row-1">
       <div class="header-right">
-        <img src="images/logo.png" alt="لوگو" class="logo">
+        <img src="/images/logo.png" alt="لوگو" class="logo">
         <div class="header-search-container">
           <i class="fas fa-search search-icon"></i>
           <input type="text" id="header-search-input" placeholder="جستجو...">
@@ -36,7 +33,6 @@
         </div>
       </div>
     </div>
-
     <div class="header-row-2">
       <nav class="header-nav">
         <a href="#">کالاهای با تخفیف</a>
@@ -51,14 +47,12 @@
             <span id="selected-city-name">انتخاب شهر</span>
           </button>
         </div>
-        
         <a href="login.html" class="btn-login" id="login-register-btn">
           <i class="fas fa-user-circle"></i>
           <span>ورود | ثبت‌نام</span>
         </a>
-
         <div class="profile-header-menu" id="profile-menu-container" style="display: none;">
-          <img src="images/default-avatar.png" alt="پروفایل" id="user-profile-picture" class="profile-picture-btn">
+          <img src="/images/default-avatar.png" alt="پروفایل" id="user-profile-picture" class="profile-picture-btn">
           <div class="profile-dropdown" id="profile-dropdown">
             <a href="user-panel.html">پنل کاربری</a>
             <a href="update-profile.html">ویرایش پروفایل</a>
@@ -67,16 +61,14 @@
             <a href="#" id="logout-btn-header">خروج از حساب</a>
           </div>
         </div>
-
       </div>
     </div>
   </header>
 
   <div class="container" id="shop-details-page-container">
     <nav id="breadcrumb" class="breadcrumb"></nav>
-
     <section id="shop-header-section" class="shop-header">
-      <img id="shop-logo" class="shop-header-logo" src="images/logo.png" alt="لوگو غرفه">
+      <img id="shop-logo" class="shop-header-logo" src="/images/logo.png" alt="لوگو غرفه">
       <div class="shop-header-info">
         <div class="shop-header-title">
           <h1 id="shop-name">نام غرفه</h1>
@@ -109,14 +101,12 @@
 
       <div id="tab-panel-home" class="shop-tab-content active">
         <img id="shop-banner-img" class="shop-home-banner" alt="بنر غرفه">
-
         <div class="card">
           <h3><i class="fas fa-info-circle"></i> درباره غرفه</h3>
           <p id="shop-description-text"></p>
           <p><strong>سابقه کاری:</strong> <span id="shop-experience"></span></p>
           <p><strong>شهر:</strong> <span id="shop-city-2"></span></p>
           <p><strong>تلفن:</strong> <span id="shop-phone-number">-</span></p>
-
           <div id="call-buttons" style="display:none; margin-top:12px;">
             <button id="btn-voice-call" class="btn secondary"><i class="fas fa-phone"></i> تماس صوتی</button>
             <button id="btn-video-call" class="btn primary"><i class="fas fa-video"></i> تماس تصویری</button>
@@ -125,7 +115,6 @@
             </small>
           </div>
         </div>
-
         <div id="shop-location-box" class="card" style="display:none;">
           <h3><i class="fas fa-map-marker-alt"></i> موقعیت مکانی</h3>
           <div id="shop-map"></div>
@@ -135,7 +124,6 @@
             <a id="open-in-maps" class="btn secondary" target="_blank" rel="noopener">باز کردن در نقشه</a>
           </div>
         </div>
-
         <div class="card">
           <h3>
             <i class="fas fa-certificate"></i> محصولات منتخب
@@ -192,8 +180,7 @@
       navigator.serviceWorker.register('/sw.js').catch(console.error);
     }
   </script>
-
   <script src="/socket.io/socket.io.js"></script>
-  <script src="script.js?v=1.2"></script>
+  <script type="module" src="/src/script.js"></script>
 </body>
 </html>

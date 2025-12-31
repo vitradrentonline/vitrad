@@ -1,0 +1,13 @@
+node_modules
+.env
+.DS_Store
+recovery-codes.txt
+laira.txt
+recovery-codes.txt
+recovery-codes a.sed
+node_modules/
+frontend/node_modules/
+frontend/dist/
+backend/node_modules/
+.env
+.DS_Store

@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>ثبت‌نام کاربر</title>
-    <link rel="stylesheet" href="styles.css?v=1.2">
+    <link rel="stylesheet" href="/src/styles.css">
 </head>
 <body>
     <div class="form-card">
-        <img src="images/logo.png" alt="لوگو" class="logo">
+        <img src="/images/logo.png" alt="لوگو" class="logo">
         <h2>ثبت‌نام کاربر</h2>
 
         <div id="step1" class="wizard-step active">
@@ -17,15 +17,12 @@
             <label for="email">ایمیل:</label>
             <input type="email" id="email">
             <p id="email-error" class="error-message" style="color: red; font-size: 12px;"></p>
-
             <label for="mobile">موبایل:</label>
             <input type="tel" id="mobile">
             <p id="mobile-error" class="error-message" style="color: red; font-size: 12px;"></p>
-
             <label for="national_id">کد ملی:</label>
             <input type="text" id="national_id" maxlength="10">
             <p id="national_id-error" class="error-message" style="color: red; font-size: 12px;"></p>
-
             <button onclick="validateAndNextStep(2)">بعدی</button>
             <a href="index.html">بازگشت به صفحه اصلی</a>
         </div>
@@ -33,18 +30,14 @@
         <div id="step2" class="wizard-step">
             <label for="province">استان:</label>
             <select id="province" onchange="updateCities()"></select>
-
             <label for="city">شهر:</label>
             <select id="city" onchange="handleCityChange()"></select>
-
             <div id="tehran-area-section" style="display:none;">    
                 <label for="tehran_area">منطقه تهران:</label>
                 <select id="tehran_area"></select>
             </div>
-
             <label for="referral_code">کد معرف (اختیاری):</label>
             <input type="text" id="referral_code">
-            
             <button onclick="nextStep(3)">بعدی</button>
             <button onclick="prevStep(1)">بازگشت</button>
         </div>
@@ -55,17 +48,14 @@
                 <input type="password" id="password">
                 <span class="password-toggle" onclick="togglePassword('password')">👁️</span>
             </div>
-
             <label for="confirm_password">تأیید رمز عبور:</label>
             <div class="password-wrapper">
                 <input type="password" id="confirm_password">
                 <span class="password-toggle" onclick="togglePassword('confirm_password')">👁️</span>
             </div>
-
             <button onclick="submitRegistration()">ثبت‌نام</button>
             <button onclick="prevStep(2)">بازگشت</button>
         </div>
-
         <p class="privacy-note">اطلاعات شما محفوظ خواهد ماند.</p>
     </div>
 
@@ -73,7 +63,6 @@
         <div class="loading-spinner"></div>
         <p>در حال پردازش...</p>
     </div>
-
-    <script src="script.js?v=1.2"></script>
+    <script type="module" src="/src/script.js"></script>
 </body>
 </html>

@@ -207,7 +207,6 @@ app.use((req, res, next) => {
 });
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'frontend')));
 app.use((req, res, next) => {
     if (!db) return res.status(503).json({ message: 'دیتابیس متصل نیست' });
     next();
@@ -786,6 +785,23 @@ io.on('connection', (socket) => {
     socket.on('offer', (d) => socket.to(d.roomId).emit('offer', d));
     socket.on('answer', (d) => socket.to(d.roomId).emit('answer', d));
     socket.on('ice-candidate', (d) => socket.to(d.roomId).emit('ice-candidate', d));
+});
+
+// ==========================================
+// تنظیمات اتصال به Frontend (Vite)
+// ==========================================
+const frontendBuildPath = path.join(__dirname, '../frontend/dist');
+
+// 1. فایل‌های استاتیک (CSS, JS, Images) را از پوشه dist بخوان
+app.use(express.static(frontendBuildPath));
+
+// 2. هر درخواستی که API نبود، فایل index.html را بفرست (برای اینکه رفرش صفحه کار کند)
+app.get('*', (req, res, next) => {
+    // اگر درخواست مربوط به API بود، کاری نداشته باش
+    if (req.url.startsWith('/api/')) return next();
+    
+    // در غیر این صورت فایل HTML اصلی را بفرست
+    res.sendFile(path.join(frontendBuildPath, 'index.html'));
 });
 
 server.listen(port, () => {

@@ -6,23 +6,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#FF6B00">
 
-  <!-- PWA -->
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-  <!-- Styles -->
-  <link rel="stylesheet" href="styles.css?v=1.2">
-  <link rel="stylesheet" href="css/all.min.css"> <!-- Font Awesome (آیکن‌ها) -->
+  <link rel="stylesheet" href="/src/styles.css">
+  <link rel="stylesheet" href="/css/all.min.css">
 </head>
 <body>
 
-  <!-- ===== هدر روشن (همان ساختار استفاده‌شده در صفحات دیگر) ===== -->
   <header class="main-header">
     <div class="header-row-1">
       <div class="header-right">
-        <img src="icons/logo.png" alt="لوگو" class="logo">
+        <img src="/icons/logo.png" alt="لوگو" class="logo">
         <div class="header-search-container">
           <i class="fas fa-search search-icon"></i>
           <input type="text" id="header-search-input" placeholder="جستجو در ویتراد...">
@@ -63,39 +60,32 @@
     </div>
   </header>
 
-  <!-- ===== محتوای صفحه اصلی ===== -->
   <main class="container">
-    <!-- بنر اصلی سایت (اختیاری) -->
     <section class="card" style="margin-top:16px;">
-      <img src="images/hero.jpg" alt="ویتراد" class="shop-home-banner" loading="lazy">
+      <img src="/images/hero.jpg" alt="ویتراد" class="shop-home-banner" loading="lazy">
     </section>
 
-    <!-- شبکهٔ غرفه‌ها (با script.js پر می‌شود) -->
     <section style="margin-top:16px;">
       <h2 style="margin-bottom:12px;">غرفه‌های منتخب</h2>
       <div id="shops-grid" class="products-grid"></div>
     </section>
   </main>
 
-  <!-- مودال نمایش تصویر (در صورت نیاز توسط script.js) -->
   <div id="image-modal" class="image-modal">
     <span class="close-modal-btn">&times;</span>
     <img class="modal-content" id="modal-image" alt="">
   </div>
 
-  <!-- لودینگ اوورلی یکپارچه -->
   <div class="loading-overlay" id="loading-overlay" style="display:none;">
     <div class="loading-spinner"></div>
     <p>در حال پردازش...</p>
   </div>
 
-  <!-- Scripts -->
   <script>
-    // ثبت Service Worker برای نصب‌پذیری PWA
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(console.error);
     }
   </script>
-  <script src="script.js?v=1.2"></script>
+  <script type="module" src="/src/script.js"></script>
 </body>
 </html>

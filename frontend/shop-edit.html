@@ -4,11 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>مدیریت مغازه</title>
-    <link rel="stylesheet" href="css/all.min.css">
-    <link rel="stylesheet" href="styles.css?v=1.2">
+    <link rel="stylesheet" href="/css/all.min.css">
+    <link rel="stylesheet" href="/src/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <style>
-        /* استایل گرید ساده برای فیلدهای موقعیت مکانی */
         .grid-2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -20,10 +19,8 @@
     <header>
         <button onclick="window.location.href='user-panel.html?my=true'">بازگشت به لیست مغازه‌های من</button>
     </header>
-
     <div id="edit-panel" class="edit-panel">
         <h2>مدیریت مغازه <span id="shop-score-display" class="shop-score-badge"></span></h2>
-
         <div class="edit-section" id="banner-management-section">
             <h3>آپلود یا تغییر بنر</h3>
             <div class="section-content">
@@ -31,32 +28,26 @@
                 <button class="btn" onclick="uploadBanner()">آپلود بنر</button>
             </div>
         </div>
-
         <div class="edit-section">
             <h3>آپلود یا تغییر لوگو</h3>
             <div class="section-content" style="text-align: center;">
-                <img src="images/default-logo.png" alt="پیش‌نمایش لوگو" id="logo-preview" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 2px solid #ddd; margin-bottom: 15px;">
+                <img src="/images/default-logo.png" alt="پیش‌نمایش لوگو" id="logo-preview" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 2px solid #ddd; margin-bottom: 15px;">
                 <input type="file" id="logo-input" accept="image/*" style="display: none;">
                 <button onclick="document.getElementById('logo-input').click()">انتخاب لوگو</button>
                 <button id="save-logo-btn">ذخیره لوگو</button>
             </div>
         </div>
-
         <div class="edit-section">
             <h3>ویرایش اطلاعات و راه‌های ارتباطی</h3>
             <div class="section-content">
                 <label for="edit-description">توضیحات غرفه</label>
                 <textarea id="edit-description" placeholder="توضیحات..."></textarea>
-
                 <label for="edit-phone">شماره تماس</label>
                 <input type="tel" id="edit-phone" placeholder="مثلاً 09...">
-
                 <label for="edit-experience">سابقه کاری (سال/توضیح)</label>
                 <input type="text" id="edit-experience" placeholder="مثلاً ۵ سال">
-
                 <label for="edit-address">آدرس</label>
                 <input type="text" id="edit-address" placeholder="نشانی کامل">
-
                 <div class="grid-2">
                     <div>
                         <label for="edit-lat">Latitude</label>
@@ -67,7 +58,6 @@
                         <input type="text" id="edit-lng" placeholder="مثلاً 51.3890">
                     </div>
                 </div>
-
                 <hr style="margin: 15px 0; border: 1px solid #f0f0f0;">
                 <label>راه‌های ارتباطی (شبکه‌های اجتماعی):</label>
                 <input type="tel" id="edit-whatsapp" placeholder="شماره واتس‌اپ (مثال: 989123456789)">
@@ -76,11 +66,9 @@
                 <input type="text" id="edit-eitaa" placeholder="آیدی ایتا">
                 <input type="text" id="edit-rubika" placeholder="آیدی روبیکا">
                 <input type="text" id="edit-bale" placeholder="آیدی بله">
-
                 <button class="btn primary" onclick="updateShopInfo()">ذخیره اطلاعات</button>
             </div>
         </div>
-
         <div class="edit-section">
             <h3>تنظیمات تماس صوتی/تصویری</h3>
             <div class="section-content">
@@ -88,16 +76,12 @@
                     <input type="checkbox" id="edit-calls-enabled" style="width: auto;">
                     <label for="edit-calls-enabled" style="margin-bottom: 0;">فعال‌سازی تماس صوتی و تصویری</label>
                 </div>
-                
                 <label for="edit-call-windows">پنجره‌های زمانی مجاز (فرمت JSON):</label>
                 <textarea id="edit-call-windows" rows="5" placeholder='[{"day":"sat", "start":"09:00", "end":"17:00"}]' style="direction: ltr; text-align: left;"></textarea>
                 <small>مثال: روزهای شنبه از ۹ صبح تا ۵ عصر. روزها: sat, sun, mon, tue, wed, thu, fri</small>
-
                 <button class="btn primary" onclick="updateShopInfo()">ذخیره تنظیمات تماس</button>
             </div>
         </div>
-
-
         <div class="edit-section">
             <h3>افزودن محصول جدید</h3>
             <div class="section-content">
@@ -108,7 +92,6 @@
                 <button class="btn" onclick="addProduct()">اضافه کردن محصول</button>
             </div>
         </div>
-
         <div class="edit-section">
             <div class="accordion-header" onclick="toggleAccordion(this)">
                 <h3>لیست و ترتیب محصولات</h3>
@@ -116,13 +99,10 @@
             </div>
             <div class="accordion-content" style="display: none;">
                 <p>برای تغییر ترتیب، محصولات را بکشید و رها کنید. تغییرات به صورت خودکار ذخیره می‌شود.</p>
-                <div class="products-grid" id="products-grid">
-                    </div>
+                <div class="products-grid" id="products-grid"></div>
             </div>
         </div>
-
     </div>
-
     <div class="loading-overlay" id="loading-overlay" style="display:none;">
         <div class="loading-spinner"></div>
         <p>در حال پردازش...</p>
@@ -131,7 +111,6 @@
         <span class="close-modal-btn">&times;</span>
         <img class="modal-content" id="modal-image">
     </div>
-
-    <script src="script.js?v=1.2"></script>
+    <script type="module" src="/src/script.js"></script>
 </body>
 </html>

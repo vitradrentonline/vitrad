@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>پنل ادمین</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/src/styles.css">
 </head>
 <body>
     <div class="admin-container">
@@ -18,7 +18,6 @@
             </ul>
         </div>
         <div class="main-content">
-            <!-- بخش مغازه‌داران -->
             <div id="shop-owners" class="section" style="display: none;">
                 <h3>لیست مغازه‌داران</h3>
                 <table id="shop-owners-table">
@@ -44,8 +43,6 @@
                     <ul id="products-list"></ul>
                 </div>
             </div>
-
-            <!-- بخش کدهای تخفیف -->
             <div id="discount-codes" class="section" style="display: none;">
                 <h3>مدیریت کدهای تخفیف</h3>
                 <input type="text" id="discount-code" placeholder="کد تخفیف">
@@ -64,8 +61,6 @@
                     <tbody></tbody>
                 </table>
             </div>
-
-            <!-- بخش تاییدها -->
             <div id="approvals" class="section" style="display: none;">
                 <h3>تایید محصولات و مغازه‌داران</h3>
                 <h4>مغازه‌داران در انتظار تایید</h4>
@@ -99,8 +94,6 @@
                     <button onclick="rejectItem()">رد و ارسال پیام</button>
                 </div>
             </div>
-
-            <!-- بخش پیام عمومی -->
             <div id="messages" class="section" style="display: none;">
                 <h3>ارسال پیام عمومی</h3>
                 <select id="message-type">
@@ -113,9 +106,7 @@
             </div>
         </div>
     </div>
-
     <div id="loading-panel" style="display: none;">در حال پردازش...</div>
-
-    <script src="script.js"></script>
+    <script type="module" src="/src/script.js"></script>
 </body>
 </html>
